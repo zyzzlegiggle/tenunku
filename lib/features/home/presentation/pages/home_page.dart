@@ -154,103 +154,173 @@ class _HomePageState extends State<HomePage> {
         ),
         child: SafeArea(
           bottom: false, // Don't add padding for bottom safe area in body
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              24,
-              20,
-              24,
-              100,
-            ), // Add bottom padding for content
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Search Bar
-                TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Telusuri...',
-                    hintStyle: GoogleFonts.poppins(color: Colors.grey[500]),
-                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                    fillColor: Colors.white,
-                    filled: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                  ),
+          child: Column(
+            children: [
+              // Fixed Header
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
                 ),
-                const SizedBox(height: 20),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF757575), // Dark grey from screenshot
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'Logo',
+                          style: TextStyle(color: Colors.white, fontSize: 10),
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    const Icon(
+                      Icons.settings_outlined,
+                      color: Color(0xFF757575),
+                      size: 28,
+                    ),
+                  ],
+                ),
+              ),
 
-                // Categories
-                SizedBox(
-                  height: 120,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
+              // Scrollable Content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(
+                    24,
+                    0,
+                    24,
+                    100,
+                  ), // Content padding
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHighlightCard('Desa Kanekes'),
-                      const SizedBox(width: 16),
-                      _buildHighlightCard('Kegiatan Tenun'),
-                      const SizedBox(width: 16),
-                      _buildHighlightCard('Hasil Tenunan'),
+                      // Search Bar
+                      TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Telusuri...',
+                          hintStyle: GoogleFonts.poppins(
+                            color: Colors.grey[500],
+                          ),
+                          fillColor: Colors.white,
+                          filled: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 16,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Banner
+                      Container(
+                        width: double.infinity,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Categories
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildCategoryItem(),
+                          _buildCategoryItem(),
+                          _buildCategoryItem(),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Marketplace Budaya
+                      Text(
+                        'Marketplace Budaya',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF757575),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Rekomendasi Produk Unggulan',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Products Horizontal List
+                      SizedBox(
+                        height: 220,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: 4,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(width: 16),
+                          itemBuilder: (context, index) {
+                            return _buildProductCard();
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Vertical Highlights Section
+                      _buildVerticalHighlightCard('Desa Kanekes'),
+                      const SizedBox(height: 16),
+                      _buildVerticalHighlightCard('Kegiatan Tenun'),
+                      const SizedBox(height: 16),
+                      _buildVerticalHighlightCard('Hasil Tenunan'),
+                      const SizedBox(height: 40),
+
+                      // Bottom Banner (Yuk Kenali) - now at the bottom
+                      Column(
+                        children: [
+                          Text(
+                            'Yuk, Kenali Budaya Tenun\nIndonesia Lebih Lanjut!',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF757575),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            width: double.infinity,
+                            height: 150,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF9E9E9E), // Grey background
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                // Marketplace Budaya
-                Text(
-                  'Marketplace Budaya',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Rekomendasi Produk Unggulan',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.75,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                  ),
-                  itemCount: 4,
-                  itemBuilder: (context, index) {
-                    return _buildProductCard();
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // Banner
-                Container(
-                  width: double.infinity,
-                  height: 150,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[400],
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Yuk, Kenali Budaya Tenun\nIndonesia Lebih Lanjut!',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -270,44 +340,54 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildHighlightCard(String title) {
+  Widget _buildCategoryItem() {
     return Container(
-      width: 150,
+      width: 100, // Fixed size for squares
+      height: 100,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      // Empty content as per screenshot wireframe
+    );
+  }
+
+  Widget _buildVerticalHighlightCard(String title) {
+    return Container(
+      width: double.infinity,
+      height: 180, // Large vertical card
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE0E0E0), // Light grey background
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            flex: 3,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
-              ),
-              alignment: Alignment.center,
-              child: const Text(
+          // Centered "foto" placeholder
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.only(top: 40),
+              child: Text(
                 'foto',
-                style: TextStyle(fontSize: 10, color: Colors.grey),
+                style: TextStyle(color: Colors.grey, fontSize: 10),
               ),
             ),
           ),
-          Expanded(
-            flex: 1,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                title,
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
+          // Title at bottom left
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: const Color(0xFF616161),
             ),
           ),
         ],
@@ -317,25 +397,34 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildProductCard() {
     return Container(
+      width: 140, // Fixed width for horizontal list items
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(
+          0xFFE0E0E0,
+        ), // Light grey background like screenshot placeholder
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         children: [
           Expanded(
+            flex: 3,
             child: Container(
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
+              alignment: Alignment.center,
+              child: Text(
+                'Foto Produk',
+                style: GoogleFonts.poppins(
+                  fontSize: 10,
+                  color: Colors.grey[600],
                 ),
               ),
-              alignment: Alignment.center,
-              child: const Text(
-                'Foto Produk',
-                style: TextStyle(fontSize: 10, color: Colors.grey),
-              ),
+            ),
+          ),
+          // Grey darker area at bottom similar to screenshot
+          Container(
+            height: 40,
+            decoration: const BoxDecoration(
+              color: Color(0xFFAAAAAA), // Darker grey footer
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
             ),
           ),
         ],
