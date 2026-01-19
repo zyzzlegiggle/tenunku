@@ -164,19 +164,10 @@ class _HomePageState extends State<HomePage> {
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF757575), // Dark grey from screenshot
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'Logo',
-                          style: TextStyle(color: Colors.white, fontSize: 10),
-                        ),
-                      ),
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: const Color(0xFF757575), // Dark grey
+                      child: const Icon(Icons.person, color: Colors.white),
                     ),
                     const Spacer(),
                     const Icon(
@@ -293,7 +284,7 @@ class _HomePageState extends State<HomePage> {
                       _buildVerticalHighlightCard('Hasil Tenunan'),
                       const SizedBox(height: 40),
 
-                      // Bottom Banner (Yuk Kenali) - now at the bottom
+                      // Bottom "Yuk Kenali" Section
                       Column(
                         children: [
                           Text(
@@ -306,13 +297,25 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          Container(
-                            width: double.infinity,
-                            height: 150,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF9E9E9E), // Grey background
-                              borderRadius: BorderRadius.circular(20),
-                            ),
+                          // Card 1: Benang Membumi
+                          _buildFeatureCard(
+                            title: 'Benang Membumi',
+                            description:
+                                'Pelajari teknik menenun, makna, hingga bahan-bahan setiap tenun yang dihasilkan',
+                          ),
+                          const SizedBox(height: 16),
+                          // Card 2: Untaian Setiap Tenunan
+                          _buildFeatureCard(
+                            title: 'Untaian Setiap Tenunan',
+                            description:
+                                'Pelajari proses menenun, filosofi, adat istiadat, hingga sejarah dari setiap karya',
+                          ),
+                          const SizedBox(height: 16),
+                          // Card 3: Marketplace Budaya
+                          _buildFeatureCard(
+                            title: 'Marketplace Budaya',
+                            description:
+                                'Jelajahi dan beli produk tenun asli dari para penenun di Indonesia',
                           ),
                         ],
                       ),
@@ -325,17 +328,96 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       bottomNavigationBar: Container(
-        color: Colors.transparent, // Ensure no background color behind
+        color: const Color(0xFFBDBDBD), // Solid grey background
         padding: const EdgeInsets.only(bottom: 16, top: 10),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildNavItem('Beranda', 0, Icons.home),
-            _buildNavItem('Tokoku', 1, Icons.store),
-            _buildNavItem('Keranjang', 2, Icons.shopping_cart),
-            _buildNavItem('Akun Saya', 3, Icons.person),
+            _buildNavItem('Beranda', 0),
+            _buildNavItem('Telusuri', 1),
+            _buildNavItem('Keranjang', 2),
+            _buildNavItem('Akun Saya', 3),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureCard({
+    required String title,
+    required String description,
+  }) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFFE0E0E0), // Light grey base
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image / Top darker area
+          Container(
+            height: 200,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: Color(0xFF9E9E9E), // Darker grey image placeholder
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              'Foto Produk',
+              style: GoogleFonts.poppins(color: Colors.white, fontSize: 12),
+            ),
+          ),
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF616161),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    color: const Color(0xFF757575),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF757575), // Button Dark Grey
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Telusuri',
+                      style: GoogleFonts.poppins(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -432,7 +514,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildNavItem(String label, int index, IconData icon) {
+  Widget _buildNavItem(String label, int index) {
     final bool isActive = _currentIndex == index;
 
     return GestureDetector(
@@ -444,10 +526,9 @@ class _HomePageState extends State<HomePage> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: isActive ? const Color(0xFF757575) : Colors.white,
+              color: isActive ? const Color(0xFF616161) : Colors.white,
               shape: BoxShape.circle,
             ),
-            child: isActive ? Icon(icon, color: Colors.white, size: 24) : null,
           ),
           const SizedBox(height: 4),
           Text(
