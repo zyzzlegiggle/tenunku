@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../widgets/onboarding_carousel_dialog.dart';
+import '../widgets/onboarding_single_dialog.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,12 +17,41 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _showWelcomeDialog();
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => const OnboardingCarouselDialog(),
-        );
-      }
+      if (!mounted) return;
+      // Modal 1: Biografi Penenun (Standard transition or fade)
+      await showDialog(
+        context: context,
+        builder: (context) => OnboardingSingleDialog(
+          title: 'Biografi Penenun',
+          description:
+              'Kenali kisah inspiratif para perempuan penenun di balik setiap karya!',
+          onNext: () => Navigator.of(context).pop(),
+        ),
+      );
+      if (!mounted) return;
+
+      // Modal 2: Benang Membumi
+      await showDialog(
+        context: context,
+        builder: (context) => OnboardingSingleDialog(
+          title: 'Benang Membumi',
+          description:
+              'Pelajari teknik menenun, makna, hingga bahan-bahan setiap tenun yang dihasilkan',
+          onNext: () => Navigator.of(context).pop(),
+        ),
+      );
+      if (!mounted) return;
+
+      // Modal 3: Untaian Setiap Tenunan
+      await showDialog(
+        context: context,
+        builder: (context) => OnboardingSingleDialog(
+          title: 'Untaian Setiap Tenunan',
+          description:
+              'Pelajari proses menenun, filosofi, adat istiadat, hingga sejarah dari setiap karya',
+          onNext: () => Navigator.of(context).pop(),
+        ),
+      );
     });
   }
 
@@ -65,8 +94,7 @@ class _HomePageState extends State<HomePage> {
                 child: Text(
                   'Mengapa Harus Tenun?',
                   style: GoogleFonts.poppins(
-                    fontWeight:
-                        FontWeight.bold, // Italic in sketch? Usually emphasis.
+                    fontWeight: FontWeight.bold,
                     fontStyle: FontStyle.italic,
                     color: Colors.grey[800],
                   ),
@@ -115,6 +143,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true, // Allows body to extend behind the bottom bar
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -124,8 +153,14 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         child: SafeArea(
+          bottom: false, // Don't add padding for bottom safe area in body
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            padding: const EdgeInsets.fromLTRB(
+              24,
+              20,
+              24,
+              100,
+            ), // Add bottom padding for content
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -138,9 +173,7 @@ class _HomePageState extends State<HomePage> {
                     fillColor: Colors.white,
                     filled: true,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(
-                        30,
-                      ), // Rounded pill shape
+                      borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide.none,
                     ),
                     contentPadding: const EdgeInsets.symmetric(vertical: 0),
@@ -148,11 +181,9 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 20),
 
-                // Categories / Highlights (Horizontal Scroll)
-                // Based on "Marketplace Budaya" image, maybe these are categories?
-                // Actually image 2 has "Desa Kanekes", "Kegiatan Tenun".
+                // Categories
                 SizedBox(
-                  height: 120, // Height for horizontal list
+                  height: 120,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
@@ -200,7 +231,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 24),
 
-                // Banner "Yuk, Kenali Budaya..."
+                // Banner
                 Container(
                   width: double.infinity,
                   height: 150,
@@ -214,49 +245,25 @@ class _HomePageState extends State<HomePage> {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white, // Or black depending on contrast
+                      color: Colors.white,
                     ),
                   ),
                 ),
-                const SizedBox(height: 80), // Space for bottom nav
               ],
             ),
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors
-            .transparent, // Making it sit on gradient? Usually needs container.
-        // Actually, normally BottomNavBar needs solid color or it overlays content.
-        elevation: 0,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white70,
-        // The screenshot shows circles for nav items.
-        // Implementing custom row for nav bar to match design perfectly
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Beranda'),
-          BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Tokoku'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Keranjang',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Akun Saya'),
-        ],
-      ),
-      // Replacing standard navbar with custom one to match the circle design
-      bottomSheet: Container(
-        color: const Color(0xFFBDBDBD), // Match bottom gradient
-        padding: const EdgeInsets.symmetric(vertical: 16),
+      bottomNavigationBar: Container(
+        color: Colors.transparent, // Ensure no background color behind
+        padding: const EdgeInsets.only(bottom: 16, top: 10),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildNavItem('Beranda', true),
-            _buildNavItem('Tokoku', false),
-            _buildNavItem('Keranjang', false),
-            _buildNavItem('Akun Saya', false, isDark: true),
+            _buildNavItem('Beranda', 0, Icons.home),
+            _buildNavItem('Tokoku', 1, Icons.store),
+            _buildNavItem('Keranjang', 2, Icons.shopping_cart),
+            _buildNavItem('Akun Saya', 3, Icons.person),
           ],
         ),
       ),
@@ -265,7 +272,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildHighlightCard(String title) {
     return Container(
-      width: 150, // Card width
+      width: 150,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -315,7 +322,6 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
-        // crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
             child: Container(
@@ -332,34 +338,40 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          // Product Info?
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(String label, bool isActive, {bool isDark = false}) {
-    // The design has white circles for standard items and a dark circle for the last one?
-    // Or maybe "Active" state.
-    // Screenshot shows: White, White, White, Dark Grey.
-    // Labels below.
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF757575) : Colors.white,
-            shape: BoxShape.circle,
+  Widget _buildNavItem(String label, int index, IconData icon) {
+    final bool isActive = _currentIndex == index;
+
+    return GestureDetector(
+      onTap: () => setState(() => _currentIndex = index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: isActive ? const Color(0xFF757575) : Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: isActive ? Icon(icon, color: Colors.white, size: 24) : null,
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: GoogleFonts.poppins(fontSize: 10, color: Colors.white),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              color: Colors.white,
+              // Make text bold if active?
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
