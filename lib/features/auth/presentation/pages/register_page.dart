@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/api_client.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -11,6 +12,20 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   int _selectedRoleIndex = 0; // 0: Pembeli, 1: Penjual
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final ApiClient _apiClient = ApiClient();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -114,17 +129,26 @@ class _RegisterPageState extends State<RegisterPage> {
               // Fields
               _buildLabel('Nama Lengkap'),
               const SizedBox(height: 8),
-              _buildTextField('Masukkan Nama Lengkap'),
+              _buildTextField('Masukkan Nama Lengkap', _nameController),
               const SizedBox(height: 20),
 
               _buildLabel('Nomor Telepon'),
               const SizedBox(height: 8),
-              _buildTextField('Masukkan Nomor Telepon'),
+              _buildTextField('Masukkan Nomor Telepon', _phoneController),
               const SizedBox(height: 20),
 
               _buildLabel('E-mail'),
               const SizedBox(height: 8),
-              _buildTextField('Masukkan E-mail'),
+              _buildTextField('Masukkan E-mail', _emailController),
+              const SizedBox(height: 20),
+
+              _buildLabel('Kata Sandi'),
+              const SizedBox(height: 8),
+              _buildTextField(
+                'Masukkan Kata Sandi',
+                _passwordController,
+                isObscure: true,
+              ),
               const SizedBox(height: 30),
 
               // Step Indicator
@@ -142,7 +166,32 @@ class _RegisterPageState extends State<RegisterPage> {
 
               // Selanjutnya Button
               ElevatedButton(
-                onPressed: () => context.push('/otp'),
+                onPressed: () async {
+                  try {
+                    final response = await _apiClient.post('/auth/register', {
+                      'fullName': _nameController.text,
+                      'phone': _phoneController.text,
+                      'email': _emailController.text,
+                      'password':
+                          _passwordController.text, // Added password field
+                      'role': _selectedRoleIndex == 0 ? 'pembeli' : 'penjual',
+                    });
+
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Registrasi Berhasil')),
+                      );
+                      // Skip OTP as requested
+                      context.go('/home');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(e.toString())));
+                    }
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF757575),
                   elevation: 5,
@@ -192,8 +241,14 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _buildTextField(String hint) {
+  Widget _buildTextField(
+    String hint,
+    TextEditingController controller, {
+    bool isObscure = false,
+  }) {
     return TextField(
+      controller: controller,
+      obscureText: isObscure,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: Colors.grey[300]),

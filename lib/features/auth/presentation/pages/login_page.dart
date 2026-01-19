@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/api_client.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,6 +13,16 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   // 0 -> Pembeli, 1 -> Penjual
   int _selectedRoleIndex = 0;
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final ApiClient _apiClient = ApiClient();
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -122,6 +133,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 8),
               TextField(
+                controller: _usernameController,
                 decoration: InputDecoration(
                   hintText: 'Masukkan Nama Lengkap',
                   hintStyle: TextStyle(color: Colors.grey[300]),
@@ -138,6 +150,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 8),
               TextField(
+                controller: _passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
                   hintText: 'Masukkan Kata Sandi',
@@ -160,12 +173,27 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 40),
               // Login Button
               ElevatedButton(
-                onPressed: () {
-                  // TODO: Implement login logic
-                  // For now, assume successful login to Home
-                  // context.go('/home'); // Or go to OTP manually if needed, but usually login -> home
-                  // Per user flow, let's just go to Home
-                  context.go('/home');
+                onPressed: () async {
+                  try {
+                    final response = await _apiClient.post('/auth/login', {
+                      'username': _usernameController.text,
+                      'password': _passwordController.text,
+                      'role': _selectedRoleIndex == 0 ? 'pembeli' : 'penjual',
+                    });
+
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Login Berhasil')),
+                      );
+                      context.go('/home');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(e.toString())));
+                    }
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF757575),

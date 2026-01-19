@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../widgets/onboarding_carousel_dialog.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,13 +15,19 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showWelcomeDialog();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _showWelcomeDialog();
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => const OnboardingCarouselDialog(),
+        );
+      }
     });
   }
 
-  void _showWelcomeDialog() {
-    showDialog(
+  Future<void> _showWelcomeDialog() async {
+    return showDialog(
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -113,13 +120,107 @@ class _HomePageState extends State<HomePage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.white, Color(0xFFBDBDBD)], // Gradient effect
+            colors: [Colors.white, Color(0xFFBDBDBD)],
           ),
         ),
-        child: Center(
-          child: Text(
-            'Konten Beranda',
-            style: GoogleFonts.poppins(color: Colors.white),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Search Bar
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Telusuri...',
+                    hintStyle: GoogleFonts.poppins(color: Colors.grey[500]),
+                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    fillColor: Colors.white,
+                    filled: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        30,
+                      ), // Rounded pill shape
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Categories / Highlights (Horizontal Scroll)
+                // Based on "Marketplace Budaya" image, maybe these are categories?
+                // Actually image 2 has "Desa Kanekes", "Kegiatan Tenun".
+                SizedBox(
+                  height: 120, // Height for horizontal list
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      _buildHighlightCard('Desa Kanekes'),
+                      const SizedBox(width: 16),
+                      _buildHighlightCard('Kegiatan Tenun'),
+                      const SizedBox(width: 16),
+                      _buildHighlightCard('Hasil Tenunan'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Marketplace Budaya
+                Text(
+                  'Marketplace Budaya',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Rekomendasi Produk Unggulan',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.75,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: 4,
+                  itemBuilder: (context, index) {
+                    return _buildProductCard();
+                  },
+                ),
+                const SizedBox(height: 24),
+
+                // Banner "Yuk, Kenali Budaya..."
+                Container(
+                  width: double.infinity,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[400],
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Yuk, Kenali Budaya Tenun\nIndonesia Lebih Lanjut!',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white, // Or black depending on contrast
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 80), // Space for bottom nav
+              ],
+            ),
           ),
         ),
       ),
@@ -158,6 +259,81 @@ class _HomePageState extends State<HomePage> {
             _buildNavItem('Akun Saya', false, isDark: true),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHighlightCard(String title) {
+    return Container(
+      width: 150, // Card width
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+              ),
+              alignment: Alignment.center,
+              child: const Text(
+                'foto',
+                style: TextStyle(fontSize: 10, color: Colors.grey),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        // crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+              ),
+              alignment: Alignment.center,
+              child: const Text(
+                'Foto Produk',
+                style: TextStyle(fontSize: 10, color: Colors.grey),
+              ),
+            ),
+          ),
+          // Product Info?
+        ],
       ),
     );
   }
