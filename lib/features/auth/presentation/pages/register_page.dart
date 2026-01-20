@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../data/repositories/auth_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/api_client.dart';
+// import '../../../../core/api_client.dart'; // Removed ApiClient
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -16,7 +18,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final ApiClient _apiClient = ApiClient();
+  // final ApiClient _apiClient = ApiClient(); // Removed
 
   @override
   void dispose() {
@@ -168,27 +170,43 @@ class _RegisterPageState extends State<RegisterPage> {
               ElevatedButton(
                 onPressed: () async {
                   try {
-                    final response = await _apiClient.post('/auth/register', {
-                      'fullName': _nameController.text,
-                      'phone': _phoneController.text,
-                      'email': _emailController.text,
-                      'password':
-                          _passwordController.text, // Added password field
-                      'role': _selectedRoleIndex == 0 ? 'pembeli' : 'penjual',
-                    });
+                    // Basic Validation
+                    if (_emailController.text.isEmpty ||
+                        _passwordController.text.isEmpty) {
+                      throw 'Harap isi semua kolom';
+                    }
+
+                    // Call Supabase SignUp
+                    // We instantiate AuthRepository directly for now
+                    final authRepo = AuthRepository();
+                    await authRepo.signUp(
+                      email: _emailController.text,
+                      password: _passwordController.text,
+                      fullName: _nameController.text,
+                      phone: _phoneController.text,
+                      role: _selectedRoleIndex == 0 ? 'pembeli' : 'penjual',
+                    );
 
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Registrasi Berhasil')),
+                        const SnackBar(
+                          content: Text(
+                            'Registrasi Berhasil. Silakan cek kode OTP di email Anda.',
+                          ),
+                        ),
                       );
-                      // Skip OTP as requested
-                      context.go('/home');
+                      // Navigate to OTP page with email as extra
+                      context.push('/otp', extra: _emailController.text);
                     }
                   } catch (e) {
                     if (mounted) {
+                      // Extract error message if it's a Supabase AuthException
+                      final message = e is AuthException
+                          ? e.message
+                          : e.toString();
                       ScaffoldMessenger.of(
                         context,
-                      ).showSnackBar(SnackBar(content: Text(e.toString())));
+                      ).showSnackBar(SnackBar(content: Text(message)));
                     }
                   }
                 },

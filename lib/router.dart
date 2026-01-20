@@ -16,7 +16,13 @@ final router = GoRouter(
       path: '/register',
       builder: (context, state) => const RegisterPage(),
     ),
-    GoRoute(path: '/otp', builder: (context, state) => const OtpPage()),
+    GoRoute(
+      path: '/otp',
+      builder: (context, state) {
+        final email = state.extra as String;
+        return OtpPage(email: email);
+      },
+    ),
     GoRoute(path: '/home', builder: (context, state) => const HomePage()),
     GoRoute(
       path: '/seller-home',

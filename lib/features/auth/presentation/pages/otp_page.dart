@@ -1,17 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../data/repositories/auth_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class OtpPage extends StatelessWidget {
-  const OtpPage({super.key});
+class OtpPage extends StatefulWidget {
+  final String email;
+  const OtpPage({super.key, required this.email});
+
+  @override
+  State<OtpPage> createState() => _OtpPageState();
+}
+
+class _OtpPageState extends State<OtpPage> {
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
+
+  @override
+  void dispose() {
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(
-            color: Colors.grey[700],
-            onPressed: () => context.pop(),
+          color: Colors.grey[700],
+          onPressed: () => context.pop(),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -23,7 +44,6 @@ class OtpPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 20),
-              // Back chevron is in AppBar
               // "Verifikasi OTP" Title
               Text(
                 'Verifikasi OTP',
@@ -36,7 +56,7 @@ class OtpPage extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Ketik kode verifikasi yang telah\ndikirim ke SMS nomor telepon\nAnda',
+                'Ketik kode verifikasi yang telah\ndikirim ke Email ${widget.email}',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   fontSize: 14,
@@ -44,11 +64,14 @@ class OtpPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 40),
-              
+
               // OTP Fields
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (index) => _buildOtpDigit(context)),
+                children: List.generate(
+                  6,
+                  (index) => _buildOtpDigit(context, index),
+                ),
               ),
               const SizedBox(height: 40),
 
@@ -57,7 +80,10 @@ class OtpPage extends StatelessWidget {
                 child: RichText(
                   text: TextSpan(
                     text: 'Kirim ulang OTP dalam ',
-                    style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12),
+                    style: GoogleFonts.poppins(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                    ),
                     children: [
                       TextSpan(
                         text: '59 detik',
@@ -70,12 +96,44 @@ class OtpPage extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               const Spacer(),
-              
+
               // Kirim Button
               ElevatedButton(
-                onPressed: () => context.go('/home'),
+                onPressed: () async {
+                  String otp = _controllers.map((c) => c.text).join();
+                  if (otp.length < 6) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Masukkan kode 6 digit')),
+                    );
+                    return;
+                  }
+
+                  try {
+                    final authRepo = AuthRepository();
+                    await authRepo.verifyEmailOtp(
+                      email: widget.email,
+                      token: otp,
+                    );
+
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Verifikasi Berhasil')),
+                      );
+                      context.go('/home');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      final message = e is AuthException
+                          ? e.message
+                          : e.toString();
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(message)));
+                    }
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF757575),
                   elevation: 5,
@@ -91,7 +149,7 @@ class OtpPage extends StatelessWidget {
     );
   }
 
-  Widget _buildOtpDigit(BuildContext context) {
+  Widget _buildOtpDigit(BuildContext context, int index) {
     return Container(
       width: 45,
       height: 55,
@@ -100,6 +158,7 @@ class OtpPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
+        controller: _controllers[index],
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
         maxLength: 1,
@@ -112,9 +171,11 @@ class OtpPage extends StatelessWidget {
           contentPadding: EdgeInsets.zero,
         ),
         onChanged: (value) {
-            if (value.isNotEmpty) {
-                FocusScope.of(context).nextFocus();
-            }
+          if (value.isNotEmpty && index < 5) {
+            FocusScope.of(context).nextFocus();
+          } else if (value.isEmpty && index > 0) {
+            FocusScope.of(context).previousFocus();
+          }
         },
       ),
     );

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../data/repositories/auth_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/api_client.dart';
+// import '../../../../core/api_client.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,7 +17,7 @@ class _LoginPageState extends State<LoginPage> {
   int _selectedRoleIndex = 0;
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final ApiClient _apiClient = ApiClient();
+  // final ApiClient _apiClient = ApiClient(); // Removed
 
   @override
   void dispose() {
@@ -175,11 +177,19 @@ class _LoginPageState extends State<LoginPage> {
               ElevatedButton(
                 onPressed: () async {
                   try {
-                    final response = await _apiClient.post('/auth/login', {
-                      'username': _usernameController.text,
-                      'password': _passwordController.text,
-                      'role': _selectedRoleIndex == 0 ? 'pembeli' : 'penjual',
-                    });
+                    // Basic Validation
+                    if (_usernameController.text.isEmpty ||
+                        _passwordController.text.isEmpty) {
+                      throw 'Harap isi email dan kata sandi';
+                    }
+
+                    // Call Supabase SignIn
+                    final authRepo = AuthRepository();
+                    await authRepo.signInWithPassword(
+                      email: _usernameController
+                          .text, // Assuming username is email
+                      password: _passwordController.text,
+                    );
 
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -193,9 +203,12 @@ class _LoginPageState extends State<LoginPage> {
                     }
                   } catch (e) {
                     if (mounted) {
+                      final message = e is AuthException
+                          ? e.message
+                          : e.toString();
                       ScaffoldMessenger.of(
                         context,
-                      ).showSnackBar(SnackBar(content: Text(e.toString())));
+                      ).showSnackBar(SnackBar(content: Text(message)));
                     }
                   }
                 },

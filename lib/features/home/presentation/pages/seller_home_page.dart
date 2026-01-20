@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import '../../data/repositories/seller_repository.dart';
+import '../../data/models/profile_model.dart';
+import '../../data/models/product_model.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 
 class SellerHomePage extends StatefulWidget {
   const SellerHomePage({super.key});
@@ -11,19 +15,53 @@ class SellerHomePage extends StatefulWidget {
 
 class _SellerHomePageState extends State<SellerHomePage> {
   int _currentIndex = 0;
+  final SellerRepository _sellerRepo = SellerRepository();
+  final AuthRepository _authRepo = AuthRepository();
+
+  Profile? _profile;
+  List<Product> _products = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    final user = _authRepo.currentUser;
+    if (user != null) {
+      final profile = await _sellerRepo.getProfile(user.id);
+      final products = await _sellerRepo.getSellerProducts(user.id);
+
+      if (mounted) {
+        setState(() {
+          _profile = profile;
+          _products = products;
+          _isLoading = false;
+        });
+      }
+    } else {
+      // Handle not logged in edge case?
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors
-            .transparent, // Making it blend if needed, or matches the grey
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
           'TENUNKu',
           style: GoogleFonts.poppins(
-            color: const Color(0xFF212121), // Dark text (assumed from standard)
+            color: const Color(0xFF212121),
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -31,7 +69,8 @@ class _SellerHomePageState extends State<SellerHomePage> {
           IconButton(
             icon: const Icon(Icons.settings_outlined, color: Color(0xFF757575)),
             onPressed: () {
-              // Add a settings navigation if needed
+              _authRepo.signOut();
+              context.go('/login');
             },
           ),
         ],
@@ -41,9 +80,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
           children: [
             // Profile Section
             Container(
-              color: const Color(
-                0xFFAAAAAA,
-              ), // Medium Grey background for profile
+              color: const Color(0xFFAAAAAA),
               padding: const EdgeInsets.all(24.0),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,10 +89,23 @@ class _SellerHomePageState extends State<SellerHomePage> {
                   Container(
                     width: 100,
                     height: 100,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(0xFF616161), // Darker grey for avatar
+                      color: const Color(0xFF616161),
+                      image: _profile?.avatarUrl != null
+                          ? DecorationImage(
+                              image: NetworkImage(_profile!.avatarUrl!),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
                     ),
+                    child: _profile?.avatarUrl == null
+                        ? const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 50,
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 16),
                   // Info
@@ -64,7 +114,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Nama Penenun',
+                          _profile?.fullName ?? 'Nama Penenun',
                           style: GoogleFonts.poppins(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -72,7 +122,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
                           ),
                         ),
                         Text(
-                          'Nama Toko',
+                          _profile?.shopName ?? 'Nama Toko',
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             color: Colors.black54,
@@ -80,7 +130,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+                          _profile?.description ?? 'Belum ada deskripsi.',
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             color: Colors.black45,
@@ -118,11 +168,14 @@ class _SellerHomePageState extends State<SellerHomePage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  _buildStatCard('Total Produk Terjual', '3K+'),
+                  _buildStatCard(
+                    'Total Produk Terjual',
+                    '0',
+                  ), // TODO: Real stats
                   const SizedBox(width: 12),
-                  _buildStatCard('Total Kunjungan', '20K+'),
+                  _buildStatCard('Total Kunjungan', '0'),
                   const SizedBox(width: 12),
-                  _buildStatCard('Total Ulasan', '15K+'),
+                  _buildStatCard('Total Ulasan', '0'),
                 ],
               ),
             ),
@@ -153,9 +206,24 @@ class _SellerHomePageState extends State<SellerHomePage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  _buildProductPerformanceCard('Produk A', '1,2K+', 'Rp2,7jt'),
-                  const SizedBox(height: 16),
-                  _buildProductPerformanceCard('Produk B', '1,3K+', 'Rp3,1jt'),
+                  if (_products.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Text('Belum ada produk'),
+                    )
+                  else
+                    ..._products.map(
+                      (product) => Column(
+                        children: [
+                          _buildProductPerformanceCard(
+                            product.name,
+                            '0', // Sales count placeholder
+                            'Rp${product.price.toStringAsFixed(0)}',
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    ),
                   const SizedBox(height: 100), // Bottom padding
                 ],
               ),
