@@ -185,7 +185,11 @@ class _LoginPageState extends State<LoginPage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Login Berhasil')),
                       );
-                      context.go('/home');
+                      if (_selectedRoleIndex == 1) {
+                        context.go('/seller-home');
+                      } else {
+                        context.go('/home');
+                      }
                     }
                   } catch (e) {
                     if (mounted) {
