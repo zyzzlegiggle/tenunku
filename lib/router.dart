@@ -5,6 +5,7 @@ import 'features/auth/presentation/pages/register_page.dart';
 import 'features/auth/presentation/pages/otp_page.dart';
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/home/presentation/pages/seller_home_page.dart';
+import 'features/home/presentation/pages/edit_profile_page.dart';
 
 final router = GoRouter(
   initialLocation: '/',
@@ -20,6 +21,10 @@ final router = GoRouter(
     GoRoute(
       path: '/seller-home',
       builder: (context, state) => const SellerHomePage(),
+    ),
+    GoRoute(
+      path: '/seller/edit-profile',
+      builder: (context, state) => const EditProfilePage(),
     ),
   ],
 );

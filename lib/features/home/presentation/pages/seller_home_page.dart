@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 
 class SellerHomePage extends StatefulWidget {
   const SellerHomePage({super.key});
@@ -29,7 +30,9 @@ class _SellerHomePageState extends State<SellerHomePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined, color: Color(0xFF757575)),
-            onPressed: () {},
+            onPressed: () {
+              // Add a settings navigation if needed
+            },
           ),
         ],
       ),
@@ -97,7 +100,12 @@ class _SellerHomePageState extends State<SellerHomePage> {
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  Expanded(child: _buildActionButton('Edit Profil')),
+                  Expanded(
+                    child: _buildActionButton(
+                      'Edit Profil',
+                      () => context.push('/seller/edit-profile'),
+                    ),
+                  ),
                   const SizedBox(width: 16),
                   Expanded(child: _buildActionButton('Bagikan Profil')),
                 ],
@@ -158,8 +166,16 @@ class _SellerHomePageState extends State<SellerHomePage> {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: const BoxDecoration(
-          color: Color(0xFFE0E0E0), // Light grey footer bg
-          border: Border(top: BorderSide(color: Colors.black12)),
+          color: Colors
+              .white, // Matches the lighter/white background in screenshot
+          border: Border(top: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 10,
+              offset: Offset(0, -2),
+            ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -174,20 +190,23 @@ class _SellerHomePageState extends State<SellerHomePage> {
     );
   }
 
-  Widget _buildActionButton(String label) {
-    return Container(
-      height: 48,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: const Color(0xFFE0E0E0),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.poppins(
-          fontWeight: FontWeight.w500,
-          color: Colors.black87,
+  Widget _buildActionButton(String label, [VoidCallback? onTap]) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 48,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: const Color(0xFFE0E0E0),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.black12),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
         ),
       ),
     );
@@ -329,29 +348,39 @@ class _SellerHomePageState extends State<SellerHomePage> {
 
   Widget _buildNavItem(String label, int index) {
     final bool isActive = _currentIndex == index;
+    // In the screenshot, all circles are solid grey.
+    // We'll mimic that, maybe making the active one slightly darker or just relying on text/user perception.
+    // The screenshot shows large grey circles.
+
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              color: Color(0xFF9E9E9E), // Darker grey circle for icons
-              shape: BoxShape.circle,
+      child: Container(
+        color: Colors.transparent, // Hit test target
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 55, // Slightly larger to match the dominant look
+              height: 55,
+              decoration: BoxDecoration(
+                color: const Color(0xFF9E9E9E), // Standard solid grey circle
+                shape: BoxShape.circle,
+                border: isActive
+                    ? Border.all(color: Colors.black54, width: 2)
+                    : null, // Subtle active indicator
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 10,
-              color: isActive ? Colors.black87 : Colors.black54,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 12, // Slightly larger text
+                color: Colors.black87,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
