@@ -117,10 +117,27 @@ class _OtpPageState extends State<OtpPage> {
                       token: otp,
                     );
 
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Verifikasi Berhasil')),
-                      );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Verifikasi Berhasil')),
+                    );
+
+                    // Check Role
+                    final user = Supabase.instance.client.auth.currentUser;
+                    if (user != null) {
+                      // We need to fetch the role from profiles table because auth metadata might be stale or just to be sure
+                      final data = await Supabase.instance.client
+                          .from('profiles')
+                          .select('role')
+                          .eq('id', user.id)
+                          .single();
+                      final role = data['role'] as String?;
+
+                      if (role == 'penjual') {
+                        context.go('/seller-setup');
+                      } else {
+                        context.go('/home');
+                      }
+                    } else {
                       context.go('/home');
                     }
                   } catch (e) {

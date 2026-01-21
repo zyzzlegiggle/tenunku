@@ -9,6 +9,7 @@ import 'features/home/presentation/pages/edit_profile_page.dart';
 import 'features/home/presentation/pages/settings/seller_settings_page.dart';
 import 'features/home/presentation/pages/settings/account_security_page.dart';
 import 'features/home/presentation/pages/settings/change_password_page.dart';
+import 'features/auth/presentation/pages/seller_setup_page.dart';
 
 final router = GoRouter(
   initialLocation: '/',
@@ -48,6 +49,10 @@ final router = GoRouter(
           builder: (context, state) => const ChangePasswordPage(),
         ),
       ],
+    ),
+    GoRoute(
+      path: '/seller-setup',
+      builder: (context, state) => const SellerSetupPage(),
     ),
   ],
 );
