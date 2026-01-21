@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'theme.dart';
 import 'router.dart';
 
@@ -7,8 +8,8 @@ void main() async {
 
   // TODO: Replace with your actual Supabase URL and Anon Key
   await Supabase.initialize(
-    url: 'YOUR_SUPABASE_URL',
-    anonKey: 'YOUR_SUPABASE_ANON_KEY',
+    url: 'https://eshvwuleojarvgddafqb.supabase.co',
+    anonKey: 'sb_publishable_RJfvCXDhXBV4DxdpEbRPRw_mulwt6LS',
   );
 
   runApp(const TenunkuApp());
