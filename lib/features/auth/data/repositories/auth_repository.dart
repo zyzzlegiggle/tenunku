@@ -14,16 +14,44 @@ class AuthRepository {
     required String email,
     required String password,
     required String fullName,
+    String? username,
     required String phone,
     required String role,
+    String? birthDate,
+    String? nik,
   }) async {
     // We store extra data in metadata first.
     // The Trigger in Supabase will copy this to the public.profiles table.
     return await _supabase.auth.signUp(
       email: email,
       password: password,
-      data: {'full_name': fullName, 'phone': phone, 'role': role},
+      data: {
+        'full_name': fullName,
+        'username': username,
+        'phone': phone,
+        'role': role,
+        'birth_date': birthDate,
+        'nik': nik,
+      },
     );
+  }
+
+  Future<void> updateShopDetails({
+    required String shopName,
+    required String shopAddress,
+    required String shopDescription,
+  }) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) throw 'User not logged in';
+
+    await _supabase
+        .from('profiles')
+        .update({
+          'shop_name': shopName,
+          'shop_address': shopAddress,
+          'shop_description': shopDescription,
+        })
+        .eq('id', user.id);
   }
 
   /// Sign In with Email and Password
