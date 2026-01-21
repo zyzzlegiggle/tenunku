@@ -69,8 +69,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
           IconButton(
             icon: const Icon(Icons.settings_outlined, color: Color(0xFF757575)),
             onPressed: () {
-              _authRepo.signOut();
-              context.go('/login');
+              context.push('/seller/settings');
             },
           ),
         ],

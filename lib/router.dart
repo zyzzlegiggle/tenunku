@@ -6,6 +6,9 @@ import 'features/auth/presentation/pages/otp_page.dart';
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/home/presentation/pages/seller_home_page.dart';
 import 'features/home/presentation/pages/edit_profile_page.dart';
+import 'features/home/presentation/pages/settings/seller_settings_page.dart';
+import 'features/home/presentation/pages/settings/account_security_page.dart';
+import 'features/home/presentation/pages/settings/change_password_page.dart';
 
 final router = GoRouter(
   initialLocation: '/',
@@ -31,6 +34,20 @@ final router = GoRouter(
     GoRoute(
       path: '/seller/edit-profile',
       builder: (context, state) => const EditProfilePage(),
+    ),
+    GoRoute(
+      path: '/seller/settings',
+      builder: (context, state) => const SellerSettingsPage(),
+      routes: [
+        GoRoute(
+          path: 'account-security',
+          builder: (context, state) => const AccountSecurityPage(),
+        ),
+        GoRoute(
+          path: 'change-password',
+          builder: (context, state) => const ChangePasswordPage(),
+        ),
+      ],
     ),
   ],
 );
