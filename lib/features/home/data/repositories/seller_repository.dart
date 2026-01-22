@@ -112,6 +112,24 @@ class SellerRepository {
     return (data as List).map((e) => Review.fromJson(e)).toList();
   }
 
+  /// Get review for a specific order (for Diterima tab display)
+  Future<Review?> getOrderReview(String orderId) async {
+    try {
+      final data = await _supabase
+          .from('reviews')
+          .select('*, profiles(full_name, avatar_url)')
+          .eq('order_id', orderId)
+          .maybeSingle();
+
+      if (data != null) {
+        return Review.fromJson(data);
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<void> updateProduct(Product product) async {
     final updates = product.toJson();
     updates.remove('id');

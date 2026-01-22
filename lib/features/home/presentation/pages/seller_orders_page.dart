@@ -21,7 +21,16 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
   List<OrderModel> _orders = [];
   bool _isLoading = true;
 
-  // Mock counts for now, eventually could be fetched from DB
+  // Filter for Diterima tab: Terbaru, Terlama, Dengan Foto, Harga Tertinggi
+  String _selectedFilter = 'Terbaru';
+  final List<String> _filters = [
+    'Terbaru',
+    'Terlama',
+    'Dengan Foto',
+    'Harga Tertinggi',
+  ];
+
+  // Counts for order tabs
   int _incomingCount = 0;
   int _shippingCount = 0;
   int _completedCount = 0;
@@ -151,10 +160,70 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
           ),
         ),
 
+        // Filter buttons row - only for Diterima tab
+        if (_selectedStatus == 'completed')
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: Colors.white,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _filters.map((filter) {
+                  final isSelected = _selectedFilter == filter;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() => _selectedFilter = filter);
+                        _fetchOrders();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFF757575)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: const Color(0xFF757575),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          filter,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: isSelected
+                                ? Colors.white
+                                : const Color(0xFF757575),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+
         // Orders List
         Expanded(
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
+              : _orders.isEmpty
+              ? Center(
+                  child: Text(
+                    'Tidak ada pesanan',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                )
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -162,6 +231,10 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
                   ),
                   itemCount: _orders.length,
                   itemBuilder: (context, index) {
+                    // Use different card for Diterima tab
+                    if (_selectedStatus == 'completed') {
+                      return _buildDiterimaOrderCard(_orders[index]);
+                    }
                     return _buildOrderCard(_orders[index]);
                   },
                 ),
@@ -307,6 +380,108 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
     );
   }
 
+  /// Build card for Diterima (completed) orders - shows product images, buyer name, rating, review
+  Widget _buildDiterimaOrderCard(OrderModel order) {
+    // Format timestamp
+    final timeStr = DateFormat('HH:mm').format(order.createdAt.toLocal());
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFBDBDBD), // Grey background
+        borderRadius: BorderRadius.circular(20),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Product images row (grey circles as placeholders) - tappable to show photo modal
+          Row(
+            children: [
+              // Multiple product image circles
+              for (int i = 0; i < 4; i++) ...[
+                GestureDetector(
+                  onTap: () => _showPhotoModal(order, i),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF757575),
+                      shape: BoxShape.circle,
+                    ),
+                    child: order.productImageUrl != null && i == 0
+                        ? ClipOval(
+                            child: Image.network(
+                              order.productImageUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const SizedBox(),
+                            ),
+                          )
+                        : null,
+                  ),
+                ),
+                if (i < 3) const SizedBox(width: 8),
+              ],
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Buyer name and rating row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Buyer name
+              Expanded(
+                child: Text(
+                  order.buyerName ?? 'Nama Pembeli',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              // Star rating (5 stars default for completed orders)
+              Row(
+                children: List.generate(5, (index) {
+                  return Icon(Icons.star, size: 14, color: Colors.black54);
+                }),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 4),
+
+          // Review text and timestamp row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Review/description text
+              Expanded(
+                child: Text(
+                  'Lorem ipsum dolor sit amet, consectetur',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: Colors.black54,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Timestamp
+              Text(
+                timeStr,
+                style: GoogleFonts.poppins(fontSize: 11, color: Colors.black54),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildActionButton(
     String label, {
     required VoidCallback onTap,
@@ -357,6 +532,24 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Show photo modal for viewing product/review images
+  void _showPhotoModal(OrderModel order, int initialIndex) {
+    // Collect available images (product image + any review images)
+    final List<String?> images = [
+      order.productImageUrl,
+      null, // Placeholder for additional images
+      null,
+      null,
+    ];
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.7),
+      builder: (context) =>
+          _PhotoModal(images: images, initialIndex: initialIndex),
     );
   }
 
@@ -705,6 +898,121 @@ class _RejectionDialogState extends State<_RejectionDialog> {
             ),
             const SizedBox(width: 12),
             Text(reason, style: GoogleFonts.poppins(color: Colors.white)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Photo modal for viewing product/review images in fullscreen
+class _PhotoModal extends StatefulWidget {
+  final List<String?> images;
+  final int initialIndex;
+
+  const _PhotoModal({required this.images, required this.initialIndex});
+
+  @override
+  State<_PhotoModal> createState() => _PhotoModalState();
+}
+
+class _PhotoModalState extends State<_PhotoModal> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.pop(context),
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 80),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Photo container
+            Container(
+              height: 280,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() => _currentIndex = index);
+                },
+                itemCount: widget.images.length,
+                itemBuilder: (context, index) {
+                  final imageUrl = widget.images[index];
+                  return Center(
+                    child: imageUrl != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.image_outlined,
+                                size: 60,
+                                color: Colors.grey[400],
+                              ),
+                            ),
+                          )
+                        : Icon(
+                            Icons.image_outlined,
+                            size: 60,
+                            color: Colors.grey[400],
+                          ),
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Pagination dots
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(widget.images.length, (index) {
+                final isActive = index == _currentIndex;
+                return Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isActive ? Colors.white : Colors.grey[600],
+                  ),
+                );
+              }),
+            ),
+
+            const SizedBox(height: 24),
+
+            // "Sentuh Untuk Kembali" text
+            Text(
+              'Sentuh Untuk Kembali',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.white,
+                decoration: TextDecoration.underline,
+                decorationColor: Colors.white,
+              ),
+            ),
           ],
         ),
       ),

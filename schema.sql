@@ -61,8 +61,10 @@ create table public.reviews (
   id uuid default gen_random_uuid() primary key,
   product_id uuid references public.products(id) not null,
   user_id uuid references public.profiles(id) not null,
+  order_id uuid references public.orders(id),  -- Link review to specific order
   rating int check (rating >= 1 and rating <= 5),
   comment text,
+  image_url text,  -- Photo review support for "Dengan Foto" filter
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
