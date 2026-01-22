@@ -9,6 +9,10 @@ import 'features/home/presentation/pages/edit_profile_page.dart';
 import 'features/home/presentation/pages/settings/seller_settings_page.dart';
 import 'features/home/presentation/pages/settings/account_security_page.dart';
 import 'features/home/presentation/pages/settings/change_password_page.dart';
+import 'features/home/presentation/pages/settings/my_address_page.dart';
+import 'features/home/presentation/pages/settings/help_center_page.dart';
+import 'features/home/presentation/pages/settings/help_answer_page.dart';
+import 'features/home/presentation/pages/settings/notifications_page.dart';
 import 'features/auth/presentation/pages/seller_setup_page.dart';
 
 final router = GoRouter(
@@ -47,6 +51,24 @@ final router = GoRouter(
         GoRoute(
           path: 'change-password',
           builder: (context, state) => const ChangePasswordPage(),
+        ),
+        GoRoute(
+          path: 'address',
+          builder: (context, state) => const MyAddressPage(),
+        ),
+        GoRoute(
+          path: 'help-center',
+          builder: (context, state) => const HelpCenterPage(),
+          routes: [
+            GoRoute(
+              path: 'answer',
+              builder: (context, state) => const HelpAnswerPage(),
+            ),
+          ],
+        ),
+        GoRoute(
+          path: 'notifications',
+          builder: (context, state) => const NotificationsPage(),
         ),
       ],
     ),

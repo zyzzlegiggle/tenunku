@@ -42,13 +42,22 @@ class SellerSettingsPage extends StatelessWidget {
                 context,
                 'Alamat Saya',
                 trailingText: 'Atur Sekarang',
+                onTap: () => context.push('/seller/settings/address'),
               ),
             ]),
             const SizedBox(height: 16),
             _buildSection([
-              _buildMenuItem(context, 'Pusat Bantuan'),
+              _buildMenuItem(
+                context,
+                'Pusat Bantuan',
+                onTap: () => context.push('/seller/settings/help-center'),
+              ),
               const Divider(height: 1),
-              _buildMenuItem(context, 'Pengaturan Notifikasi'),
+              _buildMenuItem(
+                context,
+                'Pengaturan Notifikasi',
+                onTap: () => context.push('/seller/settings/notifications'),
+              ),
             ]),
             const SizedBox(height: 16),
             _buildSection([
