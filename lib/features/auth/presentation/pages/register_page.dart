@@ -117,15 +117,31 @@ class _RegisterPageState extends State<RegisterPage> {
         nik: _selectedRoleIndex == 1 ? _nikController.text : null,
       );
 
+      // Auto-login to establish session
+      await authRepo.signInWithPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Registrasi Berhasil. Silakan cek kode OTP di email Anda.',
+              'Registrasi Berhasil. Silakan masuk dengan akun Anda.',
             ),
           ),
         );
-        context.push('/otp', extra: _emailController.text);
+        // OTP temporarily disabled
+        // context.push('/otp', extra: _emailController.text);
+
+        // Logic routing based on role
+        if (_selectedRoleIndex == 1) {
+          // Penjual -> Step 3
+          context.go('/seller-setup');
+        } else {
+          // Pembeli -> Login
+          context.go('/login');
+        }
       }
     } catch (e) {
       if (mounted) {
