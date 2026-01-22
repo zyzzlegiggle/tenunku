@@ -2,9 +2,42 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/profile_model.dart';
 import '../models/product_model.dart';
 import '../models/review_model.dart';
+import '../models/order_model.dart';
 
 class SellerRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
+
+  // ignore: unused_element
+  Future<List<OrderModel>> getSellerOrders(
+    String sellerId, {
+    String? status,
+  }) async {
+    var query = _supabase
+        .from('orders')
+        .select('*, profiles:buyer_id(*), products:product_id(*)')
+        .eq('seller_id', sellerId);
+
+    if (status != null) {
+      query = query.eq('status', status);
+    }
+
+    final data = await query.order('created_at', ascending: false);
+
+    return (data as List).map((e) => OrderModel.fromJson(e)).toList();
+  }
+
+  Future<void> updateOrderStatus(
+    String orderId,
+    String newStatus, {
+    String? rejectionReason,
+  }) async {
+    final updates = {'status': newStatus};
+    if (rejectionReason != null) {
+      updates['rejection_reason'] = rejectionReason;
+    }
+
+    await _supabase.from('orders').update(updates).eq('id', orderId);
+  }
 
   Future<Profile?> getProfile(String userId) async {
     try {

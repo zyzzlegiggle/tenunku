@@ -5,6 +5,7 @@ import '../../data/repositories/seller_repository.dart';
 import '../../data/models/profile_model.dart';
 import '../../data/models/product_model.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
+import 'seller_orders_page.dart';
 
 class SellerHomePage extends StatefulWidget {
   const SellerHomePage({super.key});
@@ -118,7 +119,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
       case 1:
         return _buildProductView();
       case 2:
-        return const Center(child: Text('Pesanan UI Coming Soon'));
+        return const SellerOrdersPage();
       case 3:
         return const Center(child: Text('Obrolan UI Coming Soon'));
       default:

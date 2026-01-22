@@ -98,6 +98,36 @@ create policy "Sellers can delete their own products."
   on products for delete
   using ( auth.uid() = seller_id );
 
+-- Create orders table
+create table public.orders (
+  id uuid default gen_random_uuid() primary key,
+  buyer_id uuid references public.profiles(id) not null,
+  seller_id uuid references public.profiles(id) not null,
+  product_id uuid references public.products(id) not null,
+  quantity int default 1 not null,
+  total_price numeric not null,
+  status text default 'pending' not null, -- pending (Masuk), shipping (Dikirim), completed (Diterima), cancelled (Ditolak)
+  rejection_reason text, -- Reason for cancellation
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+-- Enable RLS on orders
+alter table public.orders enable row level security;
+
+-- Create orders policies
+create policy "Users can view their own orders (as buyer or seller)."
+  on orders for select
+  using ( auth.uid() = buyer_id or auth.uid() = seller_id );
+
+create policy "Buyers can create orders."
+  on orders for insert
+  with check ( auth.uid() = buyer_id );
+
+create policy "Sellers can update orders assigned to them."
+  on orders for update
+  using ( auth.uid() = seller_id );
+
 -- Trigger to create profile on signup
 create or replace function public.handle_new_user()
 returns trigger
