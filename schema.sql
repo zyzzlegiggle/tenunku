@@ -107,7 +107,6 @@ create table public.orders (
   quantity int default 1 not null,
   total_price numeric not null,
   status text default 'pending' not null, -- pending (Masuk), shipping (Dikirim), completed (Diterima), cancelled (Ditolak)
-  rejection_reason text, -- Reason for cancellation
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now())
 );

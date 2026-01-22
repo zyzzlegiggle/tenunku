@@ -26,17 +26,11 @@ class SellerRepository {
     return (data as List).map((e) => OrderModel.fromJson(e)).toList();
   }
 
-  Future<void> updateOrderStatus(
-    String orderId,
-    String newStatus, {
-    String? rejectionReason,
-  }) async {
-    final updates = {'status': newStatus};
-    if (rejectionReason != null) {
-      updates['rejection_reason'] = rejectionReason;
-    }
-
-    await _supabase.from('orders').update(updates).eq('id', orderId);
+  Future<void> updateOrderStatus(String orderId, String newStatus) async {
+    await _supabase
+        .from('orders')
+        .update({'status': newStatus})
+        .eq('id', orderId);
   }
 
   Future<Profile?> getProfile(String userId) async {
