@@ -72,8 +72,16 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
     }
   }
 
-  Future<void> _updateStatus(String orderId, String newStatus) async {
-    await _sellerRepo.updateOrderStatus(orderId, newStatus);
+  Future<void> _updateStatus(
+    String orderId,
+    String newStatus, {
+    String? rejectionReason,
+  }) async {
+    await _sellerRepo.updateOrderStatus(
+      orderId,
+      newStatus,
+      rejectionReason: rejectionReason,
+    );
     _fetchOrders(); // Refresh
   }
 
@@ -312,6 +320,158 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showRejectionDialog(String orderId) {
+    showDialog(
+      context: context,
+      builder: (context) => _RejectionDialog(
+        onSaved: (reason) {
+          _updateStatus(orderId, 'cancelled', rejectionReason: reason);
+        },
+      ),
+    );
+  }
+}
+
+class _RejectionDialog extends StatefulWidget {
+  final Function(String) onSaved;
+
+  const _RejectionDialog({required this.onSaved});
+
+  @override
+  State<_RejectionDialog> createState() => _RejectionDialogState();
+}
+
+class _RejectionDialogState extends State<_RejectionDialog> {
+  String _selectedReason = '';
+
+  final List<String> _reasons = [
+    'Stok Habis',
+    'Stok tidak akurat/selisih stok',
+    'Produk Rusak/Cacat',
+    'Terjadi Kesalahan Listing',
+    'Kendala Operasional',
+    'Lainnya',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: const Color(0xFF616161),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pilih Alasan Penolakan',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            // Mock items to match screenshot layout if needed, but simple text for now
+            // Screenshot shows "Nama Pembeli", "Nama Barang", "2 helai" behind the modal?
+            // Or inside? Ah, the modal is just the grey box.
+            const SizedBox(height: 16),
+            ..._reasons.map((reason) => _buildRadioOption(reason)),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(25),
+                        border: Border.all(color: Colors.white),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'batal',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      if (_selectedReason.isNotEmpty) {
+                        widget.onSaved(_selectedReason);
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0E0E0),
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Simpan',
+                        style: GoogleFonts.poppins(
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRadioOption(String reason) {
+    final isSelected = _selectedReason == reason;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedReason = reason),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+                color: isSelected ? Colors.white : Colors.transparent,
+              ),
+              child: isSelected
+                  ? Center(
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF616161),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Text(reason, style: GoogleFonts.poppins(color: Colors.white)),
+          ],
         ),
       ),
     );

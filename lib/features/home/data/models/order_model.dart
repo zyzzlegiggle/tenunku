@@ -6,6 +6,7 @@ class OrderModel {
   final int quantity;
   final double totalPrice;
   final String status;
+  final String? rejectionReason;
   final DateTime createdAt;
 
   // Joins (optional, might need to be fetched separately or via Supabase join)
@@ -21,6 +22,7 @@ class OrderModel {
     required this.quantity,
     required this.totalPrice,
     required this.status,
+    this.rejectionReason,
     required this.createdAt,
     this.buyerName,
     this.productName,
@@ -36,6 +38,7 @@ class OrderModel {
       quantity: json['quantity'] ?? 1,
       totalPrice: (json['total_price'] as num).toDouble(),
       status: json['status'] ?? 'pending',
+      rejectionReason: json['rejection_reason'],
       createdAt: DateTime.parse(json['created_at']),
       buyerName: json['profiles'] != null
           ? json['profiles']['full_name']
@@ -56,6 +59,7 @@ class OrderModel {
       'quantity': quantity,
       'total_price': totalPrice,
       'status': status,
+      'rejection_reason': rejectionReason,
       'created_at': createdAt.toIso8601String(),
     };
   }
