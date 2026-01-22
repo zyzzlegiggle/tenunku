@@ -88,8 +88,13 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
   Future<void> _submitTrackingNumber(
     String orderId,
     String trackingNumber,
+    String? shippingEvidenceUrl,
   ) async {
-    await _sellerRepo.updateOrderTrackingNumber(orderId, trackingNumber);
+    await _sellerRepo.updateOrderTrackingNumber(
+      orderId,
+      trackingNumber,
+      shippingEvidenceUrl: shippingEvidenceUrl,
+    );
     // After adding tracking number, we might want to keep it in 'shipping' or move to another state?
     // Usually adding resi means it is definitely shipped.
     // Ensure status is shipping.
@@ -291,7 +296,7 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
                 _buildActionButton(
                   'Masukan Resi',
                   onTap: () {
-                    _showTrackingDialog(order.id);
+                    _showTrackingDialog(order);
                   },
                   isPrimary: false,
                 ),
@@ -366,12 +371,13 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
     );
   }
 
-  void _showTrackingDialog(String orderId) {
+  void _showTrackingDialog(OrderModel order) {
     showDialog(
       context: context,
       builder: (context) => _TrackingNumberDialog(
-        onSaved: (trackingNumber) {
-          _submitTrackingNumber(orderId, trackingNumber);
+        order: order,
+        onSaved: (trackingNumber, evidenceUrl) {
+          _submitTrackingNumber(order.id, trackingNumber, evidenceUrl);
         },
       ),
     );
@@ -379,9 +385,10 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
 }
 
 class _TrackingNumberDialog extends StatefulWidget {
-  final Function(String) onSaved;
+  final OrderModel order;
+  final Function(String, String?) onSaved;
 
-  const _TrackingNumberDialog({required this.onSaved});
+  const _TrackingNumberDialog({required this.order, required this.onSaved});
 
   @override
   State<_TrackingNumberDialog> createState() => _TrackingNumberDialogState();
@@ -389,6 +396,8 @@ class _TrackingNumberDialog extends StatefulWidget {
 
 class _TrackingNumberDialogState extends State<_TrackingNumberDialog> {
   final TextEditingController _controller = TextEditingController();
+  // ignore: unused_field
+  String? _evidenceUrl; // Placeholder for now
 
   @override
   void dispose() {
@@ -400,37 +409,107 @@ class _TrackingNumberDialogState extends State<_TrackingNumberDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      backgroundColor: const Color(0xFF616161),
+      backgroundColor: const Color(
+        0xFFC4C4C4,
+      ), // Lighter grey background match screenshot
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header Info
             Text(
-              'Masukkan Resi',
+              widget.order.buyerName ?? 'Nama Pembeli',
               style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Colors.black87,
               ),
             ),
+            Text(
+              widget.order.productName ?? 'Nama barang yang dibeli',
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${widget.order.quantity} helai',
+              style: GoogleFonts.poppins(fontSize: 16, color: Colors.black87),
+            ),
+
             const SizedBox(height: 16),
+
+            // Masukan Resi Input
+            Text(
+              'Masukan Resi',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 4),
             TextField(
               controller: _controller,
-              style: GoogleFonts.poppins(color: Colors.white),
+              style: GoogleFonts.poppins(color: Colors.black87),
               decoration: InputDecoration(
+                filled: true,
+                fillColor: const Color(0xFFE0E0E0),
                 hintText: 'Nomor Resi',
-                hintStyle: GoogleFonts.poppins(color: Colors.white54),
-                enabledBorder: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
+                hintStyle: GoogleFonts.poppins(color: Colors.black38),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
-                focusedBorder: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white, width: 2),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20), // Rounded pill shape
+                  borderSide: BorderSide.none,
                 ),
               ),
             ),
+
+            const SizedBox(height: 12),
+
+            // Masukan Foto Bukti Pengiriman
+            Text(
+              'Masukan Foto Bukti Pengiriman',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 4),
+            GestureDetector(
+              onTap: () {
+                // TODO: Implement image picker
+                // For now just show a snackbar or print
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Fitur upload foto belum tersedia'),
+                  ),
+                );
+              },
+              child: Container(
+                height: 100,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0E0E0),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.image_outlined,
+                    size: 40,
+                    color: Colors.black45,
+                  ),
+                ),
+              ),
+            ),
+
             const SizedBox(height: 24),
+
+            // Buttons
             Row(
               children: [
                 Expanded(
@@ -441,14 +520,14 @@ class _TrackingNumberDialogState extends State<_TrackingNumberDialog> {
                       decoration: BoxDecoration(
                         color: Colors.transparent,
                         borderRadius: BorderRadius.circular(25),
-                        border: Border.all(color: Colors.white),
+                        border: Border.all(color: Colors.white, width: 2),
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        'Batal',
+                        'batal',
                         style: GoogleFonts.poppins(
                           color: Colors.white,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -459,7 +538,10 @@ class _TrackingNumberDialogState extends State<_TrackingNumberDialog> {
                   child: GestureDetector(
                     onTap: () {
                       if (_controller.text.isNotEmpty) {
-                        widget.onSaved(_controller.text);
+                        widget.onSaved(
+                          _controller.text,
+                          null, // TODO: Pass actual image URL
+                        );
                         Navigator.pop(context);
                       }
                     },
@@ -474,7 +556,7 @@ class _TrackingNumberDialogState extends State<_TrackingNumberDialog> {
                         'Simpan',
                         style: GoogleFonts.poppins(
                           color: Colors.black87,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),

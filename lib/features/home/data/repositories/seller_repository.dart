@@ -41,12 +41,20 @@ class SellerRepository {
 
   Future<void> updateOrderTrackingNumber(
     String orderId,
-    String trackingNumber,
-  ) async {
-    await _supabase
-        .from('orders')
-        .update({'tracking_number': trackingNumber})
-        .eq('id', orderId);
+    String trackingNumber, {
+    String? shippingEvidenceUrl,
+  }) async {
+    final updates = {
+      'tracking_number': trackingNumber,
+      // If we have an evidence URL, update it. If not, maybe keep it as is or null.
+      // For now let's only update if provided or allow null if we want to clear it?
+      // Simple approach: if passed, update it.
+    };
+    if (shippingEvidenceUrl != null) {
+      updates['shipping_evidence_url'] = shippingEvidenceUrl;
+    }
+
+    await _supabase.from('orders').update(updates).eq('id', orderId);
   }
 
   Future<Profile?> getProfile(String userId) async {

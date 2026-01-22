@@ -8,6 +8,7 @@ class OrderModel {
   final String status;
   final String? rejectionReason;
   final String? trackingNumber;
+  final String? shippingEvidenceUrl;
   final DateTime createdAt;
 
   // Joins (optional, might need to be fetched separately or via Supabase join)
@@ -25,6 +26,7 @@ class OrderModel {
     required this.status,
     this.rejectionReason,
     this.trackingNumber,
+    this.shippingEvidenceUrl,
     required this.createdAt,
     this.buyerName,
     this.productName,
@@ -42,6 +44,7 @@ class OrderModel {
       status: json['status'] ?? 'pending',
       rejectionReason: json['rejection_reason'],
       trackingNumber: json['tracking_number'],
+      shippingEvidenceUrl: json['shipping_evidence_url'],
       createdAt: DateTime.parse(json['created_at']),
       buyerName: json['profiles'] != null
           ? json['profiles']['full_name']
@@ -64,6 +67,7 @@ class OrderModel {
       'status': status,
       'rejection_reason': rejectionReason,
       'tracking_number': trackingNumber,
+      'shipping_evidence_url': shippingEvidenceUrl,
       'created_at': createdAt.toIso8601String(),
     };
   }
