@@ -54,7 +54,51 @@ class AuthRepository {
         .eq('id', user.id);
   }
 
-  /// Sign In with Email and Password
+  /// Helper to get email by identity (username or shopName)
+  Future<String> _getEmailByIdentity({
+    String? username,
+    String? shopName,
+  }) async {
+    // Call the RPC function we defined in Supabase
+    final response = await _supabase.rpc(
+      'get_email_by_identity',
+      params: {'p_username': username, 'p_shop_name': shopName},
+    );
+
+    if (response == null) {
+      throw 'User not found';
+    }
+    return response as String;
+  }
+
+  /// Sign In with Username (for Pembeli)
+  Future<AuthResponse> signInWithUsername({
+    required String username,
+    required String password,
+  }) async {
+    final email = await _getEmailByIdentity(username: username);
+    return await signInWithPassword(email: email, password: password);
+  }
+
+  /// Sign In with Shop Name (for Penjual)
+  /// Note: The UI asks for "Nama Lengkap" (Full Name) and "Nama Toko".
+  /// For login, "Nama Toko" is the unique identifier we rely on.
+  /// "Nama Lengkap" acts as a verification field or just extra confirmation.
+  Future<AuthResponse> signInSeller({
+    required String shopName,
+    required String
+    fullName, // Included for flow consistency, could verify against profile if needed
+    required String password,
+  }) async {
+    final email = await _getEmailByIdentity(shopName: shopName);
+
+    // Optional: Verify full name matches if needed, but for now we just rely on password auth.
+    // If strict verification is needed, we'd need to fetch the profile after login.
+
+    return await signInWithPassword(email: email, password: password);
+  }
+
+  /// Sign In with Email and Password (Low-level)
   Future<AuthResponse> signInWithPassword({
     required String email,
     required String password,

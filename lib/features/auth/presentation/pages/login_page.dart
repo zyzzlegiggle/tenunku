@@ -17,12 +17,17 @@ class _LoginPageState extends State<LoginPage> {
   int _selectedRoleIndex = 0;
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _shopNameController =
+      TextEditingController(); // Added for Seller Login
   // final ApiClient _apiClient = ApiClient(); // Removed
 
   @override
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
+    _fullNameController.dispose();
+    _shopNameController.dispose();
     super.dispose();
   }
 
@@ -125,41 +130,36 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 30),
-              // Username Field
-              Text(
-                'Username',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
+              // Fields based on role
+              if (_selectedRoleIndex == 0) ...[
+                // Pembeli: Username & Password
+                _buildLabel('Username'),
+                const SizedBox(height: 8),
+                _buildTextField('Masukkan Username', _usernameController),
+                const SizedBox(height: 20),
+              ] else ...[
+                // Penjual: Nama Lengkap & Nama Toko
+                _buildLabel('Nama Lengkap'),
+                const SizedBox(height: 8),
+                _buildTextField('Masukkan Nama Lengkap', _fullNameController),
+                const SizedBox(height: 20),
+
+                _buildLabel('Nama Toko'),
+                const SizedBox(height: 8),
+                _buildTextField('Masukkan Nama Toko', _shopNameController),
+                const SizedBox(height: 20),
+              ],
+
+              // Password Field (Common)
+              _buildLabel('Kata Sandi'),
               const SizedBox(height: 8),
-              TextField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  hintText: 'Masukkan Nama Lengkap',
-                  hintStyle: TextStyle(color: Colors.grey[300]),
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Password Field
-              Text(
-                'Kata Sandi',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  hintText: 'Masukkan Kata Sandi',
-                  hintStyle: TextStyle(color: Colors.grey[300]),
-                ),
+              _buildTextField(
+                'Masukkan Kata Sandi',
+                _passwordController,
+                isObscure: true,
               ),
               const SizedBox(height: 10),
+
               // Forgot Password
               Align(
                 alignment: Alignment.centerRight,
@@ -177,19 +177,32 @@ class _LoginPageState extends State<LoginPage> {
               ElevatedButton(
                 onPressed: () async {
                   try {
-                    // Basic Validation
-                    if (_usernameController.text.isEmpty ||
-                        _passwordController.text.isEmpty) {
-                      throw 'Harap isi email dan kata sandi';
-                    }
-
-                    // Call Supabase SignIn
                     final authRepo = AuthRepository();
-                    await authRepo.signInWithPassword(
-                      email: _usernameController
-                          .text, // Assuming username is email
-                      password: _passwordController.text,
-                    );
+                    if (_selectedRoleIndex == 0) {
+                      // Login Pembeli
+                      if (_usernameController.text.isEmpty ||
+                          _passwordController.text.isEmpty) {
+                        throw 'Harap isi username dan kata sandi';
+                      }
+
+                      await authRepo.signInWithUsername(
+                        username: _usernameController.text,
+                        password: _passwordController.text,
+                      );
+                    } else {
+                      // Login Penjual
+                      if (_fullNameController.text.isEmpty ||
+                          _shopNameController.text.isEmpty ||
+                          _passwordController.text.isEmpty) {
+                        throw 'Harap isi semua kolom';
+                      }
+
+                      await authRepo.signInSeller(
+                        fullName: _fullNameController.text,
+                        shopName: _shopNameController.text,
+                        password: _passwordController.text,
+                      );
+                    }
 
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -248,6 +261,44 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 20),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
+    );
+  }
+
+  Widget _buildTextField(
+    String hint,
+    TextEditingController controller, {
+    bool isObscure = false,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: isObscure,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey[300]),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.grey),
         ),
       ),
     );

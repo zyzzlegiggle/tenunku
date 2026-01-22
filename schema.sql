@@ -100,3 +100,39 @@ $$;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- Make shop_name unique to allow login by shop name
+alter table public.profiles add constraint profiles_shop_name_key unique (shop_name);
+
+-- Function to get email by identity (username or shop_name)
+-- SECURITY DEFINER allows this function to access tables even if RLS would normally block it
+-- But here we are just querying public.profiles which is effectively public, 
+-- however we need to join with auth.users to get the email, which IS restricted.
+-- So we definitely need SECURITY DEFINER to read auth.users.email.
+create or replace function public.get_email_by_identity(
+  p_username text default null, 
+  p_shop_name text default null
+)
+returns text
+language plpgsql
+security definer
+set search_path = public, auth 
+as $$
+declare
+  v_email text;
+begin
+  if p_username is not null then
+    select u.email into v_email
+    from auth.users u
+    join public.profiles p on p.id = u.id
+    where p.username = p_username;
+  elsif p_shop_name is not null then
+    select u.email into v_email
+    from auth.users u
+    join public.profiles p on p.id = u.id
+    where p.shop_name = p_shop_name;
+  end if;
+  
+  return v_email;
+end;
+$$;
