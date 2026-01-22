@@ -7,6 +7,7 @@ class OrderModel {
   final double totalPrice;
   final String status;
   final String? rejectionReason;
+  final String? trackingNumber;
   final DateTime createdAt;
 
   // Joins (optional, might need to be fetched separately or via Supabase join)
@@ -23,6 +24,7 @@ class OrderModel {
     required this.totalPrice,
     required this.status,
     this.rejectionReason,
+    this.trackingNumber,
     required this.createdAt,
     this.buyerName,
     this.productName,
@@ -39,6 +41,7 @@ class OrderModel {
       totalPrice: (json['total_price'] as num).toDouble(),
       status: json['status'] ?? 'pending',
       rejectionReason: json['rejection_reason'],
+      trackingNumber: json['tracking_number'],
       createdAt: DateTime.parse(json['created_at']),
       buyerName: json['profiles'] != null
           ? json['profiles']['full_name']
@@ -60,6 +63,7 @@ class OrderModel {
       'total_price': totalPrice,
       'status': status,
       'rejection_reason': rejectionReason,
+      'tracking_number': trackingNumber,
       'created_at': createdAt.toIso8601String(),
     };
   }

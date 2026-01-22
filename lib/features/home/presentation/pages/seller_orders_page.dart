@@ -85,6 +85,18 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
     _fetchOrders(); // Refresh
   }
 
+  Future<void> _submitTrackingNumber(
+    String orderId,
+    String trackingNumber,
+  ) async {
+    await _sellerRepo.updateOrderTrackingNumber(orderId, trackingNumber);
+    // After adding tracking number, we might want to keep it in 'shipping' or move to another state?
+    // Usually adding resi means it is definitely shipped.
+    // Ensure status is shipping.
+    // If it's already shipping, just update resi.
+    _fetchOrders();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -255,7 +267,7 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
                 style: GoogleFonts.poppins(fontSize: 16, color: Colors.black87),
               ),
 
-              if (_selectedStatus == 'pending') ...[
+              if (_selectedStatus == 'pending')
                 Row(
                   children: [
                     _buildActionButton(
@@ -274,15 +286,15 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
                       isPrimary: true,
                     ),
                   ],
+                )
+              else if (_selectedStatus == 'shipping')
+                _buildActionButton(
+                  'Masukan Resi',
+                  onTap: () {
+                    _showTrackingDialog(order.id);
+                  },
+                  isPrimary: false,
                 ),
-              ] else ...[
-                // If not pending, maybe show status or nothing?
-                // Design only shows buttons on the cards in the screenshot.
-                // Assuming the screenshot is of the "Pesanan Masuk" list where buttons are relevant.
-                // For "Shipped" or "Received", maybe just status text?
-                // I'll leave buttons hidden for other states for now, or maybe "Detail"?
-                // Let's implement basics.
-              ],
             ],
           ),
         ],
@@ -295,30 +307,48 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
     required VoidCallback onTap,
     required bool isPrimary,
   }) {
-    // Accept = Dark Grey/Black, Reject = Outlined/White?
-    // Screenshot: "Tolak" -> White Outline, White Text? No, background is grey.
-    // "Tolak": Outline button, White border, White text? Or transparent bg?
-    // "Terima": Dark button.
+    // "Masukan Resi" style check
+    final isResiButton = label == 'Masukan Resi';
 
-    // Looking closely at screenshot:
-    // "Tolak": Transparent fill, White Border, White Text.
-    // "Terima": Dark Grey fill (almost black), White Text.
+    // Colors
+    // Primary (Terima): Dark Grey/Black fill (#616161), White Text
+    // Secondary (Tolak): Transparent fill, White Border, White Text
+    // Resi Button: Light Grey/White fill (#E0E0E0 or similar), Black Text
+
+    Color bgColor;
+    Color textColor;
+    Border? border;
+
+    if (isResiButton) {
+      bgColor = const Color(0xFFE0E0E0).withOpacity(0.8); // Light greyish
+      textColor = Colors.black87;
+      border = null;
+    } else if (isPrimary) {
+      bgColor = const Color(0xFF616161);
+      textColor = Colors.white;
+      border = null;
+    } else {
+      bgColor = Colors.transparent;
+      textColor = Colors.white;
+      border = Border.all(color: Colors.white, width: 2);
+    }
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
         decoration: BoxDecoration(
-          color: isPrimary ? const Color(0xFF616161) : Colors.transparent,
+          color: bgColor,
           borderRadius: BorderRadius.circular(20),
-          border: isPrimary ? null : Border.all(color: Colors.white, width: 2),
+          border: border,
         ),
+        alignment: Alignment.center,
         child: Text(
           label,
           style: GoogleFonts.poppins(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: textColor,
           ),
         ),
       ),
@@ -332,6 +362,128 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
         onSaved: (reason) {
           _updateStatus(orderId, 'cancelled', rejectionReason: reason);
         },
+      ),
+    );
+  }
+
+  void _showTrackingDialog(String orderId) {
+    showDialog(
+      context: context,
+      builder: (context) => _TrackingNumberDialog(
+        onSaved: (trackingNumber) {
+          _submitTrackingNumber(orderId, trackingNumber);
+        },
+      ),
+    );
+  }
+}
+
+class _TrackingNumberDialog extends StatefulWidget {
+  final Function(String) onSaved;
+
+  const _TrackingNumberDialog({required this.onSaved});
+
+  @override
+  State<_TrackingNumberDialog> createState() => _TrackingNumberDialogState();
+}
+
+class _TrackingNumberDialogState extends State<_TrackingNumberDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: const Color(0xFF616161),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Masukkan Resi',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _controller,
+              style: GoogleFonts.poppins(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: 'Nomor Resi',
+                hintStyle: GoogleFonts.poppins(color: Colors.white54),
+                enabledBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+                focusedBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white, width: 2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(25),
+                        border: Border.all(color: Colors.white),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Batal',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      if (_controller.text.isNotEmpty) {
+                        widget.onSaved(_controller.text);
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0E0E0),
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Simpan',
+                        style: GoogleFonts.poppins(
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -39,6 +39,16 @@ class SellerRepository {
     await _supabase.from('orders').update(updates).eq('id', orderId);
   }
 
+  Future<void> updateOrderTrackingNumber(
+    String orderId,
+    String trackingNumber,
+  ) async {
+    await _supabase
+        .from('orders')
+        .update({'tracking_number': trackingNumber})
+        .eq('id', orderId);
+  }
+
   Future<Profile?> getProfile(String userId) async {
     try {
       final data = await _supabase
