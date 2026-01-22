@@ -45,8 +45,38 @@ create table public.products (
   price numeric not null,
   image_url text,
   category text,
+  stock int default 0,
+  sold_count int default 0,
+  view_count int default 0,
+  average_rating numeric default 0,
+  total_reviews int default 0,
+  color_meaning text,
+  pattern_meaning text,
+  usage text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+
+-- Create reviews table
+create table public.reviews (
+  id uuid default gen_random_uuid() primary key,
+  product_id uuid references public.products(id) not null,
+  user_id uuid references public.profiles(id) not null,
+  rating int check (rating >= 1 and rating <= 5),
+  comment text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Enable RLS on reviews
+alter table public.reviews enable row level security;
+
+-- Create reviews policies
+create policy "Reviews are viewable by everyone."
+  on reviews for select
+  using ( true );
+
+create policy "Authenticated users can create reviews."
+  on reviews for insert
+  with check ( auth.role() = 'authenticated' );
 
 -- Enable RLS on products
 alter table public.products enable row level security;

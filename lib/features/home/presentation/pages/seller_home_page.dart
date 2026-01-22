@@ -59,7 +59,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          'TENUNKu',
+          _currentIndex == 1 ? 'Produkmu' : 'TENUNKu',
           style: GoogleFonts.poppins(
             color: const Color(0xFF212121),
             fontWeight: FontWeight.bold,
@@ -74,167 +74,11 @@ class _SellerHomePageState extends State<SellerHomePage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Profile Section
-            Container(
-              color: const Color(0xFFAAAAAA),
-              padding: const EdgeInsets.all(24.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Avatar
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF616161),
-                      image: _profile?.avatarUrl != null
-                          ? DecorationImage(
-                              image: NetworkImage(_profile!.avatarUrl!),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: _profile?.avatarUrl == null
-                        ? const Icon(
-                            Icons.person,
-                            color: Colors.white,
-                            size: 50,
-                          )
-                        : null,
-                  ),
-                  const SizedBox(width: 16),
-                  // Info
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _profile?.fullName ?? 'Nama Penenun',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        Text(
-                          _profile?.shopName ?? 'Nama Toko',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _profile?.description ?? 'Belum ada deskripsi.',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            color: Colors.black45,
-                          ),
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Action Buttons
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildActionButton(
-                      'Edit Profil',
-                      () => context.push('/seller/edit-profile'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildActionButton('Bagikan Profil')),
-                ],
-              ),
-            ),
-
-            // Stats
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  _buildStatCard(
-                    'Total Produk Terjual',
-                    '0',
-                  ), // TODO: Real stats
-                  const SizedBox(width: 12),
-                  _buildStatCard('Total Kunjungan', '0'),
-                  const SizedBox(width: 12),
-                  _buildStatCard('Total Ulasan', '0'),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Filters
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  _buildFilterChip('Terbaru', isSelected: true),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Terlaris'),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Ulasan Terbanyak'),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Dibuat Terlama'),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Product List
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  if (_products.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Text('Belum ada produk'),
-                    )
-                  else
-                    ..._products.map(
-                      (product) => Column(
-                        children: [
-                          _buildProductPerformanceCard(
-                            product.name,
-                            '0', // Sales count placeholder
-                            'Rp${product.price.toStringAsFixed(0)}',
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-                      ),
-                    ),
-                  const SizedBox(height: 100), // Bottom padding
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      body: _buildBody(),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: const BoxDecoration(
-          color: Colors
-              .white, // Matches the lighter/white background in screenshot
+          color: Colors.white,
           border: Border(top: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
           boxShadow: [
             BoxShadow(
@@ -254,6 +98,236 @@ class _SellerHomePageState extends State<SellerHomePage> {
           ],
         ),
       ),
+      floatingActionButton: _currentIndex == 1
+          ? FloatingActionButton(
+              onPressed: () async {
+                await context.push('/seller/product/add');
+                _fetchData();
+              },
+              backgroundColor: const Color(0xFF616161),
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildBody() {
+    switch (_currentIndex) {
+      case 0:
+        return _buildDashboard();
+      case 1:
+        return _buildProductView();
+      case 2:
+        return const Center(child: Text('Pesanan UI Coming Soon'));
+      case 3:
+        return const Center(child: Text('Obrolan UI Coming Soon'));
+      default:
+        return _buildDashboard();
+    }
+  }
+
+  Widget _buildDashboard() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Profile Section
+          Container(
+            color: const Color(0xFFAAAAAA),
+            padding: const EdgeInsets.all(24.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Avatar
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF616161),
+                    image: _profile?.avatarUrl != null
+                        ? DecorationImage(
+                            image: NetworkImage(_profile!.avatarUrl!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: _profile?.avatarUrl == null
+                      ? const Icon(Icons.person, color: Colors.white, size: 50)
+                      : null,
+                ),
+                const SizedBox(width: 16),
+                // Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _profile?.fullName ?? 'Nama Penenun',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      Text(
+                        _profile?.shopName ?? 'Nama Toko',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _profile?.description ?? 'Belum ada deskripsi.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          color: Colors.black45,
+                        ),
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Action Buttons
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildActionButton(
+                    'Edit Profil',
+                    () => context.push('/seller/edit-profile'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(child: _buildActionButton('Bagikan Profil')),
+              ],
+            ),
+          ),
+
+          // Stats
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                _buildStatCard('Total Produk Terjual', '0'), // TODO: Real stats
+                const SizedBox(width: 12),
+                _buildStatCard('Total Kunjungan', '0'),
+                const SizedBox(width: 12),
+                _buildStatCard('Total Ulasan', '0'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductView() {
+    return Column(
+      children: [
+        // Filter Bar
+        Container(
+          width: double.infinity,
+          color: const Color(0xFF757575), // Dark grey background
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                // Filter Icon Button
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE0E0E0), // Light grey circle
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.filter_list, color: Colors.black87),
+                ),
+                const SizedBox(width: 12),
+                _buildFilterChip('Aktif', isSelected: true),
+                const SizedBox(width: 8),
+                _buildFilterChip('Disembunyikan'),
+                const SizedBox(width: 8),
+                _buildFilterChip('Ulasan Terbanyak'),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Search Bar & Grid Icon
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 48,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0E0E0),
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Cari Produk',
+                      hintStyle: GoogleFonts.poppins(color: Colors.grey),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.only(
+                        bottom: 2,
+                      ), // Align text vertically
+                    ),
+                    style: GoogleFonts.poppins(color: Colors.black87),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Icon(Icons.grid_view_rounded, size: 32, color: Colors.grey),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Product List
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                if (_products.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 40),
+                    child: Text(
+                      'Belum ada produk',
+                      style: GoogleFonts.poppins(),
+                    ),
+                  )
+                else
+                  ..._products.map(
+                    (product) => Column(
+                      children: [
+                        _buildProductCard(product),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 80), // Fab spacing
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -314,101 +388,151 @@ class _SellerHomePageState extends State<SellerHomePage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
-        color: isSelected ? Colors.white : const Color(0xFFE0E0E0),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isSelected ? Colors.black87 : Colors.transparent,
-          width: 1.5,
-        ),
       ),
       child: Text(
         label,
         style: GoogleFonts.poppins(
           fontSize: 12,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          fontWeight: FontWeight.bold,
           color: Colors.black87,
         ),
       ),
     );
   }
 
-  Widget _buildProductPerformanceCard(
-    String name,
-    String sales,
-    String revenue,
-  ) {
+  Widget _buildProductCard(Product product) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0E0E0),
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(24),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            name,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Colors.black54,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            sales,
-            style: GoogleFonts.poppins(
-              fontSize: 48,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Column(
+          children: [
+            // Top Section: Info & Rating
+            Container(
+              color: const Color(0xFFE0E0E0), // Light grey
+              padding: const EdgeInsets.all(16),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Pendapatan',
+                    product.name,
                     style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  Text(
-                    revenue,
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                     ),
                   ),
+                  const SizedBox(height: 24), // Spacing for visuals
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          product.description ??
+                              'Kain tenun asli Badui dengan motif fauna yang melambangkan kesederhanaan hidup masyarakat Badui.', // Fallback for visual check
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.black87,
+                          ),
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Rating at bottom right of description area
+                      if (product.averageRating > 0)
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              size: 16,
+                              color: Colors.black87,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              product.averageRating.toStringAsFixed(1),
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD6D6D6), // Slightly darker button
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Rincian',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+            ),
+
+            // Bottom Section: Price & Action
+            Container(
+              color: const Color(0xFFAAAAAA), // Darker grey
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Rp${product.price.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(width: 1.5, height: 20, color: Colors.black54),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Stok ${product.stock} Helai',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
+                  GestureDetector(
+                    onTap: () async {
+                      await context.push(
+                        '/seller/product/detail',
+                        extra: product,
+                      );
+                      _fetchData();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF616161), // Dark grey button
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'Lihat',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

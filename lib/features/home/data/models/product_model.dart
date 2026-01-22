@@ -6,6 +6,14 @@ class Product {
   final double price;
   final String? imageUrl;
   final String? category;
+  final int stock;
+  final int soldCount;
+  final int viewCount;
+  final double averageRating;
+  final int totalReviews;
+  final String? colorMeaning;
+  final String? patternMeaning;
+  final String? usage;
   final DateTime createdAt;
 
   Product({
@@ -16,6 +24,14 @@ class Product {
     required this.price,
     this.imageUrl,
     this.category,
+    this.stock = 0,
+    this.soldCount = 0,
+    this.viewCount = 0,
+    this.averageRating = 0.0,
+    this.totalReviews = 0,
+    this.colorMeaning,
+    this.patternMeaning,
+    this.usage,
     required this.createdAt,
   });
 
@@ -28,6 +44,14 @@ class Product {
       price: (json['price'] as num).toDouble(),
       imageUrl: json['image_url'],
       category: json['category'],
+      stock: json['stock'] ?? 0,
+      soldCount: json['sold_count'] ?? 0,
+      viewCount: json['view_count'] ?? 0,
+      averageRating: (json['average_rating'] as num?)?.toDouble() ?? 0.0,
+      totalReviews: json['total_reviews'] ?? 0,
+      colorMeaning: json['color_meaning'],
+      patternMeaning: json['pattern_meaning'],
+      usage: json['usage'],
       createdAt: DateTime.parse(json['created_at']),
     );
   }
@@ -41,6 +65,14 @@ class Product {
       'price': price,
       'image_url': imageUrl,
       'category': category,
+      'stock': stock,
+      'sold_count': soldCount,
+      'view_count': viewCount,
+      'average_rating': averageRating,
+      'total_reviews': totalReviews,
+      'color_meaning': colorMeaning,
+      'pattern_meaning': patternMeaning,
+      'usage': usage,
       'created_at': createdAt.toIso8601String(),
     };
   }

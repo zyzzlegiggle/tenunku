@@ -14,6 +14,9 @@ import 'features/home/presentation/pages/settings/help_center_page.dart';
 import 'features/home/presentation/pages/settings/help_answer_page.dart';
 import 'features/home/presentation/pages/settings/notifications_page.dart';
 import 'features/auth/presentation/pages/seller_setup_page.dart';
+import 'features/home/presentation/pages/seller_product_detail_page.dart';
+import 'features/home/presentation/pages/add_product_page.dart';
+import 'features/home/data/models/product_model.dart';
 
 final router = GoRouter(
   initialLocation: '/',
@@ -75,6 +78,17 @@ final router = GoRouter(
     GoRoute(
       path: '/seller-setup',
       builder: (context, state) => const SellerSetupPage(),
+    ),
+    GoRoute(
+      path: '/seller/product/detail',
+      builder: (context, state) {
+        final product = state.extra as Product;
+        return SellerProductDetailPage(product: product);
+      },
+    ),
+    GoRoute(
+      path: '/seller/product/add',
+      builder: (context, state) => const AddProductPage(),
     ),
   ],
 );
