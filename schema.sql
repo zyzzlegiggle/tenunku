@@ -200,3 +200,69 @@ begin
   return v_email;
 end;
 $$;
+
+-- Create conversations table for chat feature
+create table public.conversations (
+  id uuid default gen_random_uuid() primary key,
+  buyer_id uuid references public.profiles(id) not null,
+  seller_id uuid references public.profiles(id) not null,
+  last_message text,
+  last_message_at timestamp with time zone default timezone('utc'::text, now()),
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(buyer_id, seller_id)
+);
+
+-- Create messages table
+create table public.messages (
+  id uuid default gen_random_uuid() primary key,
+  conversation_id uuid references public.conversations(id) not null,
+  sender_id uuid references public.profiles(id) not null,
+  content text not null,
+  is_read boolean default false,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Enable RLS on conversations
+alter table public.conversations enable row level security;
+
+-- Enable RLS on messages
+alter table public.messages enable row level security;
+
+-- Conversation policies
+create policy "Users can view their own conversations."
+  on conversations for select
+  using (auth.uid() = buyer_id or auth.uid() = seller_id);
+
+create policy "Users can create conversations."
+  on conversations for insert
+  with check (auth.uid() = buyer_id or auth.uid() = seller_id);
+
+create policy "Users can update their own conversations."
+  on conversations for update
+  using (auth.uid() = buyer_id or auth.uid() = seller_id);
+
+-- Message policies
+create policy "Users can view messages in their conversations."
+  on messages for select
+  using (
+    exists (
+      select 1 from conversations c 
+      where c.id = messages.conversation_id 
+      and (c.buyer_id = auth.uid() or c.seller_id = auth.uid())
+    )
+  );
+
+create policy "Users can send messages to their conversations."
+  on messages for insert
+  with check (
+    auth.uid() = sender_id and
+    exists (
+      select 1 from conversations c 
+      where c.id = messages.conversation_id 
+      and (c.buyer_id = auth.uid() or c.seller_id = auth.uid())
+    )
+  );
+
+create policy "Users can update their own messages."
+  on messages for update
+  using (auth.uid() = sender_id);

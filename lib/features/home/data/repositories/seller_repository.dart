@@ -3,6 +3,8 @@ import '../models/profile_model.dart';
 import '../models/product_model.dart';
 import '../models/review_model.dart';
 import '../models/order_model.dart';
+import '../models/conversation_model.dart';
+import '../models/message_model.dart';
 
 class SellerRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -155,5 +157,75 @@ class SellerRepository {
     // The previous implementation plan suggested removing ID.
 
     await _supabase.from('products').insert(data);
+  }
+
+  // ==================== CHAT METHODS ====================
+
+  /// Get all conversations for a seller
+  Future<List<ConversationModel>> getSellerConversations(
+    String sellerId,
+  ) async {
+    final data = await _supabase
+        .from('conversations')
+        .select('*, profiles:buyer_id(full_name, avatar_url)')
+        .eq('seller_id', sellerId)
+        .order('last_message_at', ascending: false);
+
+    return (data as List).map((e) => ConversationModel.fromJson(e)).toList();
+  }
+
+  /// Get all messages for a conversation
+  Future<List<MessageModel>> getMessages(String conversationId) async {
+    final data = await _supabase
+        .from('messages')
+        .select('*, profiles:sender_id(full_name, avatar_url)')
+        .eq('conversation_id', conversationId)
+        .order('created_at', ascending: true);
+
+    return (data as List).map((e) => MessageModel.fromJson(e)).toList();
+  }
+
+  /// Send a message in a conversation
+  Future<void> sendMessage(
+    String conversationId,
+    String senderId,
+    String content,
+  ) async {
+    // Insert the message
+    await _supabase.from('messages').insert({
+      'conversation_id': conversationId,
+      'sender_id': senderId,
+      'content': content,
+    });
+
+    // Update conversation with last message
+    await _supabase
+        .from('conversations')
+        .update({
+          'last_message': content,
+          'last_message_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', conversationId);
+  }
+
+  /// Mark all messages as read for a user in a conversation
+  Future<void> markMessagesAsRead(String conversationId, String userId) async {
+    await _supabase
+        .from('messages')
+        .update({'is_read': true})
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', userId);
+  }
+
+  /// Get unread message count for a conversation (messages not sent by this user)
+  Future<int> getUnreadCount(String conversationId, String userId) async {
+    final data = await _supabase
+        .from('messages')
+        .select('id')
+        .eq('conversation_id', conversationId)
+        .eq('is_read', false)
+        .neq('sender_id', userId);
+
+    return (data as List).length;
   }
 }
