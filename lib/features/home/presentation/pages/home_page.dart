@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/onboarding_single_dialog.dart';
 
 class HomePage extends StatefulWidget {
@@ -518,7 +519,14 @@ class _HomePageState extends State<HomePage> {
     final bool isActive = _currentIndex == index;
 
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () {
+        // Navigate to Akun Saya page when tapped
+        if (index == 3) {
+          context.push('/buyer/account');
+        } else {
+          setState(() => _currentIndex = index);
+        }
+      },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

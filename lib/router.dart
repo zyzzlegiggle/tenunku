@@ -16,6 +16,12 @@ import 'features/home/presentation/pages/settings/notifications_page.dart';
 import 'features/auth/presentation/pages/seller_setup_page.dart';
 import 'features/home/presentation/pages/seller_product_detail_page.dart';
 import 'features/home/presentation/pages/add_product_page.dart';
+import 'features/home/presentation/pages/buyer_account_page.dart';
+import 'features/home/presentation/pages/buyer_edit_profile_page.dart';
+import 'features/home/presentation/pages/favorites_page.dart';
+import 'features/home/presentation/pages/buy_again_page.dart';
+import 'features/home/presentation/pages/recently_viewed_page.dart';
+import 'features/home/presentation/pages/submit_review_page.dart';
 import 'features/home/data/models/product_model.dart';
 
 final router = GoRouter(
@@ -89,6 +95,31 @@ final router = GoRouter(
     GoRoute(
       path: '/seller/product/add',
       builder: (context, state) => const AddProductPage(),
+    ),
+    // Buyer Account Routes
+    GoRoute(
+      path: '/buyer/account',
+      builder: (context, state) => const BuyerAccountPage(),
+    ),
+    GoRoute(
+      path: '/buyer/edit-profile',
+      builder: (context, state) => const BuyerEditProfilePage(),
+    ),
+    GoRoute(
+      path: '/buyer/favorites',
+      builder: (context, state) => const FavoritesPage(),
+    ),
+    GoRoute(
+      path: '/buyer/buy-again',
+      builder: (context, state) => const BuyAgainPage(),
+    ),
+    GoRoute(
+      path: '/buyer/recently-viewed',
+      builder: (context, state) => const RecentlyViewedPage(),
+    ),
+    GoRoute(
+      path: '/buyer/submit-review',
+      builder: (context, state) => const SubmitReviewPage(),
     ),
   ],
 );

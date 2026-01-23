@@ -266,3 +266,57 @@ create policy "Users can send messages to their conversations."
 create policy "Users can update their own messages."
   on messages for update
   using (auth.uid() = sender_id);
+
+-- Create favorites table for "Favorit Saya" feature
+create table public.favorites (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) not null,
+  product_id uuid references public.products(id) not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(user_id, product_id)
+);
+
+-- Enable RLS on favorites
+alter table public.favorites enable row level security;
+
+-- Favorites policies
+create policy "Users can view their own favorites."
+  on favorites for select
+  using (auth.uid() = user_id);
+
+create policy "Users can add favorites."
+  on favorites for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can remove their own favorites."
+  on favorites for delete
+  using (auth.uid() = user_id);
+
+-- Create recently_viewed table for "Terakhir Dilihat" feature
+create table public.recently_viewed (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) not null,
+  product_id uuid references public.products(id) not null,
+  viewed_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(user_id, product_id)
+);
+
+-- Enable RLS on recently_viewed
+alter table public.recently_viewed enable row level security;
+
+-- Recently viewed policies
+create policy "Users can view their own recently viewed."
+  on recently_viewed for select
+  using (auth.uid() = user_id);
+
+create policy "Users can track viewed products."
+  on recently_viewed for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update their own recently viewed."
+  on recently_viewed for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete their own recently viewed."
+  on recently_viewed for delete
+  using (auth.uid() = user_id);
