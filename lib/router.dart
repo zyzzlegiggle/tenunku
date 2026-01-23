@@ -13,6 +13,12 @@ import 'features/home/presentation/pages/settings/my_address_page.dart';
 import 'features/home/presentation/pages/settings/help_center_page.dart';
 import 'features/home/presentation/pages/settings/help_answer_page.dart';
 import 'features/home/presentation/pages/settings/notifications_page.dart';
+import 'features/home/presentation/pages/settings/buyer_settings_page.dart';
+import 'features/home/presentation/pages/settings/buyer_account_security_page.dart';
+import 'features/home/presentation/pages/settings/buyer_address_page.dart';
+import 'features/home/presentation/pages/settings/language_settings_page.dart';
+import 'features/home/presentation/pages/settings/buyer_help_center_page.dart';
+import 'features/home/presentation/pages/settings/buyer_help_answer_page.dart';
 import 'features/auth/presentation/pages/seller_setup_page.dart';
 import 'features/home/presentation/pages/seller_product_detail_page.dart';
 import 'features/home/presentation/pages/add_product_page.dart';
@@ -120,6 +126,40 @@ final router = GoRouter(
     GoRoute(
       path: '/buyer/submit-review',
       builder: (context, state) => const SubmitReviewPage(),
+    ),
+    // Buyer Settings Routes
+    GoRoute(
+      path: '/buyer/settings',
+      builder: (context, state) => const BuyerSettingsPage(),
+      routes: [
+        GoRoute(
+          path: 'account-security',
+          builder: (context, state) => const BuyerAccountSecurityPage(),
+        ),
+        GoRoute(
+          path: 'change-password',
+          builder: (context, state) =>
+              const ChangePasswordPage(), // Reuse existing
+        ),
+        GoRoute(
+          path: 'address',
+          builder: (context, state) => const BuyerAddressPage(),
+        ),
+        GoRoute(
+          path: 'language',
+          builder: (context, state) => const LanguageSettingsPage(),
+        ),
+        GoRoute(
+          path: 'help-center',
+          builder: (context, state) => const BuyerHelpCenterPage(),
+          routes: [
+            GoRoute(
+              path: 'answer',
+              builder: (context, state) => const BuyerHelpAnswerPage(),
+            ),
+          ],
+        ),
+      ],
     ),
   ],
 );

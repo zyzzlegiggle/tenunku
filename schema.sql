@@ -320,3 +320,61 @@ create policy "Users can update their own recently viewed."
 create policy "Users can delete their own recently viewed."
   on recently_viewed for delete
   using (auth.uid() = user_id);
+
+-- Create addresses table for multiple buyer addresses
+create table public.addresses (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) not null,
+  label text not null, -- e.g., "Rumah Bandung", "Kantor Bandung"
+  recipient_name text not null,
+  phone text not null,
+  full_address text not null,
+  is_primary boolean default false,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+-- Enable RLS on addresses
+alter table public.addresses enable row level security;
+
+-- Addresses policies
+create policy "Users can view their own addresses."
+  on addresses for select
+  using (auth.uid() = user_id);
+
+create policy "Users can create their own addresses."
+  on addresses for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update their own addresses."
+  on addresses for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete their own addresses."
+  on addresses for delete
+  using (auth.uid() = user_id);
+
+-- Create user_settings table for preferences like language
+create table public.user_settings (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) not null unique,
+  language text default 'id', -- 'id' for Indonesian, 'en' for English
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+-- Enable RLS on user_settings
+alter table public.user_settings enable row level security;
+
+-- User settings policies
+create policy "Users can view their own settings."
+  on user_settings for select
+  using (auth.uid() = user_id);
+
+create policy "Users can create their own settings."
+  on user_settings for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update their own settings."
+  on user_settings for update
+  using (auth.uid() = user_id);

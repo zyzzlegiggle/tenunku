@@ -171,10 +171,13 @@ class _HomePageState extends State<HomePage> {
                       child: const Icon(Icons.person, color: Colors.white),
                     ),
                     const Spacer(),
-                    const Icon(
-                      Icons.settings_outlined,
-                      color: Color(0xFF757575),
-                      size: 28,
+                    GestureDetector(
+                      onTap: () => context.push('/buyer/settings'),
+                      child: const Icon(
+                        Icons.settings_outlined,
+                        color: Color(0xFF757575),
+                        size: 28,
+                      ),
                     ),
                   ],
                 ),
