@@ -68,4 +68,15 @@ class ProductRepository {
     final data = await dbQuery;
     return (data as List).map((e) => Product.fromJson(e)).toList();
   }
+
+  /// Get products by seller ID
+  Future<List<Product>> getProductsBySeller(String sellerId) async {
+    final data = await _supabase
+        .from('products')
+        .select()
+        .eq('seller_id', sellerId)
+        .order('created_at', ascending: false);
+
+    return (data as List).map((e) => Product.fromJson(e)).toList();
+  }
 }

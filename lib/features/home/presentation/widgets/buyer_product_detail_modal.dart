@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/product_model.dart';
@@ -466,47 +467,56 @@ class _BuyerProductDetailModalState extends State<BuyerProductDetailModal> {
   }
 
   Widget _buildSellerHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: const Color(0xFFE0E0E0),
-            backgroundImage: _sellerProfile?.avatarUrl != null
-                ? NetworkImage(_sellerProfile!.avatarUrl!)
-                : null,
-            child: _sellerProfile?.avatarUrl == null
-                ? Icon(Icons.person, color: Colors.grey[600])
-                : null,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _sellerProfile?.fullName ?? 'Penenun',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  _sellerProfile?.shopName ?? '',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
+    return GestureDetector(
+      onTap: () {
+        if (_sellerProfile != null) {
+          Navigator.pop(context); // Close the modal first
+          context.push('/seller/biography', extra: _sellerProfile);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: const Color(0xFFE0E0E0),
+              backgroundImage: _sellerProfile?.avatarUrl != null
+                  ? NetworkImage(_sellerProfile!.avatarUrl!)
+                  : null,
+              child: _sellerProfile?.avatarUrl == null
+                  ? Icon(Icons.person, color: Colors.grey[600])
+                  : null,
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _sellerProfile?.fullName ?? 'Penenun',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    _sellerProfile?.shopName ?? '',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: Colors.grey[400]),
+          ],
+        ),
       ),
     );
   }
