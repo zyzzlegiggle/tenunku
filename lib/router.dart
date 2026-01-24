@@ -30,6 +30,10 @@ import 'features/home/presentation/pages/recently_viewed_page.dart';
 import 'features/home/presentation/pages/submit_review_page.dart';
 import 'features/home/presentation/pages/payment_page.dart';
 import 'features/home/presentation/pages/seller_biography_page.dart';
+import 'features/home/presentation/pages/benang_membumi_page.dart';
+import 'features/home/presentation/pages/warna_detail_page.dart';
+import 'features/home/presentation/pages/pola_detail_page.dart';
+import 'features/home/presentation/pages/penggunaan_detail_page.dart';
 import 'features/home/data/models/product_model.dart';
 import 'features/home/data/models/cart_item_model.dart';
 import 'features/home/data/models/profile_model.dart';
@@ -38,6 +42,32 @@ final router = GoRouter(
   initialLocation: '/',
   routes: [
     GoRoute(path: '/', builder: (context, state) => const LandingPage()),
+    // Benang Membumi Routes
+    GoRoute(
+      path: '/benang-membumi',
+      builder: (context, state) => const BenangMembumiPage(),
+    ),
+    GoRoute(
+      path: '/benang-membumi/warna',
+      builder: (context, state) {
+        final colorData = state.extra as Map<String, dynamic>;
+        return WarnaDetailPage(colorData: colorData);
+      },
+    ),
+    GoRoute(
+      path: '/benang-membumi/pola',
+      builder: (context, state) {
+        final patternData = state.extra as Map<String, dynamic>;
+        return PolaDetailPage(patternData: patternData);
+      },
+    ),
+    GoRoute(
+      path: '/benang-membumi/penggunaan',
+      builder: (context, state) {
+        final usageData = state.extra as Map<String, dynamic>;
+        return PenggunaanDetailPage(usageData: usageData);
+      },
+    ),
     GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
     GoRoute(
       path: '/register',

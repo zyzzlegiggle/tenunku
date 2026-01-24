@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeViewBody extends StatelessWidget {
   final VoidCallback? onSearchTap;
@@ -124,6 +125,7 @@ class HomeViewBody extends StatelessWidget {
                 title: 'Benang Membumi',
                 description:
                     'Pelajari teknik menenun, makna, hingga bahan-bahan setiap tenun yang dihasilkan',
+                isBenangMembumi: true,
               ),
               const SizedBox(height: 16),
               // Card 2: Untaian Setiap Tenunan
@@ -154,6 +156,7 @@ class HomeViewBody extends StatelessWidget {
     required String title,
     required String description,
     bool isMarketplace = false,
+    bool isBenangMembumi = false,
   }) {
     return Container(
       width: double.infinity,
@@ -204,9 +207,13 @@ class HomeViewBody extends StatelessWidget {
                 Align(
                   alignment: Alignment.centerRight,
                   child: GestureDetector(
-                    onTap: isMarketplace
-                        ? onSearchTap
-                        : null, // If Marketplace, go to Explore
+                    onTap: () {
+                      if (isMarketplace) {
+                        onSearchTap?.call();
+                      } else if (isBenangMembumi) {
+                        context.push('/benang-membumi');
+                      }
+                    },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
