@@ -34,6 +34,7 @@ import 'features/home/presentation/pages/benang_membumi_page.dart';
 import 'features/home/presentation/pages/warna_detail_page.dart';
 import 'features/home/presentation/pages/pola_detail_page.dart';
 import 'features/home/presentation/pages/penggunaan_detail_page.dart';
+import 'features/home/presentation/pages/untaian_tenunan_page.dart';
 import 'features/home/data/models/product_model.dart';
 import 'features/home/data/models/cart_item_model.dart';
 import 'features/home/data/models/profile_model.dart';
@@ -46,6 +47,11 @@ final router = GoRouter(
     GoRoute(
       path: '/benang-membumi',
       builder: (context, state) => const BenangMembumiPage(),
+    ),
+    // Untaian Setiap Tenunan Route
+    GoRoute(
+      path: '/untaian-tenunan',
+      builder: (context, state) => const UntaianTenunanPage(),
     ),
     GoRoute(
       path: '/benang-membumi/warna',

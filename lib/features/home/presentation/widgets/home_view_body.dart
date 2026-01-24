@@ -134,6 +134,7 @@ class HomeViewBody extends StatelessWidget {
                 title: 'Untaian Setiap Tenunan',
                 description:
                     'Pelajari proses menenun, filosofi, adat istiadat, hingga sejarah dari setiap karya',
+                isUntaianTenunan: true,
               ),
               const SizedBox(height: 16),
               // Card 3: Marketplace Budaya
@@ -157,6 +158,7 @@ class HomeViewBody extends StatelessWidget {
     required String description,
     bool isMarketplace = false,
     bool isBenangMembumi = false,
+    bool isUntaianTenunan = false,
   }) {
     return Container(
       width: double.infinity,
@@ -212,6 +214,8 @@ class HomeViewBody extends StatelessWidget {
                         onSearchTap?.call();
                       } else if (isBenangMembumi) {
                         context.push('/benang-membumi');
+                      } else if (isUntaianTenunan) {
+                        context.push('/untaian-tenunan');
                       }
                     },
                     child: Container(
