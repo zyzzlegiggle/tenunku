@@ -378,3 +378,35 @@ create policy "Users can create their own settings."
 create policy "Users can update their own settings."
   on user_settings for update
   using (auth.uid() = user_id);
+
+-- Create cart_items table for shopping cart feature
+create table public.cart_items (
+  id uuid default gen_random_uuid() primary key,
+  buyer_id uuid references public.profiles(id) not null,
+  product_id uuid references public.products(id) not null,
+  seller_id uuid references public.profiles(id) not null,
+  quantity int default 1 not null check (quantity > 0),
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()),
+  unique(buyer_id, product_id)
+);
+
+-- Enable RLS on cart_items
+alter table public.cart_items enable row level security;
+
+-- Cart items policies
+create policy "Users can view their own cart items."
+  on cart_items for select
+  using (auth.uid() = buyer_id);
+
+create policy "Users can add items to their cart."
+  on cart_items for insert
+  with check (auth.uid() = buyer_id);
+
+create policy "Users can update their own cart items."
+  on cart_items for update
+  using (auth.uid() = buyer_id);
+
+create policy "Users can remove items from their cart."
+  on cart_items for delete
+  using (auth.uid() = buyer_id);

@@ -28,7 +28,9 @@ import 'features/home/presentation/pages/favorites_page.dart';
 import 'features/home/presentation/pages/buy_again_page.dart';
 import 'features/home/presentation/pages/recently_viewed_page.dart';
 import 'features/home/presentation/pages/submit_review_page.dart';
+import 'features/home/presentation/pages/payment_page.dart';
 import 'features/home/data/models/product_model.dart';
+import 'features/home/data/models/cart_item_model.dart';
 
 final router = GoRouter(
   initialLocation: '/',
@@ -47,6 +49,14 @@ final router = GoRouter(
       },
     ),
     GoRoute(path: '/home', builder: (context, state) => const HomePage()),
+    GoRoute(path: '/buyer', builder: (context, state) => const HomePage()),
+    GoRoute(
+      path: '/buyer/payment',
+      builder: (context, state) {
+        final cartItems = state.extra as List<CartItem>;
+        return PaymentPage(cartItems: cartItems);
+      },
+    ),
     GoRoute(
       path: '/seller-home',
       builder: (context, state) => const SellerHomePage(),

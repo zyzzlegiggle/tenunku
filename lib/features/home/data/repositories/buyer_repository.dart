@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/profile_model.dart';
 import '../models/product_model.dart';
 import '../models/order_model.dart';
+import '../models/cart_item_model.dart';
 
 class BuyerRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -206,5 +207,101 @@ class BuyerRepository {
     final data = await query.order('created_at', ascending: false);
 
     return (data as List).map((e) => OrderModel.fromJson(e)).toList();
+  }
+
+  /// Create a new order (for "Beli Langsung" direct purchase)
+  Future<void> createOrder({
+    required String buyerId,
+    required String sellerId,
+    required String productId,
+    required int quantity,
+    required double totalPrice,
+  }) async {
+    await _supabase.from('orders').insert({
+      'buyer_id': buyerId,
+      'seller_id': sellerId,
+      'product_id': productId,
+      'quantity': quantity,
+      'total_price': totalPrice,
+      'status': 'pending',
+    });
+  }
+
+  // ==================== CART METHODS ====================
+
+  /// Get all cart items for a buyer
+  Future<List<CartItem>> getCartItems(String userId) async {
+    final data = await _supabase
+        .from('cart_items')
+        .select('*, products(*)')
+        .eq('buyer_id', userId)
+        .order('created_at', ascending: false);
+
+    return (data as List).map((e) => CartItem.fromJson(e)).toList();
+  }
+
+  /// Add item to cart (or update quantity if already exists)
+  Future<void> addToCart({
+    required String buyerId,
+    required String productId,
+    required String sellerId,
+    required int quantity,
+  }) async {
+    await _supabase.from('cart_items').upsert({
+      'buyer_id': buyerId,
+      'product_id': productId,
+      'seller_id': sellerId,
+      'quantity': quantity,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    }, onConflict: 'buyer_id,product_id');
+  }
+
+  /// Update cart item quantity
+  Future<void> updateCartItemQuantity({
+    required String cartItemId,
+    required int quantity,
+  }) async {
+    await _supabase
+        .from('cart_items')
+        .update({
+          'quantity': quantity,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', cartItemId);
+  }
+
+  /// Remove item from cart
+  Future<void> removeFromCart(String cartItemId) async {
+    await _supabase.from('cart_items').delete().eq('id', cartItemId);
+  }
+
+  /// Clear entire cart
+  Future<void> clearCart(String userId) async {
+    await _supabase.from('cart_items').delete().eq('buyer_id', userId);
+  }
+
+  /// Get cart item count
+  Future<int> getCartItemCount(String userId) async {
+    final data = await _supabase
+        .from('cart_items')
+        .select('id')
+        .eq('buyer_id', userId);
+    return (data as List).length;
+  }
+
+  // ==================== PRODUCT METHODS ====================
+
+  /// Get product by ID with seller profile info
+  Future<Map<String, dynamic>?> getProductWithSeller(String productId) async {
+    try {
+      final data = await _supabase
+          .from('products')
+          .select('*, profiles:seller_id(*)')
+          .eq('id', productId)
+          .single();
+      return data;
+    } catch (e) {
+      return null;
+    }
   }
 }

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../data/models/product_model.dart';
 import '../../data/repositories/product_repository.dart';
+import '../widgets/buyer_product_detail_modal.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({super.key});
@@ -207,9 +208,15 @@ class _ExplorePageState extends State<ExplorePage> {
               itemCount: _bestSellingProducts.length,
               separatorBuilder: (context, index) => const SizedBox(width: 16),
               itemBuilder: (context, index) {
-                return _buildBestSellerCard(
-                  _bestSellingProducts[index],
-                  index + 1,
+                return GestureDetector(
+                  onTap: () => showBuyerProductDetailModal(
+                    context,
+                    _bestSellingProducts[index],
+                  ),
+                  child: _buildBestSellerCard(
+                    _bestSellingProducts[index],
+                    index + 1,
+                  ),
                 );
               },
             ),
@@ -335,7 +342,10 @@ class _ExplorePageState extends State<ExplorePage> {
       padding: const EdgeInsets.only(bottom: 100),
       itemCount: products.length,
       itemBuilder: (context, index) {
-        return _buildProductItem(products[index]);
+        return GestureDetector(
+          onTap: () => showBuyerProductDetailModal(context, products[index]),
+          child: _buildProductItem(products[index]),
+        );
       },
     );
   }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/buyer_repository.dart';
 import '../../data/models/product_model.dart';
+import '../widgets/buyer_product_detail_modal.dart';
 
 class RecentlyViewedPage extends StatefulWidget {
   const RecentlyViewedPage({super.key});
@@ -95,7 +96,11 @@ class _RecentlyViewedPageState extends State<RecentlyViewedPage> {
               ),
               itemCount: _products.length,
               itemBuilder: (context, index) {
-                return _buildProductCard(_products[index]);
+                return GestureDetector(
+                  onTap: () =>
+                      showBuyerProductDetailModal(context, _products[index]),
+                  child: _buildProductCard(_products[index]),
+                );
               },
             ),
     );

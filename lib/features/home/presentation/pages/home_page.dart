@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../widgets/onboarding_single_dialog.dart';
 import '../widgets/home_view_body.dart';
 import 'explore_page.dart';
+import 'cart_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -196,8 +197,8 @@ class _HomePageState extends State<HomePage> {
                     ),
                     // Index 1: Explore Page
                     const ExplorePage(),
-                    // Index 2: Keranjang (Placeholder)
-                    const Center(child: Text("Keranjang")),
+                    // Index 2: Keranjang
+                    const CartPage(),
                     // Index 3: Akun Saya (Handled by navigation, but placeholder here for safety)
                     const Center(child: Text("Akun Saya")),
                   ],
