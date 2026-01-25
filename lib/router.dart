@@ -43,6 +43,8 @@ import 'features/home/data/models/product_model.dart';
 import 'features/home/data/models/cart_item_model.dart';
 import 'features/home/data/models/profile_model.dart';
 
+import 'features/home/presentation/pages/buyer_chat_page.dart';
+
 final router = GoRouter(
   initialLocation: '/',
   routes: [
@@ -238,6 +240,17 @@ final router = GoRouter(
           ],
         ),
       ],
+    ),
+    GoRoute(
+      path: '/buyer/chat',
+      builder: (context, state) {
+        final extras = state.extra as Map<String, dynamic>;
+        return BuyerChatPage(
+          sellerId: extras['sellerId'],
+          shopName: extras['shopName'],
+          sellerAvatarUrl: extras['sellerAvatarUrl'],
+        );
+      },
     ),
   ],
 );

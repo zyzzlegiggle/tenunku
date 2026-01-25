@@ -230,29 +230,23 @@ alter table public.conversations enable row level security;
 alter table public.messages enable row level security;
 
 -- Conversation policies
-create policy "Users can view their own conversations."
-  on conversations for select
-  using (auth.uid() = buyer_id or auth.uid() = seller_id);
-
+-- Allow users to insert if they are either the buyer OR the seller in the new row
 create policy "Users can create conversations."
   on conversations for insert
   with check (auth.uid() = buyer_id or auth.uid() = seller_id);
 
+-- Allow users to view if they are participant
+create policy "Users can view their own conversations."
+  on conversations for select
+  using (auth.uid() = buyer_id or auth.uid() = seller_id);
+
+-- Allow users to update (e.g. last_message) if participant
 create policy "Users can update their own conversations."
   on conversations for update
   using (auth.uid() = buyer_id or auth.uid() = seller_id);
 
 -- Message policies
-create policy "Users can view messages in their conversations."
-  on messages for select
-  using (
-    exists (
-      select 1 from conversations c 
-      where c.id = messages.conversation_id 
-      and (c.buyer_id = auth.uid() or c.seller_id = auth.uid())
-    )
-  );
-
+-- Allow insert if user is sender AND they are part of the conversation
 create policy "Users can send messages to their conversations."
   on messages for insert
   with check (
@@ -264,6 +258,18 @@ create policy "Users can send messages to their conversations."
     )
   );
 
+-- Allow view if participant in conversation
+create policy "Users can view messages in their conversations."
+  on messages for select
+  using (
+    exists (
+      select 1 from conversations c 
+      where c.id = conversation_id 
+      and (c.buyer_id = auth.uid() or c.seller_id = auth.uid())
+    )
+  );
+
+-- Allow update own messages
 create policy "Users can update their own messages."
   on messages for update
   using (auth.uid() = sender_id);

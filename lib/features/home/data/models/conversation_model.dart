@@ -9,6 +9,9 @@ class ConversationModel {
   // Joined fields from profiles
   final String? buyerName;
   final String? buyerAvatarUrl;
+  final String? sellerName;
+  final String? sellerAvatarUrl;
+  final String? shopName;
 
   ConversationModel({
     required this.id,
@@ -19,6 +22,9 @@ class ConversationModel {
     required this.createdAt,
     this.buyerName,
     this.buyerAvatarUrl,
+    this.sellerName,
+    this.sellerAvatarUrl,
+    this.shopName,
   });
 
   factory ConversationModel.fromJson(Map<String, dynamic> json) {
@@ -37,6 +43,13 @@ class ConversationModel {
       buyerAvatarUrl: json['profiles'] != null
           ? json['profiles']['avatar_url']
           : null,
+      sellerName: json['profiles'] != null
+          ? json['profiles']['full_name']
+          : null,
+      sellerAvatarUrl: json['profiles'] != null
+          ? json['profiles']['avatar_url']
+          : null,
+      shopName: json['profiles'] != null ? json['profiles']['shop_name'] : null,
     );
   }
 

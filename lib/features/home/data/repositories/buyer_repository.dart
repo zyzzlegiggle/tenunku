@@ -4,6 +4,9 @@ import '../models/product_model.dart';
 import '../models/order_model.dart';
 import '../models/cart_item_model.dart';
 
+import '../models/conversation_model.dart';
+import '../models/message_model.dart';
+
 class BuyerRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
@@ -323,5 +326,83 @@ class BuyerRepository {
         .from('products')
         .update({'stock': newStock})
         .eq('id', productId);
+  }
+
+  // ==================== CHAT METHODS ====================
+
+  Future<ConversationModel?> getConversationWithSeller(
+    String buyerId,
+    String sellerId,
+  ) async {
+    try {
+      final data = await _supabase
+          .from('conversations')
+          .select('*, profiles:seller_id(full_name, avatar_url, shop_name)')
+          .eq('buyer_id', buyerId)
+          .eq('seller_id', sellerId)
+          .maybeSingle();
+
+      if (data != null) {
+        return ConversationModel.fromJson(data);
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<ConversationModel> createConversation(
+    String buyerId,
+    String sellerId,
+  ) async {
+    final data = await _supabase
+        .from('conversations')
+        .insert({
+          'buyer_id': buyerId,
+          'seller_id': sellerId,
+          'last_message': '',
+        })
+        .select('*, profiles:seller_id(full_name, avatar_url, shop_name)')
+        .single();
+
+    return ConversationModel.fromJson(data);
+  }
+
+  Future<void> sendMessage(
+    String conversationId,
+    String senderId,
+    String content,
+  ) async {
+    await _supabase.from('messages').insert({
+      'conversation_id': conversationId,
+      'sender_id': senderId,
+      'content': content,
+    });
+
+    await _supabase
+        .from('conversations')
+        .update({
+          'last_message': content,
+          'last_message_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', conversationId);
+  }
+
+  Future<List<MessageModel>> getMessages(String conversationId) async {
+    final data = await _supabase
+        .from('messages')
+        .select('*, profiles:sender_id(full_name, avatar_url)')
+        .eq('conversation_id', conversationId)
+        .order('created_at', ascending: true);
+
+    return (data as List).map((e) => MessageModel.fromJson(e)).toList();
+  }
+
+  Future<void> markMessagesAsRead(String conversationId, String userId) async {
+    await _supabase
+        .from('messages')
+        .update({'is_read': true})
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', userId);
   }
 }
