@@ -19,6 +19,10 @@ import 'features/home/presentation/pages/settings/buyer_address_page.dart';
 import 'features/home/presentation/pages/settings/language_settings_page.dart';
 import 'features/home/presentation/pages/settings/buyer_help_center_page.dart';
 import 'features/home/presentation/pages/settings/buyer_help_answer_page.dart';
+import 'features/home/presentation/pages/settings/buyer_notification_settings_page.dart';
+import 'features/home/presentation/pages/settings/buyer_app_notifications_page.dart';
+import 'features/home/presentation/pages/settings/buyer_email_notifications_page.dart';
+import 'features/home/presentation/pages/settings/buyer_whatsapp_notifications_page.dart';
 import 'features/auth/presentation/pages/seller_setup_page.dart';
 import 'features/home/presentation/pages/seller_product_detail_page.dart';
 import 'features/home/presentation/pages/add_product_page.dart';
@@ -211,6 +215,25 @@ final router = GoRouter(
             GoRoute(
               path: 'answer',
               builder: (context, state) => const BuyerHelpAnswerPage(),
+            ),
+          ],
+        ),
+        GoRoute(
+          path: 'notifications',
+          builder: (context, state) => const BuyerNotificationSettingsPage(),
+          routes: [
+            GoRoute(
+              path: 'app',
+              builder: (context, state) => const BuyerAppNotificationsPage(),
+            ),
+            GoRoute(
+              path: 'email',
+              builder: (context, state) => const BuyerEmailNotificationsPage(),
+            ),
+            GoRoute(
+              path: 'whatsapp',
+              builder: (context, state) =>
+                  const BuyerWhatsappNotificationsPage(),
             ),
           ],
         ),

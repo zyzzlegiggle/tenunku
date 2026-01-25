@@ -71,6 +71,12 @@ class BuyerSettingsPage extends StatelessWidget {
                 'Pusat Bantuan',
                 onTap: () => context.push('/buyer/settings/help-center'),
               ),
+              const Divider(height: 1),
+              _buildMenuItem(
+                context,
+                'Pengaturan Notifikasi',
+                onTap: () => context.push('/buyer/settings/notifications'),
+              ),
             ]),
             const SizedBox(height: 24),
             _buildSection([
