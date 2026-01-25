@@ -1,11 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import '../../data/repositories/product_repository.dart';
+import '../../data/models/product_model.dart';
 
-class HomeViewBody extends StatelessWidget {
+class HomeViewBody extends StatefulWidget {
   final VoidCallback? onSearchTap;
 
   const HomeViewBody({super.key, this.onSearchTap});
+
+  @override
+  State<HomeViewBody> createState() => _HomeViewBodyState();
+}
+
+class _HomeViewBodyState extends State<HomeViewBody> {
+  final ProductRepository _productRepository = ProductRepository();
+  List<Product> _products = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      final products = await _productRepository.getRecommendedProducts();
+      setState(() {
+        _products = products;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  String _formatPrice(double price) {
+    return price
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]}.',
+        );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +54,7 @@ class HomeViewBody extends StatelessWidget {
         children: [
           // Search Bar
           GestureDetector(
-            onTap: onSearchTap,
+            onTap: widget.onSearchTap,
             child: AbsorbPointer(
               child: TextField(
                 decoration: InputDecoration(
@@ -87,14 +125,20 @@ class HomeViewBody extends StatelessWidget {
           // Products Horizontal List
           SizedBox(
             height: 220,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: 4,
-              separatorBuilder: (context, index) => const SizedBox(width: 16),
-              itemBuilder: (context, index) {
-                return _buildProductCard();
-              },
-            ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _products.isEmpty ? 4 : _products.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: 16),
+                    itemBuilder: (context, index) {
+                      if (_products.isEmpty) {
+                        return _buildEmptyProductCard();
+                      }
+                      return _buildProductCard(_products[index]);
+                    },
+                  ),
           ),
           const SizedBox(height: 32),
 
@@ -211,7 +255,7 @@ class HomeViewBody extends StatelessWidget {
                   child: GestureDetector(
                     onTap: () {
                       if (isMarketplace) {
-                        onSearchTap?.call();
+                        widget.onSearchTap?.call();
                       } else if (isBenangMembumi) {
                         context.push('/benang-membumi');
                       } else if (isUntaianTenunan) {
@@ -298,7 +342,97 @@ class HomeViewBody extends StatelessWidget {
     );
   }
 
-  Widget _buildProductCard() {
+  Widget _buildProductCard(Product product) {
+    return GestureDetector(
+      onTap: () {
+        // Navigate to product detail if needed
+      },
+      child: Container(
+        width: 140,
+        decoration: BoxDecoration(
+          color: const Color(0xFFE0E0E0),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          children: [
+            // Product Image
+            Expanded(
+              flex: 3,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
+                child: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                    ? Image.network(
+                        product.imageUrl!,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            alignment: Alignment.center,
+                            color: const Color(0xFFE0E0E0),
+                            child: Text(
+                              'Foto Produk',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                    : Container(
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Foto Produk',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+              ),
+            ),
+            // Product Info
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: const BoxDecoration(
+                color: Color(0xFFAAAAAA),
+                borderRadius: BorderRadius.vertical(
+                  bottom: Radius.circular(20),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    'Rp${_formatPrice(product.price)}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyProductCard() {
     return Container(
       width: 140,
       decoration: BoxDecoration(
