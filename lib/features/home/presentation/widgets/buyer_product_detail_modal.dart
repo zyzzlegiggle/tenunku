@@ -538,39 +538,164 @@ class _BuyerProductDetailModalState extends State<BuyerProductDetailModal> {
 
   Widget _buildBenangMembumiInfo() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildInfoRow('Arti Warna', widget.product.colorMeaning ?? '-'),
-        const Divider(),
-        _buildInfoRow('Arti Pola', widget.product.patternMeaning ?? '-'),
-        const Divider(),
-        _buildInfoRow('Penggunaan', widget.product.usage ?? '-'),
+        _buildBenangCard(
+          label: 'Arti Warna',
+          value:
+              widget.product.benangColor?.name ??
+              widget.product.colorMeaning ??
+              '-',
+          meaning:
+              widget.product.benangColor?.meaning ??
+              'Keterangan tidak tersedia.',
+          icon: Icons.circle, // Placeholder icon or use hexCode if you want
+        ),
+        const SizedBox(height: 12),
+        _buildBenangCard(
+          label: 'Arti Pola',
+          value:
+              widget.product.benangPattern?.name ??
+              widget.product.patternMeaning ??
+              '-',
+          meaning:
+              widget.product.benangPattern?.meaning ??
+              'Keterangan tidak tersedia.',
+          icon: Icons.grid_on,
+        ),
+        const SizedBox(height: 12),
+        _buildBenangCard(
+          label: 'Penggunaan',
+          value:
+              widget.product.benangUsage?.name ?? widget.product.usage ?? '-',
+          meaning:
+              widget.product.benangUsage?.meaning ??
+              'Keterangan tidak tersedia.',
+          icon: Icons.accessibility_new,
+        ),
       ],
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildBenangCard({
+    required String label,
+    required String value,
+    required String meaning,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE0E0E0),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
         children: [
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
+          Icon(icon, size: 32, color: const Color(0xFF616161)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: const Color(0xFF616161),
+                  ),
+                ),
+                Text(
+                  value,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700]),
+          ElevatedButton(
+            onPressed: () => _showBenangDetailModal(label, value, meaning),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF757575),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Lihat Detail',
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.arrow_forward, size: 12),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
+
+  void _showBenangDetailModal(String title, String subtitle, String content) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                content,
+                style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(height: 24),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Tutup',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Legacy helper removed or replaced
+  // Widget _buildInfoRow...
 
   Widget _buildBottomBar() {
     return Container(

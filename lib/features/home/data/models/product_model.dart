@@ -1,3 +1,5 @@
+import 'benang_membumi_model.dart';
+
 class Product {
   final String id;
   final String sellerId;
@@ -15,6 +17,13 @@ class Product {
   final String? colorMeaning;
   final String? patternMeaning;
   final String? usage;
+  final String? patternId;
+  final String? colorId;
+  final String? usageId;
+  // Joined fields
+  final BenangPattern? benangPattern;
+  final BenangColor? benangColor;
+  final BenangUsage? benangUsage;
   final DateTime createdAt;
 
   Product({
@@ -34,6 +43,12 @@ class Product {
     this.colorMeaning,
     this.patternMeaning,
     this.usage,
+    this.patternId,
+    this.colorId,
+    this.usageId,
+    this.benangPattern,
+    this.benangColor,
+    this.benangUsage,
     required this.createdAt,
   });
 
@@ -57,6 +72,18 @@ class Product {
       colorMeaning: json['color_meaning'],
       patternMeaning: json['pattern_meaning'],
       usage: json['usage'],
+      patternId: json['pattern_id'],
+      colorId: json['color_id'],
+      usageId: json['usage_id'],
+      benangPattern: json['benang_patterns'] != null
+          ? BenangPattern.fromJson(json['benang_patterns'])
+          : null,
+      benangColor: json['benang_colors'] != null
+          ? BenangColor.fromJson(json['benang_colors'])
+          : null,
+      benangUsage: json['benang_usages'] != null
+          ? BenangUsage.fromJson(json['benang_usages'])
+          : null,
       createdAt: DateTime.parse(json['created_at']),
     );
   }
@@ -79,6 +106,9 @@ class Product {
       'color_meaning': colorMeaning,
       'pattern_meaning': patternMeaning,
       'usage': usage,
+      'pattern_id': patternId,
+      'color_id': colorId,
+      'usage_id': usageId,
       'created_at': createdAt.toIso8601String(),
     };
   }

@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/profile_model.dart';
 import '../models/product_model.dart';
+import '../models/benang_membumi_model.dart';
 import '../models/review_model.dart';
 import '../models/order_model.dart';
 import '../models/conversation_model.dart';
@@ -123,7 +124,7 @@ class SellerRepository {
   Future<List<Product>> getSellerProducts(String sellerId) async {
     final data = await _supabase
         .from('products')
-        .select()
+        .select('*, benang_patterns(*), benang_colors(*), benang_usages(*)')
         .eq('seller_id', sellerId)
         .order('created_at', ascending: false);
 
@@ -133,7 +134,7 @@ class SellerRepository {
   Future<List<Product>> getAllProducts() async {
     final data = await _supabase
         .from('products')
-        .select()
+        .select('*, benang_patterns(*), benang_colors(*), benang_usages(*)')
         .order('created_at', ascending: false);
 
     return (data as List).map((e) => Product.fromJson(e)).toList();
@@ -262,5 +263,22 @@ class SellerRepository {
         .neq('sender_id', userId);
 
     return (data as List).length;
+  }
+
+  // ==================== BENANG MEMBUMI METHODS ====================
+
+  Future<List<BenangPattern>> getBenangPatterns() async {
+    final data = await _supabase.from('benang_patterns').select();
+    return (data as List).map((e) => BenangPattern.fromJson(e)).toList();
+  }
+
+  Future<List<BenangColor>> getBenangColors() async {
+    final data = await _supabase.from('benang_colors').select();
+    return (data as List).map((e) => BenangColor.fromJson(e)).toList();
+  }
+
+  Future<List<BenangUsage>> getBenangUsages() async {
+    final data = await _supabase.from('benang_usages').select();
+    return (data as List).map((e) => BenangUsage.fromJson(e)).toList();
   }
 }

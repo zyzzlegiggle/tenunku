@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:io';
 import '../../data/models/product_model.dart';
+import '../../data/models/benang_membumi_model.dart';
 import '../../data/repositories/seller_repository.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../../core/services/storage_service.dart';
@@ -33,7 +34,46 @@ class _AddProductPageState extends State<AddProductPage> {
       TextEditingController();
   final TextEditingController _usageController = TextEditingController();
 
+  // Benang Membumi Data
+  List<BenangPattern> _patterns = [];
+  List<BenangColor> _colors = [];
+  List<BenangUsage> _usages = [];
+  String? _selectedPatternId;
+  String? _selectedColorId;
+  String? _selectedUsageId;
+  bool _isLoadingMetadata = true;
+
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMetadata();
+  }
+
+  Future<void> _loadMetadata() async {
+    try {
+      final patterns = await _sellerRepo.getBenangPatterns();
+      final colors = await _sellerRepo.getBenangColors();
+      final usages = await _sellerRepo.getBenangUsages();
+
+      if (mounted) {
+        setState(() {
+          _patterns = patterns;
+          _colors = colors;
+          _usages = usages;
+          _isLoadingMetadata = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat data Benang Membumi: $e')),
+        );
+        setState(() => _isLoadingMetadata = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -135,9 +175,20 @@ class _AddProductPageState extends State<AddProductPage> {
         viewCount: 0,
         averageRating: 0,
         totalReviews: 0,
-        colorMeaning: _colorMeaningController.text,
-        patternMeaning: _patternMeaningController.text,
-        usage: _usageController.text,
+        // Legacy fields filled with Name for fallback/display if join fails
+        colorMeaning: _colors
+            .where((e) => e.id == _selectedColorId)
+            .firstOrNull
+            ?.name,
+        patternMeaning: _patterns
+            .where((e) => e.id == _selectedPatternId)
+            .firstOrNull
+            ?.name,
+        usage: _usages.where((e) => e.id == _selectedUsageId).firstOrNull?.name,
+        // New IDs
+        patternId: _selectedPatternId,
+        colorId: _selectedColorId,
+        usageId: _selectedUsageId,
         createdAt: DateTime.now(),
       );
 
@@ -306,28 +357,40 @@ class _AddProductPageState extends State<AddProductPage> {
             ),
             const SizedBox(height: 16),
 
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _buildBenangInfoItem(
-                    'Arti Warna',
-                    _colorMeaningController,
+            if (_isLoadingMetadata)
+              const Center(child: CircularProgressIndicator())
+            else
+              Column(
+                children: [
+                  _buildDropdown<BenangColor>(
+                    label: 'Arti Warna',
+                    hint: 'Pilih Warna',
+                    value: _selectedColorId,
+                    items: _colors,
+                    onChanged: (val) => setState(() => _selectedColorId = val),
+                    itemLabel: (item) => item.name,
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildBenangInfoItem(
-                    'Arti Pola',
-                    _patternMeaningController,
+                  const SizedBox(height: 16),
+                  _buildDropdown<BenangPattern>(
+                    label: 'Arti Pola',
+                    hint: 'Pilih Pola',
+                    value: _selectedPatternId,
+                    items: _patterns,
+                    onChanged: (val) =>
+                        setState(() => _selectedPatternId = val),
+                    itemLabel: (item) => item.name,
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildBenangInfoItem('Penggunaan', _usageController),
-                ),
-              ],
-            ),
+                  const SizedBox(height: 16),
+                  _buildDropdown<BenangUsage>(
+                    label: 'Penggunaan',
+                    hint: 'Pilih Penggunaan',
+                    value: _selectedUsageId,
+                    items: _usages,
+                    onChanged: (val) => setState(() => _selectedUsageId = val),
+                    itemLabel: (item) => item.name,
+                  ),
+                ],
+              ),
 
             const SizedBox(height: 32),
             ElevatedButton(
@@ -360,49 +423,6 @@ class _AddProductPageState extends State<AddProductPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildBenangInfoItem(String title, TextEditingController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            border: Border.all(color: Colors.grey[300]!),
-          ),
-          child: Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: Colors.black54,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        Container(
-          height: 80,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: const BorderRadius.vertical(
-              bottom: Radius.circular(12),
-            ),
-            border: Border.all(color: Colors.grey[300]!),
-          ),
-          child: TextField(
-            controller: controller,
-            style: GoogleFonts.poppins(fontSize: 10),
-            maxLines: null,
-            decoration: const InputDecoration(border: InputBorder.none),
-          ),
-        ),
-      ],
     );
   }
 
@@ -443,6 +463,51 @@ class _AddProductPageState extends State<AddProductPage> {
           contentPadding: EdgeInsets.symmetric(vertical: 12),
         ),
       ),
+    );
+  }
+
+  Widget _buildDropdown<T>({
+    required String label,
+    required String hint,
+    required String? value,
+    required List<T> items,
+    required Function(String?) onChanged,
+    required String Function(T) itemLabel,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel(label),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              hint: Text(hint, style: GoogleFonts.poppins(fontSize: 14)),
+              isExpanded: true,
+              items: items.map((item) {
+                // We assume items have an 'id' property, but T is generic.
+                // We need to access id. casting to dynamic or using interface.
+                // Since our models all have id, dynamic is easiest for this helper.
+                final id = (item as dynamic).id;
+                return DropdownMenuItem<String>(
+                  value: id,
+                  child: Text(
+                    itemLabel(item),
+                    style: GoogleFonts.poppins(fontSize: 14),
+                  ),
+                );
+              }).toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

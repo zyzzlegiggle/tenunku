@@ -51,9 +51,12 @@ create table public.products (
   view_count int default 0,
   average_rating numeric default 0,
   total_reviews int default 0,
-  color_meaning text,
-  pattern_meaning text,
-  usage text,
+  color_meaning text, -- Legacy, keeping for now
+  pattern_meaning text, -- Legacy
+  usage text, -- Legacy
+  pattern_id uuid references public.benang_patterns(id), -- New Benang Membumi
+  color_id uuid references public.benang_colors(id),     -- New Benang Membumi
+  usage_id uuid references public.benang_usages(id),     -- New Benang Membumi
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -482,3 +485,50 @@ begin
   where id = p_product_id;
 end;
 $$;
+
+-- BENANG MEMBUMI TABLES
+
+-- Create benang_patterns table
+create table public.benang_patterns (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  meaning text not null,
+  image_url text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Create benang_colors table
+create table public.benang_colors (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  meaning text not null,
+  hex_code text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Create benang_usages table
+create table public.benang_usages (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  meaning text not null,
+  icon_url text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Enable RLS for Benang Membumi tables
+alter table public.benang_patterns enable row level security;
+alter table public.benang_colors enable row level security;
+alter table public.benang_usages enable row level security;
+
+-- Policies (Public read)
+create policy "Patterns are viewable by everyone." on benang_patterns for select using (true);
+create policy "Colors are viewable by everyone." on benang_colors for select using (true);
+create policy "Usages are viewable by everyone." on benang_usages for select using (true);
+
+-- Update products table to include references (This command is for reference, 
+-- in a fresh schema these columns should be added to the create table public.products definition directly
+-- but we append ALTER here for migration context if running sequentially)
+-- alter table public.products add column pattern_id uuid references public.benang_patterns(id);
+-- alter table public.products add column color_id uuid references public.benang_colors(id);
+-- alter table public.products add column usage_id uuid references public.benang_usages(id);
+
