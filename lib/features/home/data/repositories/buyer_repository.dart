@@ -306,4 +306,22 @@ class BuyerRepository {
       return null;
     }
   }
+
+  Future<void> decrementStock(String productId, int quantity) async {
+    // Get current stock first to be safe (or rely on DB constraints if check constraint exists)
+    // We'll just decrement.
+    // RPC is better but for now:
+    final product = await _supabase
+        .from('products')
+        .select('stock')
+        .eq('id', productId)
+        .single();
+    final currentStock = product['stock'] as int;
+    final newStock = currentStock - quantity;
+
+    await _supabase
+        .from('products')
+        .update({'stock': newStock})
+        .eq('id', productId);
+  }
 }

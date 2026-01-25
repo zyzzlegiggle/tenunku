@@ -22,6 +22,11 @@ class _SellerHomePageState extends State<SellerHomePage> {
 
   Profile? _profile;
   List<Product> _products = [];
+  Map<String, int> _stats = {
+    'totalSold': 0,
+    'totalViews': 0,
+    'totalReviews': 0,
+  };
   bool _isLoading = true;
 
   @override
@@ -35,11 +40,13 @@ class _SellerHomePageState extends State<SellerHomePage> {
     if (user != null) {
       final profile = await _sellerRepo.getProfile(user.id);
       final products = await _sellerRepo.getSellerProducts(user.id);
+      final stats = await _sellerRepo.getSellerStats(user.id);
 
       if (mounted) {
         setState(() {
           _profile = profile;
           _products = products;
+          _stats = stats;
           _isLoading = false;
         });
       }
@@ -218,11 +225,14 @@ class _SellerHomePageState extends State<SellerHomePage> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                _buildStatCard('Total Produk Terjual', '0'), // TODO: Real stats
+                _buildStatCard(
+                  'Total Produk Terjual',
+                  '${_stats['totalSold']}',
+                ),
                 const SizedBox(width: 12),
-                _buildStatCard('Total Kunjungan', '0'),
+                _buildStatCard('Total Kunjungan', '${_stats['totalViews']}'),
                 const SizedBox(width: 12),
-                _buildStatCard('Total Ulasan', '0'),
+                _buildStatCard('Total Ulasan', '${_stats['totalReviews']}'),
               ],
             ),
           ),

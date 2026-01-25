@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/onboarding_single_dialog.dart';
 import '../widgets/home_view_body.dart';
 import 'explore_page.dart';
@@ -15,48 +16,58 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
+  static const String _onboardingKey = 'buyer_onboarding_completed';
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _showWelcomeDialog();
-      if (!mounted) return;
-      // Modal 1: Biografi Penenun (Standard transition or fade)
-      await showDialog(
-        context: context,
-        builder: (context) => OnboardingSingleDialog(
-          title: 'Biografi Penenun',
-          description:
-              'Kenali kisah inspiratif para perempuan penenun di balik setiap karya!',
-          onNext: () => Navigator.of(context).pop(),
-        ),
-      );
-      if (!mounted) return;
+    _checkAndShowOnboarding();
+  }
 
-      // Modal 2: Benang Membumi
-      await showDialog(
-        context: context,
-        builder: (context) => OnboardingSingleDialog(
-          title: 'Benang Membumi',
-          description:
-              'Pelajari teknik menenun, makna, hingga bahan-bahan setiap tenun yang dihasilkan',
-          onNext: () => Navigator.of(context).pop(),
-        ),
-      );
-      if (!mounted) return;
+  Future<void> _checkAndShowOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    final onboardingCompleted = prefs.getBool(_onboardingKey) ?? false;
 
-      // Modal 3: Untaian Setiap Tenunan
-      await showDialog(
-        context: context,
-        builder: (context) => OnboardingSingleDialog(
-          title: 'Untaian Setiap Tenunan',
-          description:
-              'Pelajari proses menenun, filosofi, adat istiadat, hingga sejarah dari setiap karya',
-          onNext: () => Navigator.of(context).pop(),
-        ),
-      );
-    });
+    if (onboardingCompleted || !mounted) return;
+
+    // Show onboarding dialogs
+    await _showWelcomeDialog();
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (context) => OnboardingSingleDialog(
+        title: 'Biografi Penenun',
+        description:
+            'Kenali kisah inspiratif para perempuan penenun di balik setiap karya!',
+        onNext: () => Navigator.of(context).pop(),
+      ),
+    );
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (context) => OnboardingSingleDialog(
+        title: 'Benang Membumi',
+        description:
+            'Pelajari teknik menenun, makna, hingga bahan-bahan setiap tenun yang dihasilkan',
+        onNext: () => Navigator.of(context).pop(),
+      ),
+    );
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (context) => OnboardingSingleDialog(
+        title: 'Untaian Setiap Tenunan',
+        description:
+            'Pelajari proses menenun, filosofi, adat istiadat, hingga sejarah dari setiap karya',
+        onNext: () => Navigator.of(context).pop(),
+      ),
+    );
+
+    // Mark onboarding as completed
+    await prefs.setBool(_onboardingKey, true);
   }
 
   Future<void> _showWelcomeDialog() async {

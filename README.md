@@ -21,7 +21,8 @@ flutter run
 ### Supabase Setup
 1. Create a Supabase project
 2. Run `schema.sql` in the SQL Editor
-3. Update credentials in `lib/main.dart`
+3. Run `settings_schema.sql` in the SQL Editor (for user settings)
+4. Update credentials in `lib/main.dart`
 
 ## Features
 

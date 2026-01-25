@@ -50,6 +50,20 @@ class _PaymentPageState extends State<PaymentPage> {
     setState(() => _isLoading = true);
 
     try {
+      // Validate stock first
+      for (final item in widget.cartItems) {
+        final productData = await _repository.getProductWithSeller(
+          item.productId,
+        );
+        if (productData == null) {
+          throw Exception('Produk tidak ditemukan: ${item.productName}');
+        }
+        final currentStock = productData['stock'] as int;
+        if (currentStock < item.quantity) {
+          throw Exception('Stok tidak cukup untuk: ${item.productName}');
+        }
+      }
+
       // Create orders for each cart item
       for (final item in widget.cartItems) {
         await _repository.createOrder(
@@ -59,6 +73,9 @@ class _PaymentPageState extends State<PaymentPage> {
           quantity: item.quantity,
           totalPrice: (item.productPrice ?? 0) * item.quantity,
         );
+        // Decrement stock
+        await _repository.decrementStock(item.productId, item.quantity);
+
         // Remove from cart after order created
         await _repository.removeFromCart(item.id);
       }

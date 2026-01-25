@@ -9,6 +9,41 @@ import '../models/message_model.dart';
 class SellerRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  /// Get seller statistics (total sold, views, reviews)
+  Future<Map<String, int>> getSellerStats(String sellerId) async {
+    // Get total products sold (sum of sold_count from all seller products)
+    final products = await _supabase
+        .from('products')
+        .select('sold_count, view_count, id')
+        .eq('seller_id', sellerId);
+
+    int totalSold = 0;
+    int totalViews = 0;
+    final productIds = <String>[];
+
+    for (final p in products as List) {
+      totalSold += (p['sold_count'] as int?) ?? 0;
+      totalViews += (p['view_count'] as int?) ?? 0;
+      productIds.add(p['id'] as String);
+    }
+
+    // Get total reviews count for all seller's products
+    int totalReviews = 0;
+    if (productIds.isNotEmpty) {
+      final reviews = await _supabase
+          .from('reviews')
+          .select('id')
+          .inFilter('product_id', productIds);
+      totalReviews = (reviews as List).length;
+    }
+
+    return {
+      'totalSold': totalSold,
+      'totalViews': totalViews,
+      'totalReviews': totalReviews,
+    };
+  }
+
   // ignore: unused_element
   Future<List<OrderModel>> getSellerOrders(
     String sellerId, {
