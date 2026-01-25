@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:io';
 import '../../data/models/product_model.dart';
 import '../../data/repositories/seller_repository.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
+import '../../../../core/services/storage_service.dart';
 
 class AddProductPage extends StatefulWidget {
   const AddProductPage({super.key});
@@ -16,6 +18,10 @@ class AddProductPage extends StatefulWidget {
 class _AddProductPageState extends State<AddProductPage> {
   final SellerRepository _sellerRepo = SellerRepository();
   final AuthRepository _authRepo = AuthRepository();
+  final StorageService _storageService = StorageService();
+
+  File? _selectedImage;
+  String? _uploadedImageUrl;
 
   // Form Controllers
   final TextEditingController _nameController = TextEditingController();
@@ -41,7 +47,37 @@ class _AddProductPageState extends State<AddProductPage> {
     super.dispose();
   }
 
-  Future<void> _saveProduct() async {
+  Future<void> _pickImage() async {
+    try {
+      final File? image = await _storageService.pickImage();
+      if (image != null) {
+        setState(() {
+          _selectedImage = image;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal mengambil gambar: $e')));
+      }
+    }
+  }
+
+  Future<String?> _uploadImage(File image) async {
+    try {
+      return await _storageService.uploadImage('products', image);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal mengupload gambar: $e')));
+      }
+      return null;
+    }
+  }
+
+  Future<void> _saveProductWithUpload() async {
     if (_nameController.text.isEmpty || _priceController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Nama dan Harga produk wajib diisi')),
@@ -50,19 +86,29 @@ class _AddProductPageState extends State<AddProductPage> {
     }
 
     setState(() => _isSaving = true);
+
     try {
+      // Upload image if selected
+      if (_selectedImage != null) {
+        final url = await _uploadImage(_selectedImage!);
+        if (url == null) {
+          setState(() => _isSaving = false);
+          return; // Stop if upload fails
+        }
+        _uploadedImageUrl = url;
+      }
+
       final user = _authRepo.currentUser;
       if (user == null) throw Exception('User not logged in');
 
       final newProduct = Product(
-        id: const Uuid()
-            .v4(), // Generate temporary ID, DB will likely generate its own or use this if we send it
+        id: const Uuid().v4(),
         sellerId: user.id,
         name: _nameController.text,
         description: _descriptionController.text,
         price: double.tryParse(_priceController.text) ?? 0,
-        imageUrl: null, // Placeholder for now
-        category: 'Tenun', // Default or add picker later
+        imageUrl: _uploadedImageUrl,
+        category: 'Tenun',
         stock: int.tryParse(_stockController.text) ?? 0,
         soldCount: 0,
         viewCount: 0,
@@ -124,15 +170,31 @@ class _AddProductPageState extends State<AddProductPage> {
                 children: [
                   Expanded(
                     flex: 1,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[400],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Center(
-                        child: Icon(Icons.add_a_photo, color: Colors.white),
-                      ),
-                    ),
+                    child: _selectedImage != null
+                        ? Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              image: DecorationImage(
+                                image: FileImage(_selectedImage!),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          )
+                        : GestureDetector(
+                            onTap: _pickImage,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.grey[400],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.add_a_photo,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -230,7 +292,7 @@ class _AddProductPageState extends State<AddProductPage> {
 
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: _isSaving ? null : _saveProduct,
+              onPressed: _isSaving ? null : _saveProductWithUpload,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF616161),
                 shape: RoundedRectangleBorder(

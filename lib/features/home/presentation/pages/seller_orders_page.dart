@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/seller_repository.dart';
 import '../../data/models/order_model.dart';
 import 'package:intl/intl.dart';
+import 'dart:io';
+import '../../../../core/services/storage_service.dart';
 
 class SellerOrdersPage extends StatefulWidget {
   const SellerOrdersPage({super.key});
@@ -589,8 +591,67 @@ class _TrackingNumberDialog extends StatefulWidget {
 
 class _TrackingNumberDialogState extends State<_TrackingNumberDialog> {
   final TextEditingController _controller = TextEditingController();
-  // ignore: unused_field
-  String? _evidenceUrl; // Placeholder for now
+  final StorageService _storageService = StorageService();
+  File? _evidenceImage;
+  String? _evidenceUrl;
+  bool _isUploading = false;
+
+  Future<void> _pickImage() async {
+    try {
+      final File? image = await _storageService.pickImage();
+      if (image != null) {
+        setState(() {
+          _evidenceImage = image;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal mengambil gambar: $e')));
+      }
+    }
+  }
+
+  Future<String?> _uploadImage(File image) async {
+    try {
+      return await _storageService.uploadImage('shipping_evidence', image);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal mengupload gambar: $e')));
+      }
+      return null;
+    }
+  }
+
+  Future<void> _submit() async {
+    if (_controller.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Nomor Resi harus diisi')));
+      return;
+    }
+
+    setState(() => _isUploading = true);
+
+    try {
+      if (_evidenceImage != null) {
+        final url = await _uploadImage(_evidenceImage!);
+        if (url == null) {
+          setState(() => _isUploading = false);
+          return;
+        }
+        _evidenceUrl = url;
+      }
+
+      widget.onSaved(_controller.text, _evidenceUrl);
+      if (mounted) Navigator.pop(context);
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -674,29 +735,29 @@ class _TrackingNumberDialogState extends State<_TrackingNumberDialog> {
             ),
             const SizedBox(height: 4),
             GestureDetector(
-              onTap: () {
-                // TODO: Implement image picker
-                // For now just show a snackbar or print
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Fitur upload foto belum tersedia'),
-                  ),
-                );
-              },
+              onTap: _pickImage,
               child: Container(
                 height: 100,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: const Color(0xFFE0E0E0),
                   borderRadius: BorderRadius.circular(20),
+                  image: _evidenceImage != null
+                      ? DecorationImage(
+                          image: FileImage(_evidenceImage!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: Center(
-                  child: Icon(
-                    Icons.image_outlined,
-                    size: 40,
-                    color: Colors.black45,
-                  ),
-                ),
+                child: _evidenceImage == null
+                    ? const Center(
+                        child: Icon(
+                          Icons.image_outlined,
+                          size: 40,
+                          color: Colors.black45,
+                        ),
+                      )
+                    : null,
               ),
             ),
 
@@ -729,15 +790,7 @@ class _TrackingNumberDialogState extends State<_TrackingNumberDialog> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: GestureDetector(
-                    onTap: () {
-                      if (_controller.text.isNotEmpty) {
-                        widget.onSaved(
-                          _controller.text,
-                          null, // TODO: Pass actual image URL
-                        );
-                        Navigator.pop(context);
-                      }
-                    },
+                    onTap: _isUploading ? null : _submit,
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
@@ -745,13 +798,19 @@ class _TrackingNumberDialogState extends State<_TrackingNumberDialog> {
                         borderRadius: BorderRadius.circular(25),
                       ),
                       alignment: Alignment.center,
-                      child: Text(
-                        'Simpan',
-                        style: GoogleFonts.poppins(
-                          color: Colors.black87,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: _isUploading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(
+                              'Simpan',
+                              style: GoogleFonts.poppins(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
                 ),

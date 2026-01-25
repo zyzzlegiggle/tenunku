@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:io';
 import '../../data/repositories/buyer_repository.dart';
 import '../../data/models/order_model.dart';
+import '../../../../core/services/storage_service.dart';
 
 class SubmitReviewPage extends StatefulWidget {
   const SubmitReviewPage({super.key});
@@ -14,6 +16,7 @@ class SubmitReviewPage extends StatefulWidget {
 
 class _SubmitReviewPageState extends State<SubmitReviewPage> {
   final BuyerRepository _repository = BuyerRepository();
+  final StorageService _storageService = StorageService();
   List<OrderModel> _ordersNeedingReview = [];
   bool _isLoading = true;
   OrderModel? _selectedOrder;
@@ -22,6 +25,7 @@ class _SubmitReviewPageState extends State<SubmitReviewPage> {
   int _rating = 0;
   final _commentController = TextEditingController();
   bool _isSubmitting = false;
+  File? _imageFile;
 
   @override
   void initState() {
@@ -43,6 +47,23 @@ class _SubmitReviewPageState extends State<SubmitReviewPage> {
     });
   }
 
+  Future<void> _pickImage() async {
+    try {
+      final File? image = await _storageService.pickImage();
+      if (image != null) {
+        setState(() {
+          _imageFile = image;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal mengambil gambar: $e')));
+      }
+    }
+  }
+
   Future<void> _submitReview() async {
     if (_selectedOrder == null || _rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -57,6 +78,15 @@ class _SubmitReviewPageState extends State<SubmitReviewPage> {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) return;
 
+      String? imageUrl;
+      if (_imageFile != null) {
+        imageUrl = await _storageService.uploadImage(
+          'reviews', // Ensure 'reviews' bucket exists
+          _imageFile!,
+          path: '$userId/${DateTime.now().millisecondsSinceEpoch}.jpg',
+        );
+      }
+
       await _repository.submitReview(
         productId: _selectedOrder!.productId,
         userId: userId,
@@ -65,6 +95,7 @@ class _SubmitReviewPageState extends State<SubmitReviewPage> {
         comment: _commentController.text.trim().isNotEmpty
             ? _commentController.text.trim()
             : null,
+        imageUrl: imageUrl, // Pass image URL
       );
 
       if (mounted) {
@@ -80,7 +111,7 @@ class _SubmitReviewPageState extends State<SubmitReviewPage> {
         ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
-      setState(() => _isSubmitting = false);
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -330,13 +361,38 @@ class _SubmitReviewPageState extends State<SubmitReviewPage> {
                         children: [
                           // Foto Button
                           Expanded(
-                            child: _buildMediaButton(
-                              icon: Icons.photo_camera_outlined,
-                              label: 'Foto',
-                              onTap: () {
-                                // TODO: Implement photo picker
-                              },
-                            ),
+                            child: _imageFile != null
+                                ? Stack(
+                                    alignment: Alignment.topRight,
+                                    children: [
+                                      Container(
+                                        height: 100,
+                                        width: double.infinity,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          image: DecorationImage(
+                                            image: FileImage(_imageFile!),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                        ),
+                                        onPressed: () =>
+                                            setState(() => _imageFile = null),
+                                      ),
+                                    ],
+                                  )
+                                : _buildMediaButton(
+                                    icon: Icons.photo_camera_outlined,
+                                    label: 'Foto',
+                                    onTap: _pickImage,
+                                  ),
                           ),
                           const SizedBox(width: 12),
                           // Video Button

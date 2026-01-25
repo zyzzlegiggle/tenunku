@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:io';
 import '../../data/repositories/buyer_repository.dart';
 import '../../data/models/profile_model.dart';
+import '../../../../core/services/storage_service.dart';
 
 class BuyerEditProfilePage extends StatefulWidget {
   const BuyerEditProfilePage({super.key});
@@ -14,6 +16,7 @@ class BuyerEditProfilePage extends StatefulWidget {
 
 class _BuyerEditProfilePageState extends State<BuyerEditProfilePage> {
   final BuyerRepository _repository = BuyerRepository();
+  final StorageService _storageService = StorageService();
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
@@ -24,6 +27,7 @@ class _BuyerEditProfilePageState extends State<BuyerEditProfilePage> {
   String? _selectedGender;
   DateTime? _birthDate;
   Profile? _profile;
+  File? _avatarFile;
   bool _isLoading = true;
   bool _isSaving = false;
 
@@ -40,14 +44,35 @@ class _BuyerEditProfilePageState extends State<BuyerEditProfilePage> {
     final profile = await _repository.getProfile(userId);
     final email = Supabase.instance.client.auth.currentUser?.email;
 
-    setState(() {
-      _profile = profile;
-      _nameController.text = profile?.fullName ?? '';
-      _bioController.text = profile?.description ?? '';
-      _phoneController.text = profile?.phone ?? '';
-      _emailController.text = email ?? '';
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _profile = profile;
+        _nameController.text = profile?.fullName ?? '';
+        _bioController.text =
+            profile?.description ??
+            ''; // using description as bio based on previous page logic
+        _phoneController.text = profile?.phone ?? '';
+        _emailController.text = email ?? '';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _pickAvatar() async {
+    try {
+      final File? image = await _storageService.pickImage();
+      if (image != null) {
+        setState(() {
+          _avatarFile = image;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal mengambil gambar: $e')));
+      }
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -59,13 +84,24 @@ class _BuyerEditProfilePageState extends State<BuyerEditProfilePage> {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) return;
 
+      String? avatarUrl = _profile?.avatarUrl;
+
+      // Upload new avatar if selected
+      if (_avatarFile != null) {
+        avatarUrl = await _storageService.uploadImage(
+          'avatars',
+          _avatarFile!,
+          path: '$userId/avatar.jpg',
+        );
+      }
+
       final updatedProfile = Profile(
         id: userId,
         fullName: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
         description: _bioController.text.trim(),
         age: _profile?.age,
-        avatarUrl: _profile?.avatarUrl,
+        avatarUrl: avatarUrl,
         dailyActivity: _profile?.dailyActivity,
         hope: _profile?.hope,
         role: _profile?.role,
@@ -87,7 +123,7 @@ class _BuyerEditProfilePageState extends State<BuyerEditProfilePage> {
         ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
-      setState(() => _isSaving = false);
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -147,53 +183,61 @@ class _BuyerEditProfilePageState extends State<BuyerEditProfilePage> {
             children: [
               // Avatar Section
               Center(
-                child: Stack(
-                  children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFFE0E0E0),
-                        border: Border.all(color: Colors.white, width: 3),
-                      ),
-                      child: _profile?.avatarUrl != null
-                          ? ClipOval(
-                              child: Image.network(
-                                _profile!.avatarUrl!,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          : const Icon(
-                              Icons.person,
-                              size: 50,
-                              color: Color(0xFF9E9E9E),
-                            ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF424242),
+                child: GestureDetector(
+                  onTap: _pickAvatar,
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
+                          color: const Color(0xFFE0E0E0),
+                          border: Border.all(color: Colors.white, width: 3),
                         ),
-                        child: const Icon(
-                          Icons.camera_alt,
-                          size: 18,
-                          color: Colors.white,
+                        child: _avatarFile != null
+                            ? ClipOval(
+                                child: Image.file(
+                                  _avatarFile!,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : _profile?.avatarUrl != null
+                            ? ClipOval(
+                                child: Image.network(
+                                  _profile!.avatarUrl!,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.person,
+                                size: 50,
+                                color: Color(0xFF9E9E9E),
+                              ),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF424242),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            size: 18,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
               TextButton(
-                onPressed: () {
-                  // Upload photo functionality
-                },
+                onPressed: _pickAvatar,
                 child: Text(
                   'Ubah',
                   style: GoogleFonts.poppins(
