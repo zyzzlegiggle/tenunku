@@ -1,53 +1,107 @@
-# Tenunku
+# TENUNku
 
-Tenunku is a mobile application for buying and selling traditional woven fabrics (Tenun), designed to support local artisans and preserve Indonesian culture. This application is built using Flutter.
+A Flutter mobile app connecting traditional Indonesian weavers (penenun) with buyers, preserving cultural heritage while supporting local artisans.
 
-## Features
-
-*   **Authentication Flow:**
-    *   **Landing Page:** Entry point for users to choose between Login and Register.
-    *   **Role-Based Login/Register:** Separate flows for Buyers (Pembeli) and Sellers (Penjual).
-    *   **OTP Verification:** Secure verification step during registration.
-*   **Home Page:**
-    *   **Welcome Dialog:** A popup promoting the preservation of culture.
-    *   **Custom Navigation:** Unique bottom navigation bar with a premium design.
-    *   **Modern UI:** Clean, grayscale aesthetic with focus on usability.
+## Tech Stack
+- **Flutter** - Cross-platform mobile framework
+- **Supabase** - Backend (Auth, Database, Realtime, Storage)
+- **GoRouter** - Navigation
+- **Google Fonts** - Typography (Poppins)
 
 ## Getting Started
 
-### Prerequisites
+```bash
+# Install dependencies
+flutter pub get
 
-*   [Flutter SDK](https://flutter.dev/docs/get-started/install) installed.
-*   An Android or iOS emulator, or a physical device connected.
+# Run the app
+flutter run
+```
 
-### Installation
+### Supabase Setup
+1. Create a Supabase project
+2. Run `schema.sql` in the SQL Editor
+3. Update credentials in `lib/main.dart`
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/yourusername/tenunku.git
-    cd tenunku
-    ```
+## Features
 
-2.  **Install dependencies:**
-    ```bash
-    flutter pub get
-    ```
+### ✅ Implemented
 
-3.  **Run the app:**
-    ```bash
-    flutter run
-    ```
+**Authentication**
+- Login/Register with email
+- OTP verification
+- Role-based access (Pembeli/Penenun)
+
+**Buyer (Pembeli)**
+- Home page with product browsing
+- Product detail modal with seller info
+- Cart & checkout flow
+- Favorites, Recently Viewed, Buy Again
+- Submit product reviews
+- Settings (Account, Address, Help Center, Notifications)
+
+**Seller (Penenun)**
+- Dashboard with profile
+- Product management (Add/Edit/Delete)
+- Order management (Accept/Reject/Ship)
+- Real-time chat with buyers
+- Profile editing
+
+**Educational Content**
+- Benang Membumi (weaving techniques)
+- Untaian Tenunan (weaving stories)
+
+---
+
+## 🚧 TODO / Not Yet Implemented
+
+### Buyer Features
+- [ ] Photo/video upload in reviews
+- [ ] Notification settings persistence
+- [ ] Language preference saving
+- [ ] Change password functionality
+- [ ] Edit profile fields (username, phone, email)
+- [ ] Change primary address
+- [ ] Order tracking page
+- [ ] Home page banner, categories, highlights (placeholders)
+
+### Seller Features
+- [ ] Real seller statistics (sold count, visits, reviews)
+- [ ] Share profile functionality
+- [ ] Shipping evidence image upload
+- [ ] Notification settings persistence
+- [ ] Product filtering logic
+- [ ] Address editing
+
+### Chat
+- [ ] Image/file attachments
+- [ ] Push notifications
+
+### System
+- [ ] Payment gateway integration
+- [ ] Forgot password flow
+- [ ] Onboarding skip/persistence
+- [ ] Search history
+- [ ] Similar products recommendation
+- [ ] Multiple product images
+- [ ] Push notifications (FCM)
+
+---
 
 ## Project Structure
 
-*   `lib/main.dart`: Application entry point.
-*   `lib/router.dart`: Navigation configuration (GoRouter).
-*   `lib/theme.dart`: Application styling and theme configuration.
-*   `lib/features/`: Feature-based directory structure (Auth, Home, etc.).
+```
+lib/
+├── features/
+│   ├── auth/           # Authentication
+│   └── home/           # Main app features
+│       ├── data/       # Models & repositories
+│       └── presentation/
+│           ├── pages/  # Screen widgets
+│           └── widgets/# Reusable components
+├── router.dart         # GoRouter configuration
+└── main.dart           # App entry point
+```
 
-## Technologies Used
-
-*   **Flutter:** cross-platform UI toolkit.
-*   **GoRouter:** Declarative routing.
-*   **Google Fonts:** Custom typography (Poppins).
-*   **Provider:** (Planned) State management.
+## Database Schema
+See `schema.sql` for complete Supabase table definitions.
