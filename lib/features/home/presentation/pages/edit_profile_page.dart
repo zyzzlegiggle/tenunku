@@ -264,16 +264,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                     _nameController,
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
+                                    hintText: 'Nama Penenun',
                                   ),
                                   _buildHeaderInput(
                                     _shopNameController,
                                     fontSize: 14,
+                                    hintText: 'Nama Toko',
                                   ),
                                   const SizedBox(height: 8),
                                   _buildHeaderInput(
                                     _descriptionController,
                                     fontSize: 10,
                                     maxLines: 5,
+                                    hintText:
+                                        'Lorem ipsum dolor sit amet, consectetur adipiscing elit...',
                                   ),
                                 ],
                               ),
@@ -305,9 +309,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
                   // Sections
                   const SizedBox(height: 16),
-                  _buildSectionCard('Kisah', _storyController),
-                  _buildSectionCard('Harapan', _hopeController),
-                  _buildSectionCard('Keseharian', _dailyController),
+                  _buildSectionCard(
+                    'Kisah',
+                    _storyController,
+                    'Saya mulai belajar menenun sejak usia 9 tahun dari ibu saya. Menenun bukan hanya pekerjaan, tetapi juga cara saya berkontribusi untuk keluarga...',
+                  ),
+                  _buildSectionCard(
+                    'Harapan',
+                    _hopeController,
+                    'Saya berharap tenun, khususnya tenun Badui, dapat dikenal di seluruh dunia...',
+                  ),
+                  _buildSectionCard(
+                    'Keseharian',
+                    _dailyController,
+                    'Pagi hari saya mulai dengan berdoa, lalu mengumpulkan benang dan mempersiapkan alat tenun...',
+                  ),
 
                   // Data Diri Section
                   Padding(
@@ -415,32 +431,40 @@ class _EditProfilePageState extends State<EditProfilePage> {
     double fontSize = 14,
     FontWeight fontWeight = FontWeight.normal,
     int maxLines = 1,
+    String hintText = 'Edit...',
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.black12,
-        borderRadius: BorderRadius.circular(4),
-      ),
+      // Removed decoration (background color) to match design
       child: TextField(
         controller: controller,
         style: GoogleFonts.poppins(
           fontSize: fontSize,
           fontWeight: fontWeight,
-          color: Colors.black87,
+          color: Colors.white, // Changed to white
         ),
         maxLines: maxLines,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           isDense: true,
           contentPadding: EdgeInsets.zero,
           border: InputBorder.none,
+          hintText: hintText, // Specific hint text
+          hintStyle: GoogleFonts.poppins(
+            fontSize: fontSize,
+            fontWeight: fontWeight,
+            color: Colors.white54,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSectionCard(String title, TextEditingController controller) {
+  Widget _buildSectionCard(
+    String title,
+    TextEditingController controller,
+    String placeholder,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
@@ -462,22 +486,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
             ),
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(
-                  0xFFE0E0E0,
-                ), // Light grey text area background
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TextField(
-                controller: controller,
-                style: GoogleFonts.poppins(fontSize: 12, color: Colors.black87),
-                maxLines: null, // Allow multiline
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.zero,
+            // Removed inner container with background color
+            TextField(
+              controller: controller,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.white,
+              ), // Changed to white
+              maxLines: null, // Allow multiline
+              decoration: InputDecoration(
+                // Added hint
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+                hintText: placeholder,
+                hintStyle: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.white54,
                 ),
               ),
             ),
@@ -494,7 +519,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
         text,
         style: GoogleFonts.poppins(
           fontSize: 12,
-          color: Colors.white,
+          color: Colors
+              .white, // Text inside Data Diri section is on grey, so white is good
           fontWeight: FontWeight.w500,
         ),
       ),
