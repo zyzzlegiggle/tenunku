@@ -44,6 +44,8 @@ import 'features/home/data/models/cart_item_model.dart';
 import 'features/home/data/models/profile_model.dart';
 
 import 'features/home/presentation/pages/buyer_chat_page.dart';
+import 'features/home/presentation/pages/seller_chat_detail_page.dart';
+import 'features/home/data/models/conversation_model.dart';
 
 final router = GoRouter(
   initialLocation: '/',
@@ -162,6 +164,17 @@ final router = GoRouter(
     GoRoute(
       path: '/seller/product/add',
       builder: (context, state) => const AddProductPage(),
+    ),
+    GoRoute(
+      path: '/seller/product/add',
+      builder: (context, state) => const AddProductPage(),
+    ),
+    GoRoute(
+      path: '/seller/chat/detail',
+      builder: (context, state) {
+        final conversation = state.extra as ConversationModel;
+        return SellerChatDetailPage(conversation: conversation);
+      },
     ),
     // Buyer Account Routes
     GoRoute(

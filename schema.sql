@@ -417,3 +417,67 @@ create policy "Users can update their own cart items."
 create policy "Users can remove items from their cart."
   on cart_items for delete
   using (auth.uid() = buyer_id);
+
+-- Functions to safely update product counters (bypassing RLS)
+create or replace function public.increment_view_count(p_product_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.products
+  set view_count = view_count + 1
+  where id = p_product_id;
+end;
+$$;
+
+create or replace function public.increment_sold_count(p_product_id uuid, p_quantity int)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.products
+  set sold_count = sold_count + p_quantity
+  where id = p_product_id;
+end;
+$$;
+
+create or replace function public.decrement_stock(p_product_id uuid, p_quantity int)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.products
+  set stock = stock - p_quantity
+  where id = p_product_id;
+end;
+$$;
+
+create or replace function public.update_product_rating(p_product_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_avg_rating numeric;
+  v_total_reviews int;
+begin
+  -- Calculate new stats
+  select coalesce(avg(rating), 0), count(*)
+  into v_avg_rating, v_total_reviews
+  from public.reviews
+  where product_id = p_product_id;
+
+  -- Update product
+  update public.products
+  set average_rating = v_avg_rating,
+      total_reviews = v_total_reviews
+  where id = p_product_id;
+end;
+$$;

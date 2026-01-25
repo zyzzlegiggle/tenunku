@@ -368,12 +368,24 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
                   ],
                 )
               else if (_selectedStatus == 'shipping')
-                _buildActionButton(
-                  'Masukan Resi',
-                  onTap: () {
-                    _showTrackingDialog(order);
-                  },
-                  isPrimary: false,
+                Row(
+                  children: [
+                    _buildActionButton(
+                      'Masukan Resi',
+                      onTap: () {
+                        _showTrackingDialog(order);
+                      },
+                      isPrimary: false,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      'Selesaikan',
+                      onTap: () {
+                        _updateStatus(order.id, 'completed');
+                      },
+                      isPrimary: true,
+                    ),
+                  ],
                 ),
             ],
           ),

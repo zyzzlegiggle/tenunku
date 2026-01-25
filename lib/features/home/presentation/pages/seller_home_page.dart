@@ -29,6 +29,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
   };
   bool _isLoading = true;
   String _selectedSort = 'Terbaru'; // Default sort
+  String _selectedFilter = 'Aktif'; // Default filter
 
   @override
   void initState() {
@@ -55,6 +56,15 @@ class _SellerHomePageState extends State<SellerHomePage> {
     } else {
       setState(() => _isLoading = false);
     }
+  }
+
+  List<Product> get _filteredAndSortedProducts {
+    // Apply Filter
+    if (_selectedFilter == 'Disembunyikan') {
+      return [];
+    }
+    // _products is already sorted by _sortProducts
+    return List.from(_products);
   }
 
   void _sortProducts() {
@@ -119,6 +129,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             _buildNavItem('Beranda', 0),
             _buildNavItem('Produk', 1),
@@ -518,9 +529,11 @@ class _SellerHomePageState extends State<SellerHomePage> {
   // We retain _buildProductView and others for other tabs.
 
   Widget _buildProductView() {
+    final displayProducts = _filteredAndSortedProducts;
+
     return Column(
       children: [
-        // Filter Bar - Keep original design for Product Tab
+        // Filter Bar
         Container(
           width: double.infinity,
           color: const Color(0xFF757575),
@@ -539,12 +552,17 @@ class _SellerHomePageState extends State<SellerHomePage> {
                   ),
                   child: const Icon(Icons.filter_list, color: Colors.black87),
                 ),
-                const SizedBox(width: 12),
-                _buildFilterChip('Aktif', isSelected: true),
+                Container(
+                  height: 40, // Height of the separator line
+                  margin: const EdgeInsets.symmetric(horizontal: 12),
+                  width: 1,
+                  color: Colors.white54,
+                ),
+                _buildFilterTab('Aktif'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Disembunyikan'),
+                _buildFilterTab('Disembunyikan'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Ulasan Terbanyak'),
+                _buildFilterTab('Ulasan Terbanyak', isSort: true),
               ],
             ),
           ),
@@ -565,14 +583,20 @@ class _SellerHomePageState extends State<SellerHomePage> {
                     color: const Color(0xFFE0E0E0),
                     borderRadius: BorderRadius.circular(25),
                   ),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Cari Produk',
-                      hintStyle: GoogleFonts.poppins(color: Colors.grey),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.only(bottom: 2),
-                    ),
-                    style: GoogleFonts.poppins(color: Colors.black87),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Cari Produk',
+                            hintStyle: GoogleFonts.poppins(color: Colors.grey),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.only(bottom: 2),
+                          ),
+                          style: GoogleFonts.poppins(color: Colors.black87),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -589,7 +613,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
               children: [
-                if (_products.isEmpty)
+                if (displayProducts.isEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 40),
                     child: Text(
@@ -598,7 +622,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
                     ),
                   )
                 else
-                  ..._products.map(
+                  ...displayProducts.map(
                     (product) => Column(
                       children: [
                         _buildProductCard(product),
@@ -612,6 +636,58 @@ class _SellerHomePageState extends State<SellerHomePage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildFilterTab(String label, {bool isSort = false}) {
+    bool isSelected;
+    if (isSort) {
+      isSelected = _selectedSort == label;
+    } else {
+      isSelected = _selectedFilter == label;
+    }
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          if (isSort) {
+            // Toggle sort or set sort
+            if (_selectedSort == label) {
+              _selectedSort = 'Terbaru'; // Toggle off returns to default
+            } else {
+              _selectedSort = label;
+            }
+          } else {
+            _selectedFilter = label;
+          }
+          _sortProducts();
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFFE0E0E0)
+              : Colors
+                    .transparent, // Active: Light Grey/White-ish, Inactive: Transparent
+          borderRadius: BorderRadius.circular(20),
+          // border: Border.all(color: Colors.transparent),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: isSelected
+                ? Colors.black87
+                : Colors
+                      .black87, // Always black text in screenshot? Or maybe white on dark?
+            // Screenshot: Active 'Aktif' is Light bg, black text. 'Disembunyikan' is Dark bg, Black text?
+            // Actually 'Disembunyikan' looks like it has same grey bg as bar, text is black.
+            // Let's assume Inactive text is Black.
+          ),
+        ),
+      ),
     );
   }
 
@@ -672,26 +748,6 @@ class _SellerHomePageState extends State<SellerHomePage> {
     );
   }
 
-  Widget _buildFilterChip(String label, {bool isSelected = false}) {
-    // This is for the Product Tab filter chips, kept separate for now or reused?
-    // The screenshot re-uses the style.
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.poppins(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-        ),
-      ),
-    );
-  }
-
   Widget _buildProductCard(Product product) {
     return Container(
       width: double.infinity,
@@ -703,64 +759,72 @@ class _SellerHomePageState extends State<SellerHomePage> {
         borderRadius: BorderRadius.circular(24),
         child: Column(
           children: [
+            // Top Part: Light Grey
             Container(
               color: const Color(0xFFE0E0E0),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.all(20),
+              child: Stack(
                 children: [
-                  Text(
-                    product.name,
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          right: 30,
+                        ), // Space for star if needed
                         child: Text(
-                          product.description ?? '',
+                          product.name,
                           style: GoogleFonts.poppins(
-                            fontSize: 12,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                             color: Colors.black87,
                           ),
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      if (product.averageRating > 0)
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              size: 16,
-                              color: Colors.black87,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              product.averageRating.toStringAsFixed(1),
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 24),
+                      Text(
+                        product.description ?? '',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.black87,
                         ),
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 16),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  // Rating Star at Bottom Right of top section
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.star,
+                          size: 16,
+                          color: Color(0xFF424242),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          product.averageRating.toStringAsFixed(1),
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF424242),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
+            // Bottom Part: Darker Grey
             Container(
-              color: const Color(0xFFAAAAAA),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: const Color(0xFF9E9E9E), // Darker grey
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -780,7 +844,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
                       Text(
                         'Stok ${product.stock} Helai',
                         style: GoogleFonts.poppins(
-                          fontSize: 14,
+                          fontSize: 12,
                           color: Colors.black87,
                         ),
                       ),
@@ -824,32 +888,46 @@ class _SellerHomePageState extends State<SellerHomePage> {
 
   Widget _buildNavItem(String label, int index) {
     final bool isActive = _currentIndex == index;
+
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
       child: Container(
         color: Colors.transparent,
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Container(
-              width: 55,
-              height: 55,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutBack,
+              width: isActive ? 80 : 55,
+              height: isActive ? 80 : 55,
               decoration: BoxDecoration(
                 color: const Color(0xFF9E9E9E),
                 shape: BoxShape.circle,
                 border: isActive
                     ? Border.all(color: Colors.black54, width: 2)
                     : null,
+                boxShadow: isActive
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
+                    : null,
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              label,
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 color: Colors.black87,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
               ),
+              child: Text(label),
             ),
           ],
         ),

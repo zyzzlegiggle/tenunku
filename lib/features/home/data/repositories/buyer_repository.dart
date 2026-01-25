@@ -88,6 +88,12 @@ class BuyerRepository {
   }
 
   Future<void> trackProductView(String userId, String productId) async {
+    // Increment total view count
+    await _supabase.rpc(
+      'increment_view_count',
+      params: {'p_product_id': productId},
+    );
+
     // Use upsert to update viewed_at if already exists, or insert if new
     await _supabase.from('recently_viewed').upsert({
       'user_id': userId,
@@ -170,27 +176,11 @@ class BuyerRepository {
       'video_url': videoUrl,
     });
 
-    // Update product average rating
-    final reviews = await _supabase
-        .from('reviews')
-        .select('rating')
-        .eq('product_id', productId);
-
-    if ((reviews as List).isNotEmpty) {
-      final totalRating = reviews.fold<int>(
-        0,
-        (sum, r) => sum + (r['rating'] as int),
-      );
-      final avgRating = totalRating / reviews.length;
-
-      await _supabase
-          .from('products')
-          .update({
-            'average_rating': avgRating,
-            'total_reviews': reviews.length,
-          })
-          .eq('id', productId);
-    }
+    // Update product average rating using RPC
+    await _supabase.rpc(
+      'update_product_rating',
+      params: {'p_product_id': productId},
+    );
   }
 
   // ==================== ORDER METHODS ====================
@@ -230,6 +220,12 @@ class BuyerRepository {
       'total_price': totalPrice,
       'status': 'pending',
     });
+
+    // Increment sold count
+    await _supabase.rpc(
+      'increment_sold_count',
+      params: {'p_product_id': productId, 'p_quantity': quantity},
+    );
   }
 
   // ==================== CART METHODS ====================
@@ -311,21 +307,10 @@ class BuyerRepository {
   }
 
   Future<void> decrementStock(String productId, int quantity) async {
-    // Get current stock first to be safe (or rely on DB constraints if check constraint exists)
-    // We'll just decrement.
-    // RPC is better but for now:
-    final product = await _supabase
-        .from('products')
-        .select('stock')
-        .eq('id', productId)
-        .single();
-    final currentStock = product['stock'] as int;
-    final newStock = currentStock - quantity;
-
-    await _supabase
-        .from('products')
-        .update({'stock': newStock})
-        .eq('id', productId);
+    await _supabase.rpc(
+      'decrement_stock',
+      params: {'p_product_id': productId, 'p_quantity': quantity},
+    );
   }
 
   // ==================== CHAT METHODS ====================
