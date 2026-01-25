@@ -44,6 +44,7 @@ create table public.products (
   description text,
   price numeric not null,
   image_url text,
+  image_urls text[],
   category text,
   stock int default 0,
   sold_count int default 0,

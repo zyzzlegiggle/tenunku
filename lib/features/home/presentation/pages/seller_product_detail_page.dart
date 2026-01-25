@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:io';
+import '../../../../core/services/storage_service.dart';
 import '../../data/models/product_model.dart';
 import '../../data/models/review_model.dart';
 import '../../data/repositories/seller_repository.dart';
@@ -19,6 +21,10 @@ class _SellerProductDetailPageState extends State<SellerProductDetailPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final SellerRepository _sellerRepo = SellerRepository();
+  final StorageService _storageService = StorageService();
+
+  List<String> _currentImageUrls = [];
+  final List<File> _newImages = [];
 
   // Form Controllers
   late TextEditingController _nameController;
@@ -38,6 +44,13 @@ class _SellerProductDetailPageState extends State<SellerProductDetailPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+
+    // Initialize image URLs
+    if (widget.product.imageUrls.isNotEmpty) {
+      _currentImageUrls = List.from(widget.product.imageUrls);
+    } else if (widget.product.imageUrl != null) {
+      _currentImageUrls = [widget.product.imageUrl!];
+    }
 
     // Initialize controllers with product data
     _nameController = TextEditingController(text: widget.product.name);
@@ -77,6 +90,50 @@ class _SellerProductDetailPageState extends State<SellerProductDetailPage>
     }
   }
 
+  Future<void> _pickImage() async {
+    try {
+      final File? image = await _storageService.pickImage();
+      if (image != null) {
+        setState(() {
+          _newImages.add(image);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal mengambil gambar: $e')));
+      }
+    }
+  }
+
+  void _removeDetailedImage(int index) {
+    setState(() {
+      if (index < _currentImageUrls.length) {
+        _currentImageUrls.removeAt(index);
+      } else {
+        _newImages.removeAt(index - _currentImageUrls.length);
+      }
+    });
+  }
+
+  Future<List<String>> _uploadNewImages(List<File> images) async {
+    List<String> urls = [];
+    for (var image in images) {
+      try {
+        final url = await _storageService.uploadImage('products', image);
+        urls.add(url);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal mengupload gambar: $e')),
+          );
+        }
+      }
+    }
+    return urls;
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -91,15 +148,36 @@ class _SellerProductDetailPageState extends State<SellerProductDetailPage>
   }
 
   Future<void> _saveChanges() async {
+    if (_currentImageUrls.isEmpty && _newImages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Minimal satu gambar produk wajib diisi')),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
     try {
+      // Upload new images
+      List<String> newUrls = [];
+      if (_newImages.isNotEmpty) {
+        newUrls = await _uploadNewImages(_newImages);
+        if (newUrls.length != _newImages.length) {
+          // Some uploads might have failed, but we continue with what we have
+          // or we could stop. For now continuing.
+        }
+      }
+
+      final allImageUrls = [..._currentImageUrls, ...newUrls];
+      final mainImageUrl = allImageUrls.isNotEmpty ? allImageUrls.first : null;
+
       final updatedProduct = Product(
         id: widget.product.id,
         sellerId: widget.product.sellerId,
         name: _nameController.text,
         description: _descriptionController.text,
         price: double.tryParse(_priceController.text) ?? widget.product.price,
-        imageUrl: widget.product.imageUrl, // Not editing image for now
+        imageUrl: mainImageUrl, // First image as main
+        imageUrls: allImageUrls,
         category: widget.product.category,
         stock: int.tryParse(_stockController.text) ?? widget.product.stock,
         soldCount: widget.product.soldCount,
@@ -199,64 +277,94 @@ class _SellerProductDetailPageState extends State<SellerProductDetailPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Image Placeholders
+                // Image List
                 const SizedBox(height: 8),
                 SizedBox(
                   height: 120,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF757575),
-                            borderRadius: BorderRadius.circular(20),
-                            image: widget.product.imageUrl != null
-                                ? DecorationImage(
-                                    image: NetworkImage(
-                                      widget.product.imageUrl!,
-                                    ),
-                                    fit: BoxFit.cover,
-                                  )
-                                : null,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF757575),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF757575),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.add,
-                                color: Colors.white70,
-                                size: 40,
-                              ),
-                              Text(
-                                "Tambahkan",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _currentImageUrls.length + _newImages.length + 1,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final totalImages =
+                          _currentImageUrls.length + _newImages.length;
+                      if (index == totalImages) {
+                        return GestureDetector(
+                          onTap: _pickImage,
+                          child: Container(
+                            width: 120,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF757575),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.grey[400]!),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.add_a_photo,
                                   color: Colors.white70,
+                                  size: 30,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Tambah',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      ImageProvider imageProvider;
+                      if (index < _currentImageUrls.length) {
+                        imageProvider = NetworkImage(_currentImageUrls[index]);
+                      } else {
+                        imageProvider = FileImage(
+                          _newImages[index - _currentImageUrls.length],
+                        );
+                      }
+
+                      return Stack(
+                        children: [
+                          Container(
+                            width: 120,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              image: DecorationImage(
+                                image: imageProvider,
+                                fit: BoxFit.cover,
+                              ),
+                              border: Border.all(color: Colors.grey[400]!),
+                            ),
+                          ),
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: GestureDetector(
+                              onTap: () => _removeDetailedImage(index),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 16,
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
+                        ],
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 12),

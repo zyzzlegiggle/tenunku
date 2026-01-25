@@ -20,8 +20,8 @@ class _AddProductPageState extends State<AddProductPage> {
   final AuthRepository _authRepo = AuthRepository();
   final StorageService _storageService = StorageService();
 
-  File? _selectedImage;
-  String? _uploadedImageUrl;
+  final List<File> _selectedImages = [];
+  final List<String> _uploadedImageUrls = [];
 
   // Form Controllers
   final TextEditingController _nameController = TextEditingController();
@@ -52,7 +52,7 @@ class _AddProductPageState extends State<AddProductPage> {
       final File? image = await _storageService.pickImage();
       if (image != null) {
         setState(() {
-          _selectedImage = image;
+          _selectedImages.add(image);
         });
       }
     } catch (e) {
@@ -64,17 +64,27 @@ class _AddProductPageState extends State<AddProductPage> {
     }
   }
 
-  Future<String?> _uploadImage(File image) async {
-    try {
-      return await _storageService.uploadImage('products', image);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Gagal mengupload gambar: $e')));
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+  }
+
+  Future<List<String>> _uploadImages(List<File> images) async {
+    List<String> urls = [];
+    for (var image in images) {
+      try {
+        final url = await _storageService.uploadImage('products', image);
+        urls.add(url);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal mengupload gambar: $e')),
+          );
+        }
       }
-      return null;
     }
+    return urls;
   }
 
   Future<void> _saveProductWithUpload() async {
@@ -85,21 +95,31 @@ class _AddProductPageState extends State<AddProductPage> {
       return;
     }
 
+    if (_selectedImages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Minimal satu gambar produk wajib diisi')),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     try {
-      // Upload image if selected
-      if (_selectedImage != null) {
-        final url = await _uploadImage(_selectedImage!);
-        if (url == null) {
-          setState(() => _isSaving = false);
-          return; // Stop if upload fails
-        }
-        _uploadedImageUrl = url;
+      // Upload images
+      final urls = await _uploadImages(_selectedImages);
+      if (urls.isEmpty) {
+        setState(() => _isSaving = false);
+        return; // Stop if upload fails for all images
       }
+      _uploadedImageUrls.addAll(urls);
 
       final user = _authRepo.currentUser;
       if (user == null) throw Exception('User not logged in');
+
+      // Use the first image as the main thumbnail
+      final mainImageUrl = _uploadedImageUrls.isNotEmpty
+          ? _uploadedImageUrls.first
+          : null;
 
       final newProduct = Product(
         id: const Uuid().v4(),
@@ -107,7 +127,8 @@ class _AddProductPageState extends State<AddProductPage> {
         name: _nameController.text,
         description: _descriptionController.text,
         price: double.tryParse(_priceController.text) ?? 0,
-        imageUrl: _uploadedImageUrl,
+        imageUrl: mainImageUrl,
+        imageUrls: _uploadedImageUrls,
         category: 'Tenun',
         stock: int.tryParse(_stockController.text) ?? 0,
         soldCount: 0,
@@ -163,63 +184,81 @@ class _AddProductPageState extends State<AddProductPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Image Placeholders
+            // Image List
             SizedBox(
               height: 120,
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 1,
-                    child: _selectedImage != null
-                        ? Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              image: DecorationImage(
-                                image: FileImage(_selectedImage!),
-                                fit: BoxFit.cover,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _selectedImages.length + 1,
+                separatorBuilder: (context, index) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  if (index == _selectedImages.length) {
+                    return GestureDetector(
+                      onTap: _pickImage,
+                      child: Container(
+                        width: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[400]!),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.add_a_photo,
+                              color: Colors.black54,
+                              size: 30,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Tambah',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: Colors.black54,
                               ),
                             ),
-                          )
-                        : GestureDetector(
-                            onTap: _pickImage,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.grey[400],
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.add_a_photo,
-                                  color: Colors.white,
-                                ),
-                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return Stack(
+                    children: [
+                      Container(
+                        width: 120,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          image: DecorationImage(
+                            image: FileImage(_selectedImages[index]),
+                            fit: BoxFit.cover,
+                          ),
+                          border: Border.all(color: Colors.grey[300]!),
+                        ),
+                      ),
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: GestureDetector(
+                          onTap: () => _removeImage(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 16,
                             ),
                           ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    flex: 1,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[400],
-                        borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    flex: 1,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[400],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Center(
-                        child: Icon(Icons.add, color: Colors.white, size: 30),
-                      ),
-                    ),
-                  ),
-                ],
+                    ],
+                  );
+                },
               ),
             ),
             const SizedBox(height: 24),

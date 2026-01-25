@@ -5,6 +5,7 @@ class Product {
   final String? description;
   final double price;
   final String? imageUrl;
+  final List<String> imageUrls;
   final String? category;
   final int stock;
   final int soldCount;
@@ -23,6 +24,7 @@ class Product {
     this.description,
     required this.price,
     this.imageUrl,
+    this.imageUrls = const [],
     this.category,
     this.stock = 0,
     this.soldCount = 0,
@@ -43,6 +45,9 @@ class Product {
       description: json['description'],
       price: (json['price'] as num).toDouble(),
       imageUrl: json['image_url'],
+      imageUrls: json['image_urls'] != null
+          ? List<String>.from(json['image_urls'])
+          : [],
       category: json['category'],
       stock: json['stock'] ?? 0,
       soldCount: json['sold_count'] ?? 0,
@@ -64,6 +69,7 @@ class Product {
       'description': description,
       'price': price,
       'image_url': imageUrl,
+      'image_urls': imageUrls,
       'category': category,
       'stock': stock,
       'sold_count': soldCount,
