@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/product_model.dart';
 import '../../data/models/profile_model.dart';
+import '../../data/models/cart_item_model.dart';
 import '../../data/repositories/buyer_repository.dart';
 
 /// Shows a bottom sheet modal with product details
@@ -718,45 +719,23 @@ class _CartModalState extends State<_CartModal> {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) return;
 
-    setState(() => _isLoading = true);
+    // Create a temporary CartItem for payment page
+    final cartItem = CartItem(
+      id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
+      buyerId: userId,
+      productId: widget.product.id,
+      sellerId: widget.product.sellerId,
+      quantity: _quantity,
+      createdAt: DateTime.now(),
+      productName: widget.product.name,
+      productImageUrl: widget.product.imageUrl,
+      productPrice: widget.product.price,
+    );
 
-    try {
-      await _buyerRepository.createOrder(
-        buyerId: userId,
-        sellerId: widget.product.sellerId,
-        productId: widget.product.id,
-        quantity: _quantity,
-        totalPrice: _totalPrice,
-      );
-
-      if (mounted) {
-        Navigator.pop(context);
-        Navigator.pop(context); // Also close the product detail modal
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Pesanan berhasil dibuat!',
-              style: GoogleFonts.poppins(),
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Gagal membuat pesanan',
-              style: GoogleFonts.poppins(),
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    // Close modals and navigate to payment page
+    Navigator.pop(context); // Close cart modal
+    Navigator.pop(context); // Close product detail modal
+    context.push('/buyer/payment', extra: [cartItem]);
   }
 
   @override
