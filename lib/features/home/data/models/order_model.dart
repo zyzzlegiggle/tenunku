@@ -15,6 +15,7 @@ class OrderModel {
   final String? buyerName;
   final String? productName;
   final String? productImageUrl;
+  final String? sellerShopName;
 
   OrderModel({
     required this.id,
@@ -31,6 +32,7 @@ class OrderModel {
     this.buyerName,
     this.productName,
     this.productImageUrl,
+    this.sellerShopName,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -52,6 +54,9 @@ class OrderModel {
       productName: json['products'] != null ? json['products']['name'] : null,
       productImageUrl: json['products'] != null
           ? json['products']['image_url']
+          : null,
+      sellerShopName: json['profiles'] != null
+          ? json['profiles']['shop_name']
           : null,
     );
   }

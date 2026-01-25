@@ -155,6 +155,7 @@ class BuyerRepository {
     required int rating,
     String? comment,
     String? imageUrl,
+    String? videoUrl,
   }) async {
     await _supabase.from('reviews').insert({
       'product_id': productId,
@@ -163,6 +164,7 @@ class BuyerRepository {
       'rating': rating,
       'comment': comment,
       'image_url': imageUrl,
+      'video_url': videoUrl,
     });
 
     // Update product average rating

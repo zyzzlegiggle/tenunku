@@ -36,6 +36,9 @@ class _SubmitReviewPageState extends State<SubmitReviewPage> {
     final orders = await _repository.getOrdersNeedingReview(userId);
     setState(() {
       _ordersNeedingReview = orders;
+      if (orders.isNotEmpty) {
+        _selectedOrder = orders.first;
+      }
       _isLoading = false;
     });
   }
@@ -43,9 +46,7 @@ class _SubmitReviewPageState extends State<SubmitReviewPage> {
   Future<void> _submitReview() async {
     if (_selectedOrder == null || _rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pilih produk dan rating terlebih dahulu'),
-        ),
+        const SnackBar(content: Text('Pilih rating terlebih dahulu')),
       );
       return;
     }
@@ -89,31 +90,39 @@ class _SubmitReviewPageState extends State<SubmitReviewPage> {
     super.dispose();
   }
 
+  String _formatPrice(double price) {
+    return price
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]}.',
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF616161),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF424242)),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Beri Penilaian',
           style: GoogleFonts.poppins(
-            color: const Color(0xFF333333),
+            color: Colors.white,
             fontWeight: FontWeight.w600,
+            fontSize: 18,
           ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined, color: Color(0xFF424242)),
-            onPressed: () {
-              // Settings action
-            },
+            icon: const Icon(Icons.settings_outlined, color: Colors.white),
+            onPressed: () {},
           ),
         ],
       ),
@@ -122,48 +131,6 @@ class _SubmitReviewPageState extends State<SubmitReviewPage> {
           : _ordersNeedingReview.isEmpty
           ? _buildEmptyState()
           : _buildReviewForm(),
-      bottomNavigationBar: _selectedOrder != null
-          ? Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitReview,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF424242),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: _isSubmitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        'Kirim',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 16,
-                        ),
-                      ),
-              ),
-            )
-          : null,
     );
   }
 
@@ -195,310 +162,329 @@ class _SubmitReviewPageState extends State<SubmitReviewPage> {
   }
 
   Widget _buildReviewForm() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Info Text
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE0E0E0)),
-            ),
-            child: Row(
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.info_outline,
-                  color: Color(0xFF9E9E9E),
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
+                // Info Banner
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  color: const Color(0xFFF5F5F5),
                   child: Text(
-                    'Beri tahu kami pengalaman belanja untuk meningkatkan kualitas layanan.',
+                    'Nilai produkmu agar kami dapat meningkatkan kualitas kami!',
                     style: GoogleFonts.poppins(
-                      fontSize: 13,
+                      fontSize: 12,
                       color: const Color(0xFF666666),
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
 
-          // Product Selection Header
-          Text(
-            'Pilih Produk',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF333333),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Orders List
-          ...(_ordersNeedingReview.map((order) => _buildOrderCard(order))),
-
-          if (_selectedOrder != null) ...[
-            const SizedBox(height: 24),
-
-            // Rating Section
-            Text(
-              'Beri Penilaian',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF333333),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Star Rating
-            Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) {
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() => _rating = index + 1);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Icon(
-                        index < _rating ? Icons.star : Icons.star_outline,
-                        size: 40,
-                        color: index < _rating
-                            ? const Color(0xFFFFB300)
-                            : const Color(0xFFBDBDBD),
-                      ),
+                // Shop Name Section
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Color(0xFFE0E0E0)),
                     ),
-                  );
-                }),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Comment Section
-            Text(
-              'Tambahkan Foto atau Video',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF333333),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Photo placeholder
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE0E0E0),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: const Color(0xFFBDBDBD),
-                  style: BorderStyle.solid,
-                ),
-              ),
-              child: const Icon(
-                Icons.add_photo_alternate_outlined,
-                color: Color(0xFF9E9E9E),
-                size: 32,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Comment TextArea
-            Text(
-              'Ceritakan pengalamanmu',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF333333),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            TextField(
-              controller: _commentController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: 'Tulis ulasan tentang produk ini...',
-                hintStyle: GoogleFonts.poppins(
-                  color: const Color(0xFF9E9E9E),
-                  fontSize: 14,
-                ),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF424242)),
-                ),
-              ),
-              style: GoogleFonts.poppins(fontSize: 14),
-            ),
-            const SizedBox(height: 16),
-
-            // Additional fields (matching wireframe)
-            _buildInfoField('Catatan', 'Tambahkan catatan untuk penjual'),
-            const SizedBox(height: 12),
-            _buildInfoField('Tinggi/Berat', 'Contoh: 170cm/60kg'),
-          ],
-          const SizedBox(height: 100), // Space for bottom button
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOrderCard(OrderModel order) {
-    final isSelected = _selectedOrder?.id == order.id;
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedOrder = order;
-          _rating = 0;
-          _commentController.clear();
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? const Color(0xFF424242)
-                : const Color(0xFFE0E0E0),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            // Product Image
-            Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE0E0E0),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: order.productImageUrl != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        order.productImageUrl!,
-                        fit: BoxFit.cover,
-                      ),
-                    )
-                  : const Center(
-                      child: Icon(Icons.image, color: Color(0xFF9E9E9E)),
-                    ),
-            ),
-            const SizedBox(width: 12),
-
-            // Product Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    order.productName ?? 'Nama Produk',
+                  ),
+                  child: Text(
+                    _selectedOrder?.sellerShopName ?? 'Nama Toko',
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF333333),
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Rp ${_formatPrice(order.totalPrice)}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: const Color(0xFF666666),
+                ),
+
+                // Product Card
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Color(0xFFE0E0E0)),
                     ),
                   ),
-                ],
-              ),
+                  child: Row(
+                    children: [
+                      // Product Image
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE0E0E0),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: _selectedOrder?.productImageUrl != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  _selectedOrder!.productImageUrl!,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : const Center(
+                                child: Icon(
+                                  Icons.image,
+                                  color: Color(0xFF9E9E9E),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Product Info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _selectedOrder?.productName ?? 'Nama produk',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF333333),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Rp${_formatPrice(_selectedOrder?.totalPrice ?? 0)}',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: const Color(0xFF666666),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Rating Section
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Nilai Produk',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF333333),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: List.generate(5, (index) {
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() => _rating = index + 1);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Icon(
+                                index < _rating
+                                    ? Icons.star
+                                    : Icons.star_border,
+                                size: 32,
+                                color: index < _rating
+                                    ? const Color(0xFF333333)
+                                    : const Color(0xFFBDBDBD),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Divider(height: 1, color: Color(0xFFE0E0E0)),
+
+                // Photo and Video Section
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tambahkan Foto dan Video',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF333333),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          // Foto Button
+                          Expanded(
+                            child: _buildMediaButton(
+                              icon: Icons.photo_camera_outlined,
+                              label: 'Foto',
+                              onTap: () {
+                                // TODO: Implement photo picker
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Video Button
+                          Expanded(
+                            child: _buildMediaButton(
+                              icon: Icons.videocam_outlined,
+                              label: 'Video',
+                              onTap: () {
+                                // TODO: Implement video picker
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Divider(height: 1, color: Color(0xFFE0E0E0)),
+
+                // Experience Text Area
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ceritakan Pengalaman Kamu',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF333333),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: TextField(
+                          controller: _commentController,
+                          maxLines: 4,
+                          decoration: InputDecoration(
+                            hintText: 'Bagikan pengalaman kamu disini',
+                            hintStyle: GoogleFonts.poppins(
+                              color: const Color(0xFF9E9E9E),
+                              fontSize: 13,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.all(12),
+                          ),
+                          style: GoogleFonts.poppins(fontSize: 13),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          '0/1 Karakter',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: const Color(0xFF9E9E9E),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-
-            // Selection indicator
-            if (isSelected)
-              const Icon(
-                Icons.check_circle,
-                color: Color(0xFF424242),
-                size: 24,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoField(String label, String hint) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: const Color(0xFF333333),
           ),
         ),
-        const SizedBox(height: 8),
-        TextField(
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: GoogleFonts.poppins(
-              color: const Color(0xFF9E9E9E),
-              fontSize: 14,
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 12,
-            ),
+
+        // Submit Button
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
           ),
-          style: GoogleFonts.poppins(fontSize: 14),
+          child: ElevatedButton(
+            onPressed: _isSubmitting ? null : _submitReview,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF424242),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: _isSubmitting
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(
+                    'Kirim',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                    ),
+                  ),
+          ),
         ),
       ],
     );
   }
 
-  String _formatPrice(double price) {
-    return price
-        .toStringAsFixed(0)
-        .replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]}.',
-        );
+  Widget _buildMediaButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFE0E0E0)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 28, color: const Color(0xFF666666)),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: const Color(0xFF666666),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

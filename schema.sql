@@ -65,6 +65,7 @@ create table public.reviews (
   rating int check (rating >= 1 and rating <= 5),
   comment text,
   image_url text,  -- Photo review support for "Dengan Foto" filter
+  video_url text,  -- Video review support
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
