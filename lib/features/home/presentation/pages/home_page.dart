@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/onboarding_single_dialog.dart';
 import '../widgets/home_view_body.dart';
 import 'explore_page.dart';
@@ -25,6 +26,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _checkAndShowOnboarding() async {
+    // Check user role first
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      final role = user.userMetadata?['role'];
+      // If user is a seller, do NOT show onboarding, they have their own flow
+      if (role == 'penjual') return;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final onboardingCompleted = prefs.getBool(_onboardingKey) ?? false;
 

@@ -174,7 +174,15 @@ class _SellerHomePageState extends State<SellerHomePage> {
           // Profile Section
           Container(
             width: double.infinity,
-            color: const Color(0xFF9E9E9E), // Darker grey like screenshot
+            decoration: BoxDecoration(
+              color: const Color(0xFF9E9E9E), // Darker grey like screenshot
+              image: _profile?.bannerUrl != null
+                  ? DecorationImage(
+                      image: NetworkImage(_profile!.bannerUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,

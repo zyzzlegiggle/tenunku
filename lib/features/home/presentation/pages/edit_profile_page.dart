@@ -32,6 +32,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   File? _avatarFile;
   String? _avatarUrl;
+  File? _bannerFile;
+  String? _bannerUrl;
   bool _isLoading = false;
 
   @override
@@ -45,19 +47,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
     try {
       final profile = await _sellerRepo.getProfile(_userId);
       if (profile != null) {
-        _nameController.text =
-            profile.fullName ??
-            ''; // Display name logic might differ? using full name for now
+        _nameController.text = profile.fullName ?? '';
         _shopNameController.text = profile.shopName ?? '';
-        _descriptionController.text =
-            profile.bio ?? ''; // Using bio as short description
-        _storyController.text =
-            profile.description ?? ''; // 'Kisah' maps to description
+        _descriptionController.text = profile.bio ?? '';
+        _storyController.text = profile.description ?? '';
         _hopeController.text = profile.hope ?? '';
         _dailyController.text = profile.dailyActivity ?? '';
         _fullNameController.text = profile.fullName ?? '';
         _ageController.text = profile.age?.toString() ?? '';
         _avatarUrl = profile.avatarUrl;
+        _bannerUrl = profile.bannerUrl;
       }
     } catch (e) {
       if (mounted) {
@@ -87,6 +86,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
+  Future<void> _pickBanner() async {
+    try {
+      final File? image = await _storageService.pickImage();
+      if (image != null) {
+        setState(() {
+          _bannerFile = image;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal mengambil banner: $e')));
+      }
+    }
+  }
+
   Future<void> _saveProfile() async {
     setState(() => _isLoading = true);
     try {
@@ -97,53 +113,31 @@ class _EditProfilePageState extends State<EditProfilePage> {
           _avatarFile!,
           path: '$_userId/avatar.jpg',
         );
-        _avatarUrl = url; // Update URL to be saved
+        _avatarUrl = url;
+      }
+
+      // proper upload if banner file exists
+      if (_bannerFile != null) {
+        final url = await _storageService.uploadImage(
+          'banners',
+          _bannerFile!,
+          path: '$_userId/banner.jpg',
+        );
+        _bannerUrl = url;
       }
 
       final updatedProfile = Profile(
         id: _userId,
         fullName: _fullNameController.text,
         shopName: _shopNameController.text,
-        // phone: ... // phone not in UI yet? or strictly auth?
-        bio: _descriptionController
-            .text, // Assuming bio is the short header desc
+        bio: _descriptionController.text,
         description: _storyController.text,
         hope: _hopeController.text,
         dailyActivity: _dailyController.text,
         age: int.tryParse(_ageController.text),
         avatarUrl: _avatarUrl,
+        bannerUrl: _bannerUrl,
       );
-
-      // Warning: ProfileModel definition in previous step might not have 'bio' field if I didn't verify closely.
-      // Checking ProfileModel again...
-      // It has: description, hope, dailyActivity, age.
-      // It DOES NOT have 'bio' in the code I viewed in step 132.
-      // Wait, step 11 viewed schema.sql which has 'bio'.
-      // Step 132 viewed profile_model.dart which has:
-      // fullName, shopName, phone, role, avatarUrl, description, hope, dailyActivity, age.
-      // It MISSES 'bio'.
-      // I should update ProfileModel first or map 'bio' to 'description' and 'story' to something else?
-      // schema.sql: bio text (Short header description), description text ("Kisah")
-      // profile_model.dart: description (likely "Kisah")
-      // It seems ProfileModel is missing 'bio'.
-      // I will proceed but I might need to update ProfileModel.
-      // For now, I'll map _descriptionController (short header) to nothing or skip it?
-      // No, looking at UI, the header description is important.
-      // I should probably fix ProfileModel.
-      // But adhering to "continue where left off" and "first principles", I will just use what is available.
-      // I'll map `_descriptionController` to nothing for now or wait?
-      // Let's check `seller_repository.dart` again. updateProfile takes Profile object.
-      // If Profile model misses it, I can't save it easily via repo without changing model.
-
-      // DECISION: I will assume I should update ProfileModel later or just skip bio for now.
-      // Actually, I can't skip it if I want to "Implement".
-      // Let's add 'bio' to ProfileModel in a separate step?
-      // Or checking if I missed it in view_file.
-      // Step 132 output shows:
-      // class Profile { ... final String? description; ... }
-      // distinct from bio.
-
-      // I will COMMENT OUT bio assignment for now to avoid compilation error, and add a TODO.
 
       await _sellerRepo.updateProfile(updatedProfile);
 
@@ -192,7 +186,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 children: [
                   // Profile Header Section
                   Container(
-                    color: const Color(0xFFAAAAAA),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFAAAAAA),
+                      image: _bannerFile != null
+                          ? DecorationImage(
+                              image: FileImage(_bannerFile!),
+                              fit: BoxFit.cover,
+                            )
+                          : (_bannerUrl != null && _bannerUrl!.isNotEmpty)
+                          ? DecorationImage(
+                              image: NetworkImage(_bannerUrl!),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
                     padding: const EdgeInsets.all(24.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -285,21 +293,24 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF616161),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'Masukan Gambar Banner',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
+                        GestureDetector(
+                          onTap: _pickBanner,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF616161),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Masukan Gambar Banner',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ),
@@ -333,29 +344,48 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     ),
                     child: Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF757575),
-                        borderRadius: BorderRadius.circular(20),
+                        color: Colors
+                            .transparent, // Wrapper is transparent, inner is styled
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Data Diri',
-                            style: GoogleFonts.poppins(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Column(
+                          children: [
+                            // Header
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              color: const Color(
+                                0xFF616161,
+                              ), // Dark Grey Header
+                              child: Text(
+                                'Data Diri',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildLabel('Nama Lengkap'),
-                          _buildRoundedInput(_fullNameController),
-                          const SizedBox(height: 12),
-                          _buildLabel('Umur'),
-                          _buildRoundedInput(_ageController),
-                        ],
+                            // Body
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              color: const Color(0xFFEEEEEE), // Light Grey Body
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildLabel('Nama Lengkap', isDarkText: true),
+                                  _buildRoundedInput(_fullNameController),
+                                  const SizedBox(height: 12),
+                                  _buildLabel('Umur', isDarkText: true),
+                                  _buildRoundedInput(_ageController),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -435,25 +465,28 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      // Removed decoration (background color) to match design
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEEEEEE), // Light Greyish like Keseharian
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: TextField(
         controller: controller,
         style: GoogleFonts.poppins(
           fontSize: fontSize,
           fontWeight: fontWeight,
-          color: Colors.white, // Changed to white
+          color: Colors.black87, // Dark Text
         ),
         maxLines: maxLines,
         decoration: InputDecoration(
           isDense: true,
           contentPadding: EdgeInsets.zero,
           border: InputBorder.none,
-          hintText: hintText, // Specific hint text
+          hintText: hintText,
           hintStyle: GoogleFonts.poppins(
             fontSize: fontSize,
             fontWeight: fontWeight,
-            color: Colors.white54,
+            color: Colors.black38, // Dark Hint
           ),
         ),
       ),
@@ -467,42 +500,46 @@ class _EditProfilePageState extends State<EditProfilePage> {
   ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF757575), // Dark grey from screenshots
-          borderRadius: BorderRadius.circular(20),
-        ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            // Header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              color: const Color(0xFF616161), // Dark Grey Header
+              child: Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
-            const SizedBox(height: 12),
-            // Removed inner container with background color
-            TextField(
-              controller: controller,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.white,
-              ), // Changed to white
-              maxLines: null, // Allow multiline
-              decoration: InputDecoration(
-                // Added hint
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-                hintText: placeholder,
-                hintStyle: GoogleFonts.poppins(
+            // Body
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              color: const Color(0xFFEEEEEE), // Light Grey Body
+              child: TextField(
+                controller: controller,
+                style: GoogleFonts.poppins(
                   fontSize: 12,
-                  color: Colors.white54,
+                  color: Colors.black87, // Black text on light body
+                  height: 1.5,
+                ),
+                maxLines: null,
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                  hintText: placeholder,
+                  hintStyle: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
                 ),
               ),
             ),
@@ -512,15 +549,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildLabel(String text, {bool isDarkText = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4, left: 4),
       child: Text(
         text,
         style: GoogleFonts.poppins(
           fontSize: 12,
-          color: Colors
-              .white, // Text inside Data Diri section is on grey, so white is good
+          color: isDarkText ? Colors.black87 : Colors.white,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -531,12 +567,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFAAAAAA),
+        color: const Color(0xFFEEEEEE), // Light Greyish like Keseharian
         borderRadius: BorderRadius.circular(30),
       ),
       child: TextField(
         controller: controller,
-        style: GoogleFonts.poppins(color: Colors.black87),
+        style: GoogleFonts.poppins(color: Colors.black87), // Dark Text
         decoration: const InputDecoration(border: InputBorder.none),
       ),
     );

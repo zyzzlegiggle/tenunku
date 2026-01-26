@@ -48,9 +48,10 @@ class LandingPage extends StatelessWidget {
               ElevatedButton(
                 onPressed: () => context.push('/login'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF757575), // Dark grey
+                  backgroundColor: const Color(0xFFE0E0E0), // Light grey
+                  foregroundColor: Colors.black54, // Dark text
                   elevation: 5,
-                  shadowColor: Colors.black45,
+                  shadowColor: Colors.black26,
                 ),
                 child: const Text('Masuk'),
               ),
@@ -59,10 +60,10 @@ class LandingPage extends StatelessWidget {
               ElevatedButton(
                 onPressed: () => context.push('/register'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE0E0E0), // Light grey
-                  foregroundColor: Colors.black54, // Dark text
+                  backgroundColor: const Color(0xFF757575), // Dark grey
+                  foregroundColor: Colors.white,
                   elevation: 5,
-                  shadowColor: Colors.black26,
+                  shadowColor: Colors.black45,
                 ),
                 child: const Text('Daftar'),
               ),

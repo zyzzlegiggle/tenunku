@@ -5,6 +5,7 @@ class Profile {
   final String? phone;
   final String? role;
   final String? avatarUrl;
+  final String? bannerUrl;
   final String? bio;
   final String? description;
   final String? hope;
@@ -18,6 +19,7 @@ class Profile {
     this.phone,
     this.role,
     this.avatarUrl,
+    this.bannerUrl,
     this.bio,
     this.description,
     this.hope,
@@ -33,6 +35,7 @@ class Profile {
       phone: json['phone'],
       role: json['role'],
       avatarUrl: json['avatar_url'],
+      bannerUrl: json['banner_url'],
       bio: json['bio'],
       description: json['description'],
       hope: json['hope'],
@@ -49,6 +52,7 @@ class Profile {
       'phone': phone,
       'role': role,
       'avatar_url': avatarUrl,
+      'banner_url': bannerUrl,
       'bio': bio,
       'description': description,
       'hope': hope,

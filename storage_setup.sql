@@ -46,3 +46,18 @@ create policy "Review images are viewable by everyone"
 create policy "Buyers can upload review images"
   on storage.objects for insert
   with check ( bucket_id = 'reviews' and auth.role() = 'authenticated' );
+
+-- Create banners bucket
+insert into storage.buckets (id, name, public)
+values ('banners', 'banners', true)
+on conflict (id) do nothing;
+
+-- Policy: Banners are viewable by everyone
+create policy "Banner images are viewable by everyone"
+  on storage.objects for select
+  using ( bucket_id = 'banners' );
+
+-- Policy: Users can upload their own banner
+create policy "Users can upload their own banner"
+  on storage.objects for insert
+  with check ( bucket_id = 'banners' and auth.uid() = (storage.foldername(name))[1]::uuid );

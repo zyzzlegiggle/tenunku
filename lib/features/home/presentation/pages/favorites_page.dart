@@ -18,8 +18,8 @@ class _FavoritesPageState extends State<FavoritesPage> {
   List<Product> _favorites = [];
   List<Product> _filteredFavorites = [];
   bool _isLoading = true;
-  final _searchController = TextEditingController();
-  String _selectedCategory = 'Semua Kategori';
+  // final _searchController = TextEditingController(); // Removed
+  String _selectedStatus = 'Semua';
 
   @override
   void initState() {
@@ -39,25 +39,25 @@ class _FavoritesPageState extends State<FavoritesPage> {
     });
   }
 
-  void _filterFavorites(String query) {
+  void _filterFavorites() {
     setState(() {
       _filteredFavorites = _favorites.where((product) {
-        final matchesSearch =
-            query.isEmpty ||
-            product.name.toLowerCase().contains(query.toLowerCase());
-        final matchesCategory =
-            _selectedCategory == 'Semua Kategori' ||
-            product.category == _selectedCategory;
-        return matchesSearch && matchesCategory;
+        if (_selectedStatus == 'Semua') return true;
+        // Mock status logic: 'Tersedia' if stock > 0, 'Habis' if stock == 0
+        // Provided Product model has 'stock' field usually? Let's assume stock > 0 is available.
+        // If Product model doesn't have stock revealed here, we might need to update model.
+        // Checking previous context, Product model likely has stock.
+        if (_selectedStatus == 'Tersedia') return product.stock > 0;
+        if (_selectedStatus == 'Tidak Tersedia') return product.stock == 0;
+        return true;
       }).toList();
     });
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -81,75 +81,94 @@ class _FavoritesPageState extends State<FavoritesPage> {
       ),
       body: Column(
         children: [
-          // Search and Filter Section
+          // Filter Section
           Container(
             color: Colors.white,
-            padding: const EdgeInsets.all(16),
-            child: Column(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 12,
+            ), // Increased horizontal padding
+            child: Row(
               children: [
-                // Search Bar
-                TextField(
-                  controller: _searchController,
-                  onChanged: _filterFavorites,
-                  decoration: InputDecoration(
-                    hintText: 'Cari produk favorit...',
-                    hintStyle: GoogleFonts.poppins(
-                      color: const Color(0xFF9E9E9E),
-                      fontSize: 14,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      color: Color(0xFF9E9E9E),
-                    ),
-                    filled: true,
-                    fillColor: const Color(0xFFF5F5F5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                  ),
-                  style: GoogleFonts.poppins(fontSize: 14),
-                ),
-                const SizedBox(height: 12),
-
-                // Category Filter Dropdown
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedCategory,
-                      isExpanded: true,
-                      icon: const Icon(Icons.keyboard_arrow_down),
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF333333),
-                        fontSize: 14,
+                // "Semua" Button
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedStatus = 'Semua';
+                        _filterFavorites();
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: _selectedStatus == 'Semua'
+                            ? const Color(0xFF757575) // Darker Gray Active
+                            : const Color(0xFFF5F5F5), // Light Gray Inactive
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFE0E0E0)),
                       ),
-                      items:
-                          [
-                            'Semua Kategori',
-                            'Kain Tenun',
-                            'Aksesori',
-                            'Pakaian',
-                          ].map((category) {
-                            return DropdownMenuItem(
-                              value: category,
-                              child: Text(category),
-                            );
-                          }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedCategory = value!;
-                          _filterFavorites(_searchController.text);
-                        });
-                      },
+                      child: Text(
+                        'Semua',
+                        style: GoogleFonts.poppins(
+                          color: _selectedStatus == 'Semua'
+                              ? Colors.white
+                              : Colors.black87,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+
+                // "Status" Dropdown
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F5F5), // Light Gray
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFE0E0E0)),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedStatus == 'Semua'
+                            ? null
+                            : _selectedStatus,
+                        hint: Text(
+                          'Status',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        isExpanded: true,
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down,
+                          size: 20,
+                          color: Color(0xFF333333),
+                        ),
+                        style: GoogleFonts.poppins(
+                          color: const Color(0xFF333333),
+                          fontSize: 12,
+                        ),
+                        items: ['Tersedia', 'Tidak Tersedia'].map((status) {
+                          return DropdownMenuItem(
+                            value: status,
+                            child: Text(status),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _selectedStatus = value;
+                              _filterFavorites();
+                            });
+                          }
+                        },
+                      ),
                     ),
                   ),
                 ),
