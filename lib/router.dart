@@ -47,8 +47,30 @@ import 'features/home/presentation/pages/buyer_chat_page.dart';
 import 'features/home/presentation/pages/seller_chat_detail_page.dart';
 import 'features/home/data/models/conversation_model.dart';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 final router = GoRouter(
   initialLocation: '/',
+  redirect: (context, state) {
+    final session = Supabase.instance.client.auth.currentSession;
+    final path = state.uri.path;
+    final isAuthRoute =
+        path == '/' ||
+        path == '/login' ||
+        path == '/register' ||
+        path.startsWith('/otp');
+
+    if (session != null && isAuthRoute) {
+      final user = Supabase.instance.client.auth.currentUser;
+      final role = user?.userMetadata?['role'] ?? 'pembeli';
+      if (role == 'penjual') {
+        return '/seller-home';
+      } else {
+        return '/buyer';
+      }
+    }
+    return null;
+  },
   routes: [
     GoRoute(path: '/', builder: (context, state) => const LandingPage()),
     // Benang Membumi Routes

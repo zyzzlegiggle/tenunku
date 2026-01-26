@@ -92,6 +92,15 @@ class _HomeViewBodyState extends State<HomeViewBody> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
             ),
+            alignment: Alignment.center,
+            child: Text(
+              'dana user',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -99,9 +108,9 @@ class _HomeViewBodyState extends State<HomeViewBody> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildCategoryItem(),
-              _buildCategoryItem(),
-              _buildCategoryItem(),
+              _buildCategoryItem('ikon fitur 1'),
+              _buildCategoryItem('ikon fitur 2'),
+              _buildCategoryItem('ikon fitur 3'),
             ],
           ),
           const SizedBox(height: 32),
@@ -290,7 +299,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
     );
   }
 
-  Widget _buildCategoryItem() {
+  Widget _buildCategoryItem(String label) {
     return Container(
       width: 100,
       height: 100,
@@ -304,6 +313,13 @@ class _HomeViewBodyState extends State<HomeViewBody> {
             offset: const Offset(0, 4),
           ),
         ],
+      ),
+      child: Center(
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(fontSize: 12, color: Colors.black),
+        ),
       ),
     );
   }

@@ -748,6 +748,13 @@ class _SellerHomePageState extends State<SellerHomePage> {
     );
   }
 
+  String _formatPriceWithDots(double price) {
+    return price.toInt().toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
+  }
+
   Widget _buildProductCard(Product product) {
     return Container(
       width: double.infinity,
@@ -762,39 +769,41 @@ class _SellerHomePageState extends State<SellerHomePage> {
             // Top Part: Light Grey
             Container(
               color: const Color(0xFFE0E0E0),
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+              width: double.infinity,
               child: Stack(
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          right: 30,
-                        ), // Space for star if needed
-                        child: Text(
-                          product.name,
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
+                      // Title
                       Text(
-                        product.description ?? '',
+                        product.name,
                         style: GoogleFonts.poppins(
-                          fontSize: 12,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 32),
+                      // Description
+                      Padding(
+                        padding: const EdgeInsets.only(right: 32.0),
+                        child: Text(
+                          product.description ?? 'Deskripsi produk kosong',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.black87,
+                            height: 1.5,
+                          ),
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       const SizedBox(height: 16),
                     ],
                   ),
-                  // Rating Star at Bottom Right of top section
+                  // Rating Star
                   Positioned(
                     bottom: 0,
                     right: 0,
@@ -803,14 +812,14 @@ class _SellerHomePageState extends State<SellerHomePage> {
                       children: [
                         const Icon(
                           Icons.star,
-                          size: 16,
+                          size: 20,
                           color: Color(0xFF424242),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           product.averageRating.toStringAsFixed(1),
                           style: GoogleFonts.poppins(
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: const Color(0xFF424242),
                           ),
@@ -823,33 +832,42 @@ class _SellerHomePageState extends State<SellerHomePage> {
             ),
             // Bottom Part: Darker Grey
             Container(
-              color: const Color(0xFF9E9E9E), // Darker grey
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              color: const Color(
+                0xFFBDBDBD,
+              ), // Matches the darker strip in the design
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        _formatCurrency(product.price),
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          'Rp${_formatPriceWithDots(product.price)}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(width: 1.5, height: 20, color: Colors.black54),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Stok ${product.stock} Helai',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.black87,
+                        const SizedBox(width: 12),
+                        Flexible(
+                          child: Text(
+                            'Stok ${product.stock} Helai',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   GestureDetector(
                     onTap: () async {
                       await context.push(
@@ -861,16 +879,16 @@ class _SellerHomePageState extends State<SellerHomePage> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
-                        vertical: 8,
+                        vertical: 10,
                       ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF616161),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(24),
                       ),
                       child: Text(
                         'Lihat',
                         style: GoogleFonts.poppins(
-                          fontSize: 12,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
