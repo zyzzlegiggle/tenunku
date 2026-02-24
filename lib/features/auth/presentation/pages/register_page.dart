@@ -4,6 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/auth_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+const Color _kBluePrimary = Color(0xFF54B7C2);
+const Color _kYellowAccent = Color(0xFFFFE14F);
+
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -186,24 +189,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               const SizedBox(height: 30),
               // Logo Placeholder
-              Center(
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFD9D9D9),
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Logo',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ),
-              ),
+              Center(child: Image.asset('logo.png', width: 120, height: 120)),
               const SizedBox(height: 30),
 
               // Step 1: Role Toggle
@@ -222,7 +208,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
                               color: _selectedRoleIndex == 0
-                                  ? const Color(0xFF757575)
+                                  ? _kBluePrimary
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(30),
                             ),
@@ -246,7 +232,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
                               color: _selectedRoleIndex == 1
-                                  ? const Color(0xFF757575)
+                                  ? _kBluePrimary
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(30),
                             ),
@@ -341,11 +327,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   _buildStepCircle(1, _currentStep >= 1),
                   _buildStepLine(),
                   _buildStepCircle(2, _currentStep >= 2),
-                  // If seller, maybe show 3 steps?
-                  // But the 3rd step is post-OTP. So just show 1 and 2 for registration here.
-                  // Or maybe the user expects to see '3' blocked?
-                  // User said "first is..., step 2 is..., then otp, then last step".
-                  // So visually this registration part is just 2 steps.
+                  _buildStepLine(),
+                  _buildStepCircle(3, false),
                 ],
               ),
               const SizedBox(height: 30),
@@ -354,7 +337,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ElevatedButton(
                 onPressed: _nextStep,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF757575),
+                  backgroundColor: _kBluePrimary,
                   elevation: 5,
                   shadowColor: Colors.black45,
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -447,15 +430,17 @@ class _RegisterPageState extends State<RegisterPage> {
       height: 30,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isActive ? Colors.grey[400] : Colors.transparent,
-        border: Border.all(color: Colors.grey[400]!),
+        color: isActive ? _kYellowAccent : Colors.transparent,
+        border: Border.all(
+          color: isActive ? _kYellowAccent : Colors.grey[400]!,
+        ),
       ),
       alignment: Alignment.center,
       child: Text(
         step.toString(),
         style: GoogleFonts.poppins(
           fontSize: 14,
-          color: isActive ? Colors.white : Colors.grey[400],
+          color: isActive ? Colors.black87 : Colors.grey[400],
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -463,6 +448,6 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _buildStepLine() {
-    return Container(width: 40, height: 1, color: Colors.grey[400]);
+    return Container(width: 40, height: 2, color: _kYellowAccent);
   }
 }

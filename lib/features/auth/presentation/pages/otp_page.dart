@@ -4,6 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/auth_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+const Color _kBluePrimary = Color(0xFF54B7C2);
+const Color _kYellowAccent = Color(0xFFFFE14F);
+
 class OtpPage extends StatefulWidget {
   final String email;
   const OtpPage({super.key, required this.email});
@@ -34,6 +37,12 @@ class _OtpPageState extends State<OtpPage> {
           color: Colors.grey[700],
           onPressed: () => context.pop(),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: Image.asset('logo.png', width: 40, height: 40),
+          ),
+        ],
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -152,7 +161,7 @@ class _OtpPageState extends State<OtpPage> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF757575),
+                  backgroundColor: _kBluePrimary,
                   elevation: 5,
                   shadowColor: Colors.black45,
                 ),
@@ -171,7 +180,7 @@ class _OtpPageState extends State<OtpPage> {
       width: 45,
       height: 55,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: _kYellowAccent),
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(

@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/auth_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+const Color _kBluePrimary = Color(0xFF54B7C2);
 // import '../../../../core/api_client.dart';
 
 class LoginPage extends StatefulWidget {
@@ -51,24 +53,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 30),
               // Logo Placeholder
-              Center(
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFD9D9D9),
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Logo',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ),
-              ),
+              Center(child: Image.asset('logo.png', width: 120, height: 120)),
               const SizedBox(height: 30),
               // Role Toggle
               Container(
@@ -85,7 +70,7 @@ class _LoginPageState extends State<LoginPage> {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
                             color: _selectedRoleIndex == 0
-                                ? const Color(0xFF757575)
+                                ? _kBluePrimary
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(30),
                           ),
@@ -109,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
                             color: _selectedRoleIndex == 1
-                                ? const Color(0xFF757575)
+                                ? _kBluePrimary
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(30),
                           ),
@@ -226,7 +211,7 @@ class _LoginPageState extends State<LoginPage> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF757575),
+                  backgroundColor: _kBluePrimary,
                   elevation: 5,
                   shadowColor: Colors.black45,
                 ),

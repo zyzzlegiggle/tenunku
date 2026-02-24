@@ -16,40 +16,23 @@ class LandingPage extends StatelessWidget {
             children: [
               const SizedBox(height: 20),
               Text(
-                'Login', // Defaulting to Login title as per top-left screenshot, though this might need to be dynamic or just "Welcome"
+                'Daftar',
                 style: GoogleFonts.poppins(
                   fontSize: 24,
-                  color: Colors.grey[700], // Dark grey text
+                  color: Colors.grey[700],
                   fontWeight: FontWeight.w500,
                 ),
               ),
               const Spacer(),
               // Logo Placeholder
-              Center(
-                child: Container(
-                  width: 150,
-                  height: 150,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFD9D9D9), // Light grey placeholder
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Logo',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ),
-              ),
+              Center(child: Image.asset('logo.png', width: 150, height: 150)),
               const Spacer(),
               // Masuk Button
               ElevatedButton(
                 onPressed: () => context.push('/login'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE0E0E0), // Light grey
-                  foregroundColor: Colors.black54, // Dark text
+                  backgroundColor: const Color(0xFF54B7C2).withOpacity(0.15),
+                  foregroundColor: const Color(0xFF54B7C2),
                   elevation: 5,
                   shadowColor: Colors.black26,
                 ),
@@ -60,7 +43,7 @@ class LandingPage extends StatelessWidget {
               ElevatedButton(
                 onPressed: () => context.push('/register'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF757575), // Dark grey
+                  backgroundColor: const Color(0xFF54B7C2),
                   foregroundColor: Colors.white,
                   elevation: 5,
                   shadowColor: Colors.black45,
