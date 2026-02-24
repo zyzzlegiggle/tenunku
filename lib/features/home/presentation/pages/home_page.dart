@@ -80,84 +80,141 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _showWelcomeDialog() async {
+    const yellow = Color(0xFFFFE14F);
+    const darkOrange = Color(0xFFF5793B);
+    const navyBlue = Color(0xFF31476C);
+
     return showDialog(
       context: context,
+      barrierColor: Colors.black54,
       builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: const Icon(Icons.close, color: Colors.grey),
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 60),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.white, Colors.white, yellow],
+                  stops: [0.0, 0.7, 1.0],
                 ),
               ),
-              Text(
-                'Lestarikan\nBudaya, Dukung\nPengrajin Lokal',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Mengapa Harus Tenun?',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    fontStyle: FontStyle.italic,
-                    color: Colors.grey[800],
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 8),
+                  // Title
+                  Text(
+                    'Lestarikan\nBudaya, Dukung\nPengrajin Lokal',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: navyBlue,
+                    ),
                   ),
+                  const SizedBox(height: 16),
+                  // Yellow rounded-square badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: yellow,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: RichText(
+                      text: TextSpan(
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: darkOrange,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: 'Mengapa ',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                              fontStyle: FontStyle.italic,
+                              fontSize: 14,
+                              color: darkOrange,
+                            ),
+                          ),
+                          const TextSpan(text: 'Harus Tenun?'),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Check items
+                  _buildCheckItem(
+                    '100% handmade oleh penenun\nperempuan Indonesia',
+                  ),
+                  const SizedBox(height: 12),
+                  _buildCheckItem(
+                    'Menggunakan bahan alami\ndan pewarna dari tumbuhan',
+                  ),
+                  const SizedBox(height: 12),
+                  _buildCheckItem(
+                    'Setiap produk penuh akan\ncerita dan makna filosofis',
+                  ),
+                  const SizedBox(height: 12),
+                  _buildCheckItem(
+                    'Mendukung ekonomi\nmasyarakat Indonesia secara\nlangsung',
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+            // Close button positioned on top-right corner of dialog
+            Positioned(
+              top: -15,
+              right: -15,
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: const BoxDecoration(
+                    color: darkOrange,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 20),
                 ),
               ),
-              const SizedBox(height: 24),
-              _buildCheckItem(
-                '100% handmade oleh penenun\nperempuan Indonesia',
-              ),
-              const SizedBox(height: 12),
-              _buildCheckItem(
-                'Menggunakan bahan alami\ndan pewarna dari tumbuhan',
-              ),
-              const SizedBox(height: 12),
-              _buildCheckItem(
-                'Setiap produk penuh akan\ncerita dan makna filosofis',
-              ),
-              const SizedBox(height: 12),
-              _buildCheckItem(
-                'Mendukung ekonomi\nmasyarakat Indonesia secara\nlangsung',
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildCheckItem(String text) {
+    const darkOrange = Color(0xFFF5793B);
+    const navyBlue = Color(0xFF31476C);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.check, color: Colors.grey, size: 20),
+        const Padding(
+          padding: EdgeInsets.only(top: 2),
+          child: Icon(Icons.check, color: darkOrange, size: 20),
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: navyBlue,
+              height: 1.4,
+            ),
           ),
         ),
       ],
@@ -166,8 +223,11 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    const cyanBlue = Color(0xFF54B7C2);
+    const yellow = Color(0xFFFFE14F);
+
     return Scaffold(
-      extendBody: true, // Allows body to extend behind the bottom bar
+      extendBody: true,
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -177,28 +237,25 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         child: SafeArea(
-          bottom: false, // Don't add padding for bottom safe area in body
+          bottom: false,
           child: Column(
             children: [
-              // Fixed Header
-              Padding(
+              // Fixed Header - Cyan blue background
+              Container(
+                color: cyanBlue,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 20,
+                  horizontal: 20,
+                  vertical: 14,
                 ),
                 child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: const Color(0xFF757575), // Dark grey
-                      child: const Icon(Icons.person, color: Colors.white),
-                    ),
+                    Image.asset('assets/logo.png', width: 36, height: 36),
                     const Spacer(),
                     GestureDetector(
                       onTap: () => context.push('/buyer/settings'),
                       child: const Icon(
-                        Icons.settings_outlined,
-                        color: Color(0xFF757575),
+                        Icons.settings,
+                        color: yellow,
                         size: 28,
                       ),
                     ),
@@ -219,7 +276,7 @@ class _HomePageState extends State<HomePage> {
                     const ExplorePage(),
                     // Index 2: Keranjang
                     const CartPage(),
-                    // Index 3: Akun Saya (Handled by navigation, but placeholder here for safety)
+                    // Index 3: Akun Saya
                     const Center(child: Text("Akun Saya")),
                   ],
                 ),
@@ -229,27 +286,28 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       bottomNavigationBar: Container(
-        color: const Color(0xFFBDBDBD), // Solid grey background
+        color: const Color(0xFF54B7C2), // Cyan blue background
         padding: const EdgeInsets.only(bottom: 16, top: 10),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildNavItem('Beranda', 0),
-            _buildNavItem('Telusuri', 1),
-            _buildNavItem('Keranjang', 2),
-            _buildNavItem('Akun Saya', 3),
+            _buildNavItem('Beranda', 0, Icons.home),
+            _buildNavItem('Telusuri', 1, Icons.search),
+            _buildNavItem('Keranjang', 2, Icons.shopping_cart),
+            _buildNavItem('Akun Saya', 3, Icons.person),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(String label, int index) {
+  Widget _buildNavItem(String label, int index, IconData icon) {
+    const yellow = Color(0xFFFFE14F);
+    const navyBlue = Color(0xFF31476C);
     final bool isActive = _currentIndex == index;
 
     return GestureDetector(
       onTap: () {
-        // Navigate to Akun Saya page when tapped
         if (index == 3) {
           context.push('/buyer/account');
         } else {
@@ -263,8 +321,13 @@ class _HomePageState extends State<HomePage> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: isActive ? const Color(0xFF616161) : Colors.white,
+              color: isActive ? yellow : navyBlue,
               shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: isActive ? navyBlue : Colors.grey[400],
+              size: 26,
             ),
           ),
           const SizedBox(height: 4),
@@ -273,7 +336,6 @@ class _HomePageState extends State<HomePage> {
             style: GoogleFonts.poppins(
               fontSize: 10,
               color: Colors.white,
-              // Make text bold if active?
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
             ),
           ),

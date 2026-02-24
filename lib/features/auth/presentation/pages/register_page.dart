@@ -327,8 +327,10 @@ class _RegisterPageState extends State<RegisterPage> {
                   _buildStepCircle(1, _currentStep >= 1),
                   _buildStepLine(),
                   _buildStepCircle(2, _currentStep >= 2),
-                  _buildStepLine(),
-                  _buildStepCircle(3, false),
+                  if (_selectedRoleIndex == 1) ...[
+                    _buildStepLine(),
+                    _buildStepCircle(3, false),
+                  ],
                 ],
               ),
               const SizedBox(height: 30),
