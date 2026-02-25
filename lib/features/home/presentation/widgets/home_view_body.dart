@@ -245,18 +245,18 @@ class _HomeViewBodyState extends State<HomeViewBody> {
           ),
           const SizedBox(height: 32),
 
-          // ── Vertical Highlights ──
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                _buildVerticalHighlightCard('Desa Kanekes'),
-                const SizedBox(height: 16),
-                _buildVerticalHighlightCard('Kegiatan Tenun'),
-                const SizedBox(height: 16),
-                _buildVerticalHighlightCard('Hasil Tenunan'),
-              ],
-            ),
+          // ── Full-width Image Section ──
+          Column(
+            children: [
+              _buildHighlightImage('assets/homepage/kain.png'),
+              const SizedBox(height: 16),
+              _buildHighlightImage(
+                'assets/homepage/sungai.png',
+                subtitle: 'Sungai ...',
+              ),
+              const SizedBox(height: 16),
+              _buildHighlightImage('assets/homepage/menenun.png'),
+            ],
           ),
           const SizedBox(height: 40),
 
@@ -280,6 +280,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                   title: 'Benang Membumi',
                   description:
                       'Pelajari teknik menenun, makna, hingga bahan-bahan setiap tenun yang dihasilkan',
+                  imagePath: 'assets/homepage/benangmenenun.png',
                   isBenangMembumi: true,
                 ),
                 const SizedBox(height: 16),
@@ -288,6 +289,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                   title: 'Untaian Setiap Tenunan',
                   description:
                       'Pelajari proses menenun, filosofi, adat istiadat, hingga sejarah dari setiap karya',
+                  imagePath: 'assets/homepage/untaiansetiaptenunan.png',
                   isUntaianTenunan: true,
                 ),
                 const SizedBox(height: 16),
@@ -296,8 +298,10 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                   title: 'Marketplace Budaya',
                   description:
                       'Jelajahi dan beli produk tenun asli dari para penenun di Indonesia',
+                  imagePath: 'assets/homepage/marketplacebudaya.png',
                   isMarketplace: true,
                 ),
+                const SizedBox(height: 40),
               ],
             ),
           ),
@@ -592,35 +596,73 @@ class _HomeViewBodyState extends State<HomeViewBody> {
     );
   }
 
-  Widget _buildVerticalHighlightCard(String title) {
-    return Container(
+  Widget _buildHighlightImage(String assetPath, {String? subtitle}) {
+    return SizedBox(
       width: double.infinity,
-      height: 180,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE0E0E0),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
+      height: 160,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.only(top: 40),
-              child: Text(
-                'foto',
-                style: TextStyle(color: Colors.grey, fontSize: 10),
+          // Image
+          Image.asset(
+            assetPath,
+            width: double.infinity,
+            height: 160,
+            fit: BoxFit.cover,
+          ),
+          // White glow on left edge
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 40,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Colors.white.withOpacity(0.6),
+                    Colors.white.withOpacity(0.0),
+                  ],
+                ),
               ),
             ),
           ),
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: const Color(0xFF616161),
+          // White glow on right edge
+          Positioned(
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: 40,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerRight,
+                  end: Alignment.centerLeft,
+                  colors: [
+                    Colors.white.withOpacity(0.6),
+                    Colors.white.withOpacity(0.0),
+                  ],
+                ),
+              ),
             ),
           ),
+          // Subtitle for sungai
+          if (subtitle != null)
+            Positioned(
+              left: 16,
+              bottom: 20,
+              child: Text(
+                subtitle,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                  shadows: [const Shadow(color: Colors.black54, blurRadius: 6)],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -630,6 +672,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
     required BuildContext context,
     required String title,
     required String description,
+    required String imagePath,
     bool isMarketplace = false,
     bool isBenangMembumi = false,
     bool isUntaianTenunan = false,
@@ -637,25 +680,51 @@ class _HomeViewBodyState extends State<HomeViewBody> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFFE0E0E0),
+        color: _navyBlue,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              color: Color(0xFF9E9E9E),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              'Foto Produk',
-              style: GoogleFonts.poppins(color: Colors.white, fontSize: 12),
-            ),
+          // Image with navy fog at bottom
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
+                child: Image.asset(
+                  imagePath,
+                  height: 280,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              // Navy fog gradient at bottom of image
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: 60,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(0),
+                    ),
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        _navyBlue.withOpacity(0.9),
+                        _navyBlue.withOpacity(0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
+          // Title & description container
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -666,7 +735,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: _navyBlue,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -674,7 +743,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                   description,
                   style: GoogleFonts.poppins(
                     fontSize: 10,
-                    color: Colors.grey[700],
+                    color: Colors.white70,
                   ),
                 ),
                 const SizedBox(height: 12),
