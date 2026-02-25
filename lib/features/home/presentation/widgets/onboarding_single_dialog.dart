@@ -4,12 +4,14 @@ import 'package:google_fonts/google_fonts.dart';
 class OnboardingSingleDialog extends StatelessWidget {
   final String title;
   final String description;
+  final String imagePath;
   final VoidCallback onNext;
 
   const OnboardingSingleDialog({
     super.key,
     required this.title,
     required this.description,
+    required this.imagePath,
     required this.onNext,
   });
 
@@ -51,8 +53,8 @@ class OnboardingSingleDialog extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
-                // Logo image
-                Image.asset('assets/logo.png', width: 120, height: 120),
+                // Dialog image
+                Image.asset(imagePath, width: 120, height: 120),
                 const SizedBox(height: 24),
                 // Description
                 Text(

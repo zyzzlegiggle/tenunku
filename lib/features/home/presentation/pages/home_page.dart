@@ -49,6 +49,7 @@ class _HomePageState extends State<HomePage> {
         title: 'Biografi Penenun',
         description:
             'Kenali kisah inspiratif para perempuan penenun di balik setiap karya!',
+        imagePath: 'assets/onboardDialog/BiografiPenenun.png',
         onNext: () => Navigator.of(context).pop(),
       ),
     );
@@ -60,6 +61,7 @@ class _HomePageState extends State<HomePage> {
         title: 'Benang Membumi',
         description:
             'Pelajari teknik menenun, makna, hingga bahan-bahan setiap tenun yang dihasilkan',
+        imagePath: 'assets/onboardDialog/BenangMembumi.png',
         onNext: () => Navigator.of(context).pop(),
       ),
     );
@@ -71,6 +73,7 @@ class _HomePageState extends State<HomePage> {
         title: 'Untaian Setiap Tenunan',
         description:
             'Pelajari proses menenun, filosofi, adat istiadat, hingga sejarah dari setiap karya',
+        imagePath: 'assets/onboardDialog/UntaianSetiapTenunan.png',
         onNext: () => Navigator.of(context).pop(),
       ),
     );
@@ -229,13 +232,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       extendBody: true,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.white, Color(0xFFBDBDBD)],
-          ),
-        ),
+        color: Colors.white,
         child: SafeArea(
           bottom: false,
           child: Column(
