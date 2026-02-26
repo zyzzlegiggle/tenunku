@@ -1,287 +1,266 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
-import '../../data/models/product_model.dart';
-import '../../data/repositories/product_repository.dart';
-import '../widgets/buyer_product_detail_modal.dart';
 
-class PolaDetailPage extends StatefulWidget {
-  final Map<String, dynamic> patternData;
+class PolaDetailPage extends StatelessWidget {
+  final Map<String, String> polaData;
 
-  const PolaDetailPage({super.key, required this.patternData});
-
-  @override
-  State<PolaDetailPage> createState() => _PolaDetailPageState();
-}
-
-class _PolaDetailPageState extends State<PolaDetailPage> {
-  final ProductRepository _productRepository = ProductRepository();
-  List<Product> _products = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadProducts();
-  }
-
-  Future<void> _loadProducts() async {
-    try {
-      // For demo, just load some products
-      final products = await _productRepository.getRecommendedProducts();
-      setState(() {
-        _products = products;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-    }
-  }
+  const PolaDetailPage({super.key, required this.polaData});
 
   @override
   Widget build(BuildContext context) {
-    final patternName = widget.patternData['name'] as String? ?? 'Pola';
+    final name = polaData['name'] ?? 'Pola';
+    final displayTitle = polaData['displayTitle'] ?? 'Pola $name';
+    final imagePath = polaData['image'] ?? '';
+    final description =
+        polaData['description'] ??
+        'Pola ini merupakan salah satu motif tenun khas yang memiliki makna mendalam dalam budaya masyarakat.';
+
+    final isPoleng = name == 'Poleng';
+    final needsZoom = (name == 'Janggawari' || name == 'Poleng');
+
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final topPad = MediaQuery.of(context).padding.top;
+    final topSectionHeight = screenHeight * 0.45;
+    final imageWidth = screenWidth * 0.5;
+    final imageHeight = imageWidth * 1.3;
+
+    // Position the image higher — most of it in the top section
+    final imageTop = topSectionHeight - (imageHeight * 0.75);
+    // The image is aligned to the right at ~3/4 width
+    final imageLeft = screenWidth * 0.5 - (imageWidth * 0.25);
+
+    // Scrollable content starts below the image bottom
+    final contentTopOffset = imageTop + imageHeight + 12;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF424242)),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          'Benang Membumi',
-          style: GoogleFonts.poppins(
-            color: const Color(0xFF333333),
-            fontWeight: FontWeight.w600,
+      backgroundColor: const Color(0xFFC3D3D5),
+      body: Stack(
+        children: [
+          // ---- TOP SECTION with gradient (fixed) ----
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: topSectionHeight,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF54B7C2), Color(0xFFC3D3D5)],
+                ),
+              ),
+            ),
           ),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(16),
+
+          // ---- BOTTOM SECTION with white bg and rounded top (fixed) ----
+          Positioned(
+            top: topSectionHeight,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE0E0E0)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE0E0E0),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      widget.patternData['icon'] as IconData? ?? Icons.pattern,
-                      size: 30,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pola Tenun',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                        Text(
-                          patternName,
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(28),
+                  topRight: Radius.circular(28),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 20,
+                    offset: const Offset(0, -6),
+                    spreadRadius: 2,
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-            // Subcategories
-            Text(
-              'Variasi Pola',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 1.3,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: 4,
-              itemBuilder: (context, index) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE0E0E0)),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE0E0E0),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(Icons.image, color: Colors.grey[400]),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Variasi ${index + 1}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-            // Products with this pattern
-            Text(
-              'Produk dengan Pola Ini',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _products.isEmpty
-                ? Center(
-                    child: Text(
-                      'Tidak ada produk',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.grey[500],
-                      ),
-                    ),
-                  )
-                : GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.75,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                        ),
-                    itemCount: _products.length,
-                    itemBuilder: (context, index) {
-                      return _buildProductCard(_products[index]);
-                    },
-                  ),
-            const SizedBox(height: 100),
-          ],
-        ),
-      ),
-    );
-  }
+          ),
 
-  Widget _buildProductCard(Product product) {
-    return GestureDetector(
-      onTap: () => showBuyerProductDetailModal(context, product),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE0E0E0)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 3,
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0E0E0),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(12),
+          // ---- IMAGE bridging both sections (fixed, does NOT scroll) ----
+          Positioned(
+            top: imageTop,
+            left: imageLeft,
+            child: Container(
+              width: imageWidth,
+              height: imageHeight,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                    spreadRadius: 2,
                   ),
-                ),
-                child: product.imageUrl != null
-                    ? ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(12),
-                        ),
-                        child: Image.network(
-                          product.imageUrl!,
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: needsZoom
+                    ? Transform.scale(
+                        scale: 1.8,
+                        child: Image.asset(
+                          imagePath,
+                          width: imageWidth,
+                          height: imageHeight,
                           fit: BoxFit.cover,
-                          errorBuilder: (c, e, s) => Center(
-                            child: Icon(Icons.image, color: Colors.grey[400]),
-                          ),
                         ),
                       )
-                    : Center(child: Icon(Icons.image, color: Colors.grey[400])),
+                    : Image.asset(
+                        imagePath,
+                        width: imageWidth,
+                        height: imageHeight,
+                        fit: BoxFit.cover,
+                      ),
               ),
             ),
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      product.name,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+          ),
+
+          // ---- BACK BUTTON (fixed) ----
+          Positioned(
+            top: topPad + 8,
+            left: 8,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => context.pop(),
+            ),
+          ),
+
+          // ---- TITLE (fixed) ----
+          Positioned(
+            top: topPad + 56,
+            left: 40,
+            child: Text(
+              displayTitle,
+              style: GoogleFonts.poppins(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF31476C),
+              ),
+            ),
+          ),
+
+          // ---- SCROLLABLE DESCRIPTION (only this scrolls) ----
+          Positioned(
+            top: contentTopOffset,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(
+                left: 28,
+                right: 28,
+                top: 8,
+                bottom: 40,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Description
+                  Text(
+                    description,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: const Color(0xFF5A5A5A),
+                      height: 1.6,
                     ),
-                    const Spacer(),
-                    Text(
-                      NumberFormat.currency(
-                        locale: 'id_ID',
-                        symbol: 'Rp ',
-                        decimalDigits: 0,
-                      ).format(product.price),
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  ),
+
+                  // ---- POLENG-SPECIFIC 2-COLUMN CONTENT ----
+                  if (isPoleng) ...[
+                    const SizedBox(height: 20),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Left column - Poleng Capi Turang
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Image.asset(
+                                    'assets/benangmembumi/polengicon.png',
+                                    width: 20,
+                                    height: 20,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      'Poleng Capi Turang',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        fontStyle: FontStyle.italic,
+                                        color: const Color(0xFF31476C),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Melambangkan kekayaan alam wilayah sungai Baduy. Motif ini biasanya digunakan dalam upacara pernikahan sebagai simbol kesejahteraan dan keberlimpahan.',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: const Color(0xFF5A5A5A),
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        // Right column - Poleng Pepetikan
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Image.asset(
+                                    'assets/benangmembumi/polengicon.png',
+                                    width: 20,
+                                    height: 20,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      'Poleng Pepetikan',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        fontStyle: FontStyle.italic,
+                                        color: const Color(0xFF31476C),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Melambangkan tugas dan kewajiban perempuan dalam menjalankan ritual adat. Motif ini digunakan dalam kegiatan seperti nombok padi, yang berkaitan dengan siklus pertanian dan kehidupan masyarakat Baduy.',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: const Color(0xFF5A5A5A),
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
-                ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

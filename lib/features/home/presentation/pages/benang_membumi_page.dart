@@ -50,15 +50,13 @@ class _BenangMembumiPageState extends State<BenangMembumiPage>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back,
-                        color: Color(0xFF424242)),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: Color(0xFF424242),
+                    ),
                     onPressed: () => context.pop(),
                   ),
-                  Image.asset(
-                    'assets/logo.png',
-                    width: 32,
-                    height: 32,
-                  ),
+                  Image.asset('assets/logo.png', width: 32, height: 32),
                 ],
               ),
             ),
@@ -77,7 +75,7 @@ class _BenangMembumiPageState extends State<BenangMembumiPage>
             // Tabs
             Container(
               color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -90,7 +88,11 @@ class _BenangMembumiPageState extends State<BenangMembumiPage>
             // Search bar
             Padding(
               padding: const EdgeInsets.only(
-                  left: 24, right: 24, top: 12, bottom: 24),
+                left: 24,
+                right: 24,
+                top: 12,
+                bottom: 24,
+              ),
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -107,7 +109,9 @@ class _BenangMembumiPageState extends State<BenangMembumiPage>
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Cari Nama Warna..',
+                    hintText: _tabController.index == 1
+                        ? 'Cari Arti Pola..'
+                        : 'Cari Nama Warna..',
                     hintStyle: GoogleFonts.poppins(
                       color: const Color(0xFFBDBDBD),
                       fontSize: 13,
@@ -138,10 +142,7 @@ class _BenangMembumiPageState extends State<BenangMembumiPage>
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.white,
-                              Color(0x00FFFFFF),
-                            ],
+                            colors: [Colors.white, Color(0x00FFFFFF)],
                           ),
                         ),
                       ),
@@ -264,9 +265,11 @@ class _ArtiWarnaTab extends StatelessWidget {
   List<Map<String, dynamic>> get _filteredColors {
     if (searchQuery.isEmpty) return _allColors;
     return _allColors
-        .where((c) => (c['name'] as String)
-            .toLowerCase()
-            .contains(searchQuery.toLowerCase()))
+        .where(
+          (c) => (c['name'] as String).toLowerCase().contains(
+            searchQuery.toLowerCase(),
+          ),
+        )
         .toList();
   }
 
@@ -326,11 +329,17 @@ class _ArtiWarnaTab extends StatelessWidget {
                     ),
                     border: Border(
                       left: BorderSide(
-                          color: const Color(0xFFD0D0D0), width: 1.2),
+                        color: const Color(0xFFD0D0D0),
+                        width: 1.2,
+                      ),
                       top: BorderSide(
-                          color: const Color(0xFFD0D0D0), width: 1.2),
+                        color: const Color(0xFFD0D0D0),
+                        width: 1.2,
+                      ),
                       bottom: BorderSide(
-                          color: const Color(0xFFD0D0D0), width: 1.2),
+                        color: const Color(0xFFD0D0D0),
+                        width: 1.2,
+                      ),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -357,8 +366,9 @@ class _ArtiWarnaTab extends StatelessWidget {
                         context.push('/benang-membumi/warna', extra: c);
                       },
                       child: Padding(
-                        padding:
-                            EdgeInsets.only(bottom: isLast ? 0 : itemSpacing),
+                        padding: EdgeInsets.only(
+                          bottom: isLast ? 0 : itemSpacing,
+                        ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -366,29 +376,29 @@ class _ArtiWarnaTab extends StatelessWidget {
                             Padding(
                               padding: const EdgeInsets.only(top: 12),
                               child: SizedBox(
-                              width: textWidth,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    c['name'] as String,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF727272),
+                                width: textWidth,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      c['name'] as String,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF727272),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    c['description'] as String,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 10.5,
-                                      color: const Color(0xFFAAAAAA),
-                                      height: 1.4,
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      c['description'] as String,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 10.5,
+                                        color: const Color(0xFFAAAAAA),
+                                        height: 1.4,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
+                                  ],
+                                ),
                               ),
                             ),
                             const SizedBox(width: gapWidth),
@@ -396,7 +406,8 @@ class _ArtiWarnaTab extends StatelessWidget {
                             Expanded(
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: cardPadH),
+                                  horizontal: cardPadH,
+                                ),
                                 child: Container(
                                   height: cardHeight,
                                   padding: const EdgeInsets.all(22),
@@ -409,8 +420,9 @@ class _ArtiWarnaTab extends StatelessWidget {
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black
-                                            .withValues(alpha: 0.05),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.05,
+                                        ),
                                         blurRadius: 8,
                                         offset: const Offset(0, 2),
                                         spreadRadius: 1,
@@ -444,78 +456,223 @@ class _ArtiWarnaTab extends StatelessWidget {
 // ==================== ARTI POLA TAB ====================
 
 class _ArtiPolaTab extends StatelessWidget {
-  final List<Map<String, dynamic>> _patterns = const [
-    {'name': 'Bintik Kecil', 'icon': Icons.circle_outlined},
-    {'name': 'Garis Horizontal', 'icon': Icons.horizontal_rule},
-    {'name': 'Belah Ketupat', 'icon': Icons.crop_square},
-    {'name': 'Bintik Besar', 'icon': Icons.circle},
-    {'name': 'Garis Silang', 'icon': Icons.close},
-    {'name': 'Motif Fauna', 'icon': Icons.pets},
-    {'name': 'Motif Flora', 'icon': Icons.local_florist},
-    {'name': 'Garis Vertikal', 'icon': Icons.more_vert},
+  static const List<Map<String, String>> _patterns = [
+    {
+      'name': 'Suat Songket',
+      'displayTitle': 'Pola Suat\nSungket',
+      'image': 'assets/benangmembumi/suatsongket.png',
+      'description':
+          'Suat Songket merupakan salah satu motif yang paling banyak diproduksi dan dipasarkan saat ini. Motif ini lebih fleksibel dalam penggunaannya dibandingkan motif sakral, sehingga dapat digunakan dalam berbagai kesempatan.\n\nKarena sifatnya yang tidak terikat aturan adat yang ketat, Suat Songket menjadi salah satu motif yang paling dikenal oleh masyarakat luar.',
+    },
+    {
+      'name': 'Adu Mancung',
+      'displayTitle': 'Pola Adu\nMancung',
+      'image': 'assets/benangmembumi/adumancung.png',
+      'description':
+          'Motif Adu Mancung melambangkan keseimbangan antara wilayah Baduy Dalam dan Baduy Luar. Motif ini umumnya digunakan oleh laki-laki, baik dalam kegiatan sehari-hari maupun dalam upacara adat. Adu Mancung sering dikenakan dalam ritual penting seperti Kawalu, Seba Baduy, pernikahan, hingga kegiatan pertanian adat.',
+    },
+    {
+      'name': 'Janggawari',
+      'displayTitle': 'Pola\nJanggawari',
+      'image': 'assets/benangmembumi/janggawara.png',
+      'description':
+          'Janggawari merupakan motif tertua dalam tradisi tenun Badui sekaligus yang paling rumit dan sakral. Proses pembuatannya tidak hanya membutuhkan keterampilan tinggi, tetapi juga disertai ritual khusus seperti puasa dan doa-doa tertentu. Motif ini tidak dapat digunakan sembarang orang dan secara adat hanya diperuntukkan bagi pemimpin tertinggi Baduy, yaitu Pu\'un. Untuk keperluan komersial, motif ini dibuat dalam versi yang telah disederhanakan dengan pengurangan elemen tertentu, agar tidak menyerupai bentuk sakral aslinya.',
+    },
+    {
+      'name': 'Poleng',
+      'displayTitle': 'Pola\nPoleng',
+      'image': 'assets/benangmembumi/poleng.png',
+      'description':
+          'Motif Poleng digunakan oleh perempuan dan memiliki variasi makna sesuai dengan jenisnya.',
+    },
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Berbagai Jenis Pola',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+          // ---- 4 MAIN POLA CARDS (2x2 grid) ----
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.8,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 24,
+            ),
+            itemCount: _patterns.length,
+            itemBuilder: (context, index) {
+              final pola = _patterns[index];
+              return _PolaCard(polaData: pola);
+            },
+          ),
+          const SizedBox(height: 32),
+          // ---- COMING SOON SECTION ----
+          Center(
+            child: Text(
+              'Coming Soon!',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF4A4A4A),
+              ),
             ),
           ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 1.5,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: _patterns.length,
-              itemBuilder: (context, index) {
-                final pattern = _patterns[index];
-                return GestureDetector(
-                  onTap: () {
-                    context.push('/benang-membumi/pola', extra: pattern);
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE0E0E0)),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          pattern['icon'] as IconData,
-                          size: 32,
-                          color: Colors.grey[600],
+          const SizedBox(height: 14),
+          Row(
+            children: List.generate(3, (index) {
+              return Expanded(
+                child: Container(
+                  margin: EdgeInsets.only(
+                    left: index == 0 ? 0 : 6,
+                    right: index == 2 ? 0 : 6,
+                  ),
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8E8E8),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: Align(
+                    alignment: Alignment.bottomLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Text(
+                        'Nama Pola',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF7A7A7A),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          pattern['name'] as String,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            }),
           ),
+          const SizedBox(height: 32),
         ],
+      ),
+    );
+  }
+}
+
+// ---- Individual Pola Card Widget ----
+class _PolaCard extends StatelessWidget {
+  final Map<String, String> polaData;
+
+  const _PolaCard({required this.polaData});
+
+  String get name => polaData['name']!;
+  String get imagePath => polaData['image']!;
+  bool get _isJanggawari => name == 'Janggawari';
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        context.push('/benang-membumi/pola', extra: polaData);
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF31476C),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            // ---- IMAGE AREA (5/6 of card) ----
+            Expanded(
+              flex: 5,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Image with rounded bottom corners
+                  ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(14),
+                      bottomRight: Radius.circular(14),
+                    ),
+                    child: _isJanggawari
+                        ? Transform.scale(
+                            scale: 1.6,
+                            child: Image.asset(imagePath, fit: BoxFit.cover),
+                          )
+                        : Image.asset(imagePath, fit: BoxFit.cover),
+                  ),
+                  // Gradient fog overlay on BOTTOM of image
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.only(
+                          bottomLeft: Radius.circular(14),
+                          bottomRight: Radius.circular(14),
+                        ),
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.center,
+                          colors: [
+                            const Color(0xFF31476C).withValues(alpha: 0.85),
+                            const Color(0xFF31476C).withValues(alpha: 0.0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Name text on bottom-left of image
+                  Positioned(
+                    left: 10,
+                    bottom: 8,
+                    child: Text(
+                      name,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // ---- BUTTON AREA (1/6 of card) ----
+            SizedBox(
+              height: 36,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 36,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF54B7C2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Lihat',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

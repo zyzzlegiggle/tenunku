@@ -37,6 +37,7 @@ import 'features/home/presentation/pages/seller_biography_page.dart';
 import 'features/home/presentation/pages/benang_membumi_page.dart';
 import 'features/home/presentation/pages/warna_detail_page.dart';
 import 'features/home/presentation/pages/pola_detail_page.dart';
+
 import 'features/home/presentation/pages/penggunaan_detail_page.dart';
 import 'features/home/presentation/pages/untaian_tenunan_page.dart';
 import 'features/home/data/models/product_model.dart';
@@ -93,8 +94,8 @@ final router = GoRouter(
     GoRoute(
       path: '/benang-membumi/pola',
       builder: (context, state) {
-        final patternData = state.extra as Map<String, dynamic>;
-        return PolaDetailPage(patternData: patternData);
+        final polaData = state.extra as Map<String, String>;
+        return PolaDetailPage(polaData: polaData);
       },
     ),
     GoRoute(
