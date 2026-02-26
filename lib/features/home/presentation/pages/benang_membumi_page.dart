@@ -456,7 +456,7 @@ class _ArtiWarnaTab extends StatelessWidget {
 // ==================== ARTI POLA TAB ====================
 
 class _ArtiPolaTab extends StatelessWidget {
-  static const List<Map<String, String>> _patterns = [
+  static const List<Map<String, dynamic>> _patterns = [
     {
       'name': 'Suat Songket',
       'displayTitle': 'Pola Suat\nSungket',
@@ -507,7 +507,7 @@ class _ArtiPolaTab extends StatelessWidget {
             itemCount: _patterns.length,
             itemBuilder: (context, index) {
               final pola = _patterns[index];
-              return _PolaCard(polaData: pola);
+              return _GridCard(data: pola, route: '/benang-membumi/pola');
             },
           ),
           const SizedBox(height: 32),
@@ -531,7 +531,7 @@ class _ArtiPolaTab extends StatelessWidget {
                     left: index == 0 ? 0 : 6,
                     right: index == 2 ? 0 : 6,
                   ),
-                  height: 120,
+                  height: 160,
                   decoration: BoxDecoration(
                     color: const Color(0xFFE8E8E8),
                     borderRadius: BorderRadius.circular(12),
@@ -569,21 +569,24 @@ class _ArtiPolaTab extends StatelessWidget {
   }
 }
 
-// ---- Individual Pola Card Widget ----
-class _PolaCard extends StatelessWidget {
-  final Map<String, String> polaData;
+// ---- Reusable Grid Card Widget ----
+class _GridCard extends StatelessWidget {
+  final Map<String, dynamic> data;
+  final String route;
 
-  const _PolaCard({required this.polaData});
+  const _GridCard({required this.data, required this.route});
 
-  String get name => polaData['name']!;
-  String get imagePath => polaData['image']!;
-  bool get _isJanggawari => name == 'Janggawari';
+  String get name => data['name'] as String? ?? '';
+  String get imagePath =>
+      (data['image'] as String?) ?? 'assets/benangmembumi/poleng.png';
+  bool get _needsZoom =>
+      name == 'Janggawari' || name == 'Poleng' || name == 'Dekorasi Rumah';
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        context.push('/benang-membumi/pola', extra: polaData);
+        context.push(route, extra: data);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -605,7 +608,7 @@ class _PolaCard extends StatelessWidget {
                       bottomLeft: Radius.circular(14),
                       bottomRight: Radius.circular(14),
                     ),
-                    child: _isJanggawari
+                    child: _needsZoom
                         ? Transform.scale(
                             scale: 1.6,
                             child: Image.asset(imagePath, fit: BoxFit.cover),
@@ -681,72 +684,134 @@ class _PolaCard extends StatelessWidget {
 // ==================== PENGGUNAAN TAB ====================
 
 class _PenggunaanTab extends StatelessWidget {
-  final List<Map<String, dynamic>> _usages = const [
-    {'name': 'Pakaian Adat', 'description': 'Untuk upacara tradisional'},
-    {'name': 'Aksesoris', 'description': 'Tas, ikat kepala, dll'},
-    {'name': 'Dekorasi Rumah', 'description': 'Taplak, hiasan dinding'},
-    {'name': 'Fashion Modern', 'description': 'Pakaian kasual dan formal'},
+  static const List<Map<String, dynamic>> _usages = [
+    {
+      'name': 'Suat Songket',
+      'displayTitle': 'Pola\nSuat Sungket',
+      'image': 'assets/benangmembumi/suatsongket.png',
+      'description':
+          'Motif ini adalah salah satu yang paling terkenal dan fleksibel karena banyak diproduksi dan dipasarkan saat ini. Suat Songket dapat dipakai oleh masyarakat luas sekaligus membantu promosi budaya.',
+      'checkmarks': [
+        'Aktivitas\nsehari-hari',
+        'Busana etnik\nmodern',
+        'Merchandise',
+      ],
+    },
+    {
+      'name': 'Adu Mancung',
+      'displayTitle': 'Pola\nAdu Mancung',
+      'image': 'assets/benangmembumi/adumancung.png',
+      'description':
+          'Motif ini memiliki makna penting dalam kehidupan sosial Baduy, biasanya dipakai pada upacara adat besar seperti Kawalu, Seba, serta ritual pernikahan dan pertanian. Motif ini mewakili nilai komitmen dan keseimbangan dalam komunitas.',
+      'checkmarks': [
+        'Upacara\nadat',
+        'Tradisi\nKegiatan Budaya',
+        'Pameran\netnik',
+      ],
+    },
+    {
+      'name': 'Janggawari',
+      'displayTitle': 'Pola\nJanggawari',
+      'image': 'assets/benangmembumi/janggawara.png',
+      'description':
+          'Motif ini sangat sakral dan secara tradisional hanya diperuntukkan bagi pemimpin adat tertinggi (Pu\'un) karena proses pembuatannya disertai ritual khusus. Untuk penggunaan umum, versi motif ini disederhanakan agar tetap menghormati makna aslinya.',
+      'checkmarks': ['Tradisi\nKegiatan budaya', 'Koleksi\nEdukatif'],
+    },
+    {
+      'name': 'Poleng',
+      'displayTitle': 'Pola\nPoleng',
+      'image': 'assets/benangmembumi/poleng.png',
+      'description':
+          'Motif Poleng identik dengan pola kotak-kotak dan umumnya digunakan oleh perempuan Baduy. Motif ini memiliki makna yang berkaitan dengan keseimbangan hidup, tanggung jawab, serta hubungan manusia dengan alam.',
+      'checkmarks': [
+        'Upacara\nadat',
+        'Kegiatan\nBudaya',
+        'Busana\nsehari-hari',
+      ],
+    },
   ];
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _usages.length,
-      itemBuilder: (context, index) {
-        final usage = _usages[index];
-        return GestureDetector(
-          onTap: () {
-            context.push('/benang-membumi/penggunaan', extra: usage);
-          },
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE0E0E0)),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ---- 4 MAIN PENGGUNAAN CARDS (2x2 grid) ----
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.8,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 24,
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE0E0E0),
-                    borderRadius: BorderRadius.circular(8),
+            itemCount: _usages.length,
+            itemBuilder: (context, index) {
+              final usage = _usages[index];
+              return _GridCard(
+                data: usage,
+                route: '/benang-membumi/penggunaan',
+              );
+            },
+          ),
+          const SizedBox(height: 32),
+          // ---- COMING SOON SECTION ----
+          Center(
+            child: Text(
+              'Coming Soon!',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF4A4A4A),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(3, (index) {
+              return Expanded(
+                child: Container(
+                  height: 160,
+                  margin: EdgeInsets.only(
+                    left: index == 0 ? 0 : 8,
+                    right: index == 2 ? 0 : 8,
                   ),
-                  child: Icon(Icons.image, color: Colors.grey[400]),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        usage['name'] as String,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        usage['description'] as String,
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: Colors.grey[600],
-                        ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8E8E8),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
+                  child: Align(
+                    alignment: Alignment.bottomLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Text(
+                        'Nama Pola',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF7A7A7A),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                Icon(Icons.chevron_right, color: Colors.grey[400]),
-              ],
-            ),
+              );
+            }),
           ),
-        );
-      },
+          const SizedBox(height: 60),
+        ],
+      ),
     );
   }
 }
