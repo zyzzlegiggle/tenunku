@@ -94,26 +94,34 @@ class _SellerHomePageState extends State<SellerHomePage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          _currentIndex == 1 ? 'Produkmu' : 'TENUNKu',
-          style: GoogleFonts.poppins(
-            color: const Color(0xFF212121),
-            fontWeight: FontWeight.bold,
-          ),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            // Fixed Header - Cyan blue background
+            Container(
+              color: const Color(0xFF54B7C2),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Row(
+                children: [
+                  Image.asset('assets/logo.png', width: 36, height: 36),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () => context.push('/seller/settings'),
+                    child: const Icon(
+                      Icons.settings,
+                      color: Color(0xFFFFE14F),
+                      size: 28,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Scrollable Content
+            Expanded(child: _buildBody()),
+          ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined, color: Color(0xFF757575)),
-            onPressed: () {
-              context.push('/seller/settings');
-            },
-          ),
-        ],
       ),
-      body: _buildBody(),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: const BoxDecoration(
@@ -175,7 +183,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: const Color(0xFF9E9E9E), // Darker grey like screenshot
+              color: const Color(0xFF31476C), // Dark blue background
               image: _profile?.bannerUrl != null
                   ? DecorationImage(
                       image: NetworkImage(_profile!.bannerUrl!),
@@ -189,11 +197,15 @@ class _SellerHomePageState extends State<SellerHomePage> {
               children: [
                 // Avatar
                 Container(
-                  width: 100,
-                  height: 100,
+                  width: 120,
+                  height: 120,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: const Color(0xFF616161),
+                    border: Border.all(
+                      color: const Color(0xFFFFE14F),
+                      width: 6, // Thicker yellow border per request
+                    ),
                     image: _profile?.avatarUrl != null
                         ? DecorationImage(
                             image: NetworkImage(_profile!.avatarUrl!),
@@ -202,7 +214,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
                         : null,
                   ),
                   child: _profile?.avatarUrl == null
-                      ? const Icon(Icons.person, color: Colors.white, size: 50)
+                      ? const Icon(Icons.person, color: Colors.white, size: 60)
                       : null,
                 ),
                 const SizedBox(width: 20),
@@ -216,14 +228,14 @@ class _SellerHomePageState extends State<SellerHomePage> {
                         style: GoogleFonts.poppins(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
-                          color: Colors.black87,
+                          color: const Color(0xFFFFE14F),
                         ),
                       ),
                       Text(
                         _profile?.shopName ?? 'Nama Toko',
                         style: GoogleFonts.poppins(
                           fontSize: 14,
-                          color: Colors.black54,
+                          color: Colors.white,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -232,7 +244,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
                             'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
-                          color: Colors.black54,
+                          color: Colors.white70,
                           height: 1.2,
                         ),
                         maxLines: 4,
@@ -245,10 +257,15 @@ class _SellerHomePageState extends State<SellerHomePage> {
             ),
           ),
 
-          // Action Buttons - Overlapping slightly or just below?
-          // Screenshot shows them clearly separated below the dark header.
-          Padding(
-            padding: const EdgeInsets.all(16.0),
+          // Action Buttons
+          Container(
+            color: const Color(0xFF54B7C2), // Wrap background in Cyan blue
+            padding: const EdgeInsets.only(
+              left: 16.0,
+              right: 16.0,
+              bottom: 24.0,
+              top: 16.0, // Increased top padding
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -263,10 +280,16 @@ class _SellerHomePageState extends State<SellerHomePage> {
             ),
           ),
 
+          const SizedBox(height: 16),
           // Stats
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.fromLTRB(
+              16,
+              8,
+              16,
+              24,
+            ), // Added bottom padding to prevent shadow clipping
             child: Row(
               children: [
                 _buildStatCard(
@@ -353,21 +376,21 @@ class _SellerHomePageState extends State<SellerHomePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : const Color(0xFFE0E0E0),
+          color: isSelected ? Colors.transparent : const Color(0xFFF5793B),
           borderRadius: BorderRadius.circular(24),
-          border: isSelected
-              ? Border.all(color: Colors.black87, width: 2)
-              : Border.all(
-                  color: Colors.transparent,
-                  width: 2,
-                ), // Keep layout stable
+          border: Border.all(
+            color: const Color(
+              0xFFF5793B,
+            ), // Edge is orange if active, still orange if inactive to match
+            width: 2,
+          ),
         ),
         child: Text(
           label,
           style: GoogleFonts.poppins(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: isSelected ? Colors.black : Colors.white,
           ),
         ),
       ),
@@ -375,65 +398,99 @@ class _SellerHomePageState extends State<SellerHomePage> {
   }
 
   Widget _buildPerformanceCard(Product product) {
-    // Calculate simulated revenue for display if real data isn't enough,
-    // but we'll use price * soldCount from the model.
     final double revenue = product.price * product.soldCount;
     final bool showRating =
         _selectedSort == 'Ulasan Terbanyak' ||
         _selectedSort == 'Dilihat Terbanyak';
 
+    String additionalMetricLabel = '';
+    if (_selectedSort == 'Ulasan Terbanyak') {
+      additionalMetricLabel = ' Ulasan';
+    } else if (_selectedSort == 'Dilihat Terbanyak') {
+      additionalMetricLabel = ' X Dilihat'; // Added X as requested
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFFE0E0E0), // Light grey background like screenshot
+        color: const Color(0xFF31476C), // Navy blue background for card
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top Part: Name and Big Metric
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // Top Part: Image and Metric Overlay
+          Container(
+            height: 180, // Half length of typical card
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD9D9D9), // Placeholder color
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
+              ),
+              image: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                  ? DecorationImage(
+                      image: NetworkImage(product.imageUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: Stack(
               children: [
-                Text(
-                  product.name,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w600,
+                Positioned(
+                  bottom: 16,
+                  left: 16,
+                  child: RichText(
+                    text: TextSpan(
+                      text: '${_formatNumber(product.soldCount)}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      children: [
+                        if (additionalMetricLabel.isNotEmpty)
+                          TextSpan(
+                            text: additionalMetricLabel,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12, // Subscript size
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  _formatNumber(product.soldCount), // e.g. 1,2K+
-                  style: GoogleFonts.poppins(
-                    fontSize: 56, // Huge font size
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                    height: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 16),
               ],
             ),
           ),
 
-          // Bottom Part: Revenue Strip OR Rating Strip
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: const BoxDecoration(
-              color: Color(0xFFBDBDBD), // Darker grey strip (Material Grey 400)
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
+          // Middle Part: Product Name
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            child: Text(
+              product.name,
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                color: Colors.white, // White text for navy background
+                fontWeight: FontWeight.bold,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
+          ),
+
+          // Bottom Part: Revenue/Rating Strip
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 if (showRating)
                   Column(
@@ -443,36 +500,34 @@ class _SellerHomePageState extends State<SellerHomePage> {
                         'Penilaian',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: Colors.black54,
+                          color: Colors
+                              .white70, // Whiteish text for navy background
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                       Row(
-                        children: [
-                          const Icon(
-                            Icons.star,
-                            size: 20,
-                            color: Colors.black87,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            product.averageRating.toStringAsFixed(1),
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '(${product.totalReviews})',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ],
+                        children: List.generate(5, (index) {
+                          // Simple 5-star display logic
+                          if (index < product.averageRating.floor()) {
+                            return const Icon(
+                              Icons.star,
+                              size: 20,
+                              color: Color(0xFFFFE14F),
+                            ); // Yellow Star
+                          } else if (index < product.averageRating) {
+                            return const Icon(
+                              Icons.star_half,
+                              size: 20,
+                              color: Color(0xFFFFE14F),
+                            ); // Half Star
+                          } else {
+                            return const Icon(
+                              Icons.star_border,
+                              size: 20,
+                              color: Color(0xFFFFE14F),
+                            ); // Empty Star
+                          }
+                        }),
                       ),
                     ],
                   )
@@ -484,7 +539,8 @@ class _SellerHomePageState extends State<SellerHomePage> {
                         'Pendapatan',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: Colors.black54,
+                          color: Colors
+                              .white70, // Whiteish text for navy background
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -492,8 +548,8 @@ class _SellerHomePageState extends State<SellerHomePage> {
                         _formatCurrency(revenue), // e.g. Rp2,7jt
                         style: GoogleFonts.poppins(
                           fontSize: 18,
-                          fontWeight: FontWeight.w800, // Very bold
-                          color: Colors.black87,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white, // White text for navy background
                         ),
                       ),
                     ],
@@ -511,15 +567,15 @@ class _SellerHomePageState extends State<SellerHomePage> {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEEEEE), // Very light grey button
-                      borderRadius: BorderRadius.circular(20),
+                      color: const Color(0xFF54B7C2), // Cyan button
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       'Rincian',
                       style: GoogleFonts.poppins(
                         fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black, // Black text
                       ),
                     ),
                   ),
@@ -706,15 +762,14 @@ class _SellerHomePageState extends State<SellerHomePage> {
         height: 48,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: const Color(0xFFE0E0E0),
-          borderRadius: BorderRadius.circular(24),
-          // border: Border.all(color: Colors.black12), // No border in screenshot for these buttons
+          color: Colors.white, // Button is white
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
           label,
           style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w500,
-            color: Colors.black87,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
           ),
         ),
       ),
@@ -724,12 +779,20 @@ class _SellerHomePageState extends State<SellerHomePage> {
   Widget _buildStatCard(String title, String value, {bool isLarge = false}) {
     // Screenshot has larger cards for stats
     return Container(
-      width: isLarge ? 170 : 140, // Wider
+      width: isLarge ? 200 : 160, // Wider
       height: isLarge ? 120 : 100, // Taller
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0E0E0),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26, // Darker shadow color
+            blurRadius: 15, // Wider blur
+            spreadRadius: 2, // Spread it on all sides
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
