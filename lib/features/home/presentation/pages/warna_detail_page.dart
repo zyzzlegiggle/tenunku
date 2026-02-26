@@ -7,153 +7,179 @@ class WarnaDetailPage extends StatelessWidget {
 
   const WarnaDetailPage({super.key, required this.colorData});
 
+  /// Parse simple HTML-like bold tags into TextSpans.
+  List<TextSpan> _parseSubtitle(String text) {
+    final spans = <TextSpan>[];
+    final regex = RegExp(r'<b>(.*?)</b>', caseSensitive: false);
+    int lastEnd = 0;
+
+    for (final match in regex.allMatches(text)) {
+      // Text before the bold tag
+      if (match.start > lastEnd) {
+        spans.add(TextSpan(text: text.substring(lastEnd, match.start)));
+      }
+      // Bold text
+      spans.add(
+        TextSpan(
+          text: match.group(1),
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      );
+      lastEnd = match.end;
+    }
+    // Remaining text after last bold tag
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(text: text.substring(lastEnd)));
+    }
+    return spans;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final color = colorData['color'] as Color? ?? const Color(0xFFE0E0E0);
+    final name = colorData['name'] as String? ?? 'Warna';
+    final subtitle = colorData['subtitle'] as String? ?? '';
+    final imagePath = colorData['image'] as String? ?? '';
+    final screenHeight = MediaQuery.of(context).size.height;
+    final topHeight = screenHeight / 3;
+    final bottomHeight = screenHeight / 5;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF424242)),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          'Benang Membumi',
-          style: GoogleFonts.poppins(
-            color: const Color(0xFF333333),
-            fontWeight: FontWeight.w600,
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          // ---- TOP: Color block — 1/4 of screen ----
+          Stack(
+            children: [
+              Container(
+                height: topHeight,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(72),
+                    bottomRight: Radius.circular(72),
+                  ),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      width: 1.5,
+                    ),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+              ),
+              // Back button on top of color
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 8,
+                left: 8,
+                child: GestureDetector(
+                  onTap: () => context.pop(),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+              // App logo on top-right
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 8,
+                right: 16,
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: const EdgeInsets.all(6),
+                  child: Image.asset('assets/logo.png'),
+                ),
+              ),
+            ],
           ),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Color preview
-            Container(
-              height: 200,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: colorData['color'] as Color? ?? const Color(0xFFE0E0E0),
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Color name
-            Text(
-              colorData['name'] as String? ?? 'Warna',
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Description
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE0E0E0)),
-              ),
+
+          // ---- MIDDLE: Title + Subtitle ----
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Text(
-                    'Makna dan Filosofi',
+                    name,
                     style: GoogleFonts.poppins(
-                      fontSize: 14,
+                      fontSize: 32,
                       fontWeight: FontWeight.w600,
+                      color: Colors.black,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    colorData['description'] as String? ??
-                        'Tidak ada deskripsi tersedia.',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                      height: 1.6,
+                  RichText(
+                    text: TextSpan(
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        color: const Color(0xFF5E5E5E),
+                        height: 1.6,
+                      ),
+                      children: _parseSubtitle(subtitle),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-            // Usage in products
-            Text(
-              'Produk dengan Warna Ini',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Product placeholder grid
-            SizedBox(
-              height: 160,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: 4,
-                itemBuilder: (context, index) {
-                  return Container(
-                    width: 120,
-                    margin: const EdgeInsets.only(right: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE0E0E0)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE0E0E0),
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(12),
-                            ),
-                          ),
-                          child: Center(
-                            child: Icon(Icons.image, color: Colors.grey[400]),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Produk ${index + 1}',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                'Rp 100.000',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+          ),
+
+          // ---- BOTTOM: Image with color fog — 1/4 of screen ----
+          SizedBox(
+            height: bottomHeight,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // The half-circle image
+                if (imagePath.isNotEmpty)
+                  Image.asset(
+                    imagePath,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.topCenter,
+                  ),
+                // Color fog overlay on top of image
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      stops: const [0.0, 0.5, 1.0],
+                      colors: [
+                        color.withValues(alpha: 0.7),
+                        color.withValues(alpha: 0.3),
+                        Colors.transparent,
                       ],
                     ),
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

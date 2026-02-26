@@ -219,30 +219,45 @@ class _ArtiWarnaTab extends StatelessWidget {
       'color': Color(0xFF39598E),
       'description':
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    },
-    {
-      'name': 'Warna Merah',
-      'color': Color(0xFFFA3030),
-      'description':
-          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      'subtitle':
+          'Warna biru berasal dari <b>daun tarum</b>, tanaman yang sejak lama digunakan sebagai pewarna tradisional. Proses fermentasi daun tarum menghasilkan warna biru yang lembut dan alami. Warna Biru ini juga menjadi salah satu ciri khas dari masyarakat Badui disana.',
+      'image': 'assets/benangmembumi/biru.png',
     },
     {
       'name': 'Warna Kuning',
       'color': Color(0xFFFFE14F),
       'description':
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      'subtitle':
+          'Warna kuning diperoleh dari <b>kayu nangka</b> yang direbus hingga mengeluarkan pigmen alaminya. Proses ini membutuhkan ketelatenan karena intensitas warna bergantung pada lama perendaman benang. Kuning dalam tenun Baduy sering memberi kesan cerah namun tetap alami.',
+      'image': 'assets/benangmembumi/kuning.png',
     },
     {
       'name': 'Warna Coklat',
       'color': Color(0xFFAE5715),
       'description':
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      'subtitle':
+          'Warna coklat pada tenun Badui berasal dari <b>kulit kayu mahoni</b>. Pewarna alami ini diolah melalui proses perebusan hingga menghasilkan warna hangat yang khas. Warna ini mencerminkan kedekatan masyarakat Baduy dengan alam serta penggunaan sumber daya yang bijaksana.',
+      'image': 'assets/benangmembumi/coklat.png',
+    },
+    {
+      'name': 'Warna Merah',
+      'color': Color(0xFFFA3030),
+      'description':
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      'subtitle':
+          'Warna merah dihasilkan dari <b>kombinasi bahan alami tertentu dengan kulit kayu mahoni.</b> Warna ini tidak hanya mencerminkan teknik pewarnaan tradisional, tetapi juga menunjukkan keterampilan dalam mencampur bahan hingga menghasilkan warna yang diinginkan.',
+      'image': 'assets/benangmembumi/merah.png',
     },
     {
       'name': 'Warna Hitam',
       'color': Color(0xFF000000),
       'description':
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      'subtitle':
+          'Warna hitam diperoleh dari <b>kulit buah jengkol</b> yang diolah secara alami. Warna ini memiliki karakter kuat dan sering digunakan sebagai dasar motif dalam tenun Baduy.',
+      'image': 'assets/benangmembumi/hitam.png',
     },
   ];
 
