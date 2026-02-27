@@ -25,6 +25,7 @@ import 'features/home/presentation/pages/settings/buyer_email_notifications_page
 import 'features/home/presentation/pages/settings/buyer_whatsapp_notifications_page.dart';
 import 'features/auth/presentation/pages/seller_setup_page.dart';
 import 'features/home/presentation/pages/seller_product_detail_page.dart';
+import 'features/home/presentation/pages/product_detail_page.dart';
 import 'features/home/presentation/pages/add_product_page.dart';
 import 'features/home/presentation/pages/buyer_account_page.dart';
 import 'features/home/presentation/pages/buyer_edit_profile_page.dart';
@@ -185,12 +186,18 @@ final router = GoRouter(
       },
     ),
     GoRoute(
-      path: '/seller/product/add',
-      builder: (context, state) => const AddProductPage(),
+      path: '/product/detail',
+      builder: (context, state) {
+        final product = state.extra as Product;
+        return ProductDetailPage(product: product);
+      },
     ),
     GoRoute(
       path: '/seller/product/add',
-      builder: (context, state) => const AddProductPage(),
+      builder: (context, state) {
+        final product = state.extra as Product?;
+        return AddProductPage(product: product);
+      },
     ),
     GoRoute(
       path: '/seller/chat/detail',

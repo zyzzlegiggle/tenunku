@@ -103,18 +103,32 @@ class _SellerHomePageState extends State<SellerHomePage> {
             Container(
               color: const Color(0xFF54B7C2),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              child: Row(
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  Image.asset('assets/logo.png', width: 36, height: 36),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => context.push('/seller/settings'),
-                    child: const Icon(
-                      Icons.settings,
-                      color: Color(0xFFFFE14F),
-                      size: 28,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Image.asset('assets/logo.png', width: 36, height: 36),
+                      GestureDetector(
+                        onTap: () => context.push('/seller/settings'),
+                        child: const Icon(
+                          Icons.settings,
+                          color: Color(0xFFFFE14F),
+                          size: 28,
+                        ),
+                      ),
+                    ],
                   ),
+                  if (_currentIndex == 1)
+                    Text(
+                      'Produkmu',
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -163,7 +177,8 @@ class _SellerHomePageState extends State<SellerHomePage> {
                 await context.push('/seller/product/add');
                 _fetchData();
               },
-              backgroundColor: const Color(0xFF616161),
+              backgroundColor: const Color(0xFFF5793B),
+              shape: const CircleBorder(),
               child: const Icon(Icons.add, color: Colors.white),
             )
           : null,
@@ -575,10 +590,8 @@ class _SellerHomePageState extends State<SellerHomePage> {
                   ),
                 GestureDetector(
                   onTap: () async {
-                    await context.push(
-                      '/seller/product/detail',
-                      extra: product,
-                    );
+                    await context.push('/seller/product/add', extra: product);
+                    _fetchData();
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -616,10 +629,11 @@ class _SellerHomePageState extends State<SellerHomePage> {
 
     return Column(
       children: [
+        const SizedBox(height: 16), // White spacing under header
         // Filter Bar
         Container(
           width: double.infinity,
-          color: const Color(0xFF757575),
+          color: const Color(0xFFF5793B),
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -630,10 +644,13 @@ class _SellerHomePageState extends State<SellerHomePage> {
                   width: 40,
                   height: 40,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFE0E0E0),
+                    color: Color(0xFFFFE14F),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.filter_list, color: Colors.black87),
+                  child: const Icon(
+                    Icons.filter_list,
+                    color: Color(0xFF464646),
+                  ),
                 ),
                 Container(
                   height: 40, // Height of the separator line
@@ -645,7 +662,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
                 const SizedBox(width: 8),
                 _buildFilterTab('Disembunyikan'),
                 const SizedBox(width: 8),
-                _buildFilterTab('Ulasan Terbanyak', isSort: true),
+                _buildFilterTab('Ulasan Terbanyak'),
               ],
             ),
           ),
@@ -663,8 +680,9 @@ class _SellerHomePageState extends State<SellerHomePage> {
                   height: 48,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE0E0E0),
-                    borderRadius: BorderRadius.circular(25),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
                   ),
                   child: Row(
                     children: [
@@ -674,17 +692,36 @@ class _SellerHomePageState extends State<SellerHomePage> {
                             hintText: 'Cari Produk',
                             hintStyle: GoogleFonts.poppins(color: Colors.grey),
                             border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
                             contentPadding: const EdgeInsets.only(bottom: 2),
+                            hoverColor: Colors.transparent,
                           ),
                           style: GoogleFonts.poppins(color: Colors.black87),
+                          cursorColor: Colors.black,
                         ),
                       ),
+                      const Icon(Icons.search, color: Colors.grey),
                     ],
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              const Icon(Icons.grid_view_rounded, size: 32, color: Colors.grey),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: const Icon(
+                  Icons.grid_view_rounded,
+                  size: 28,
+                  color: Colors.grey,
+                ),
+              ),
             ],
           ),
         ),
@@ -722,25 +759,23 @@ class _SellerHomePageState extends State<SellerHomePage> {
     );
   }
 
-  Widget _buildFilterTab(String label, {bool isSort = false}) {
+  Widget _buildFilterTab(String label) {
     bool isSelected;
-    if (isSort) {
+    if (label == 'Ulasan Terbanyak') {
       isSelected = _selectedSort == label;
     } else {
-      isSelected = _selectedFilter == label;
+      isSelected =
+          _selectedFilter == label && _selectedSort != 'Ulasan Terbanyak';
     }
 
     return GestureDetector(
       onTap: () {
         setState(() {
-          if (isSort) {
-            // Toggle sort or set sort
-            if (_selectedSort == label) {
-              _selectedSort = 'Terbaru'; // Toggle off returns to default
-            } else {
-              _selectedSort = label;
-            }
+          if (label == 'Ulasan Terbanyak') {
+            _selectedSort = 'Ulasan Terbanyak';
+            _selectedFilter = 'Aktif'; // Default active when sorting this way
           } else {
+            _selectedSort = 'Terbaru'; // Reset sort when changing main filter
             _selectedFilter = label;
           }
           _sortProducts();
@@ -749,12 +784,8 @@ class _SellerHomePageState extends State<SellerHomePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFFE0E0E0)
-              : Colors
-                    .transparent, // Active: Light Grey/White-ish, Inactive: Transparent
+          color: isSelected ? const Color(0xFFFFE14F) : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          // border: Border.all(color: Colors.transparent),
         ),
         child: Text(
           label,
@@ -762,12 +793,8 @@ class _SellerHomePageState extends State<SellerHomePage> {
             fontSize: 12,
             fontWeight: FontWeight.bold,
             color: isSelected
-                ? Colors.black87
-                : Colors
-                      .black87, // Always black text in screenshot? Or maybe white on dark?
-            // Screenshot: Active 'Aktif' is Light bg, black text. 'Disembunyikan' is Dark bg, Black text?
-            // Actually 'Disembunyikan' looks like it has same grey bg as bar, text is black.
-            // Let's assume Inactive text is Black.
+                ? const Color(0xFF000000)
+                : const Color(0xFF696969),
           ),
         ),
       ),
@@ -846,150 +873,183 @@ class _SellerHomePageState extends State<SellerHomePage> {
   }
 
   Widget _buildProductCard(Product product) {
+    final bool isUlasanTerbanyak = _selectedSort == 'Ulasan Terbanyak';
+
     return Container(
       width: double.infinity,
+      height: 240,
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: const Color(0xFF31476C),
         borderRadius: BorderRadius.circular(24),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Column(
-          children: [
-            // Top Part: Light Grey
-            Container(
-              color: const Color(0xFFE0E0E0),
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-              width: double.infinity,
-              child: Stack(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title
-                      Text(
-                        product.name,
-                        style: GoogleFonts.poppins(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      // Description
-                      Padding(
-                        padding: const EdgeInsets.only(right: 32.0),
-                        child: Text(
-                          product.description ?? 'Deskripsi produk kosong',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: Colors.black87,
-                            height: 1.5,
-                          ),
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
+      child: Column(
+        children: [
+          // Top Part: Image covering 3/4
+          Container(
+            height: 180,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD9D9D9),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
+              ),
+              image: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                  ? DecorationImage(
+                      image: NetworkImage(product.imageUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: Stack(
+              children: [
+                // Product name bottom left
+                Positioned(
+                  bottom: 12,
+                  left: 16,
+                  right: 80,
+                  child: Text(
+                    product.name,
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color:
+                          product.imageUrl != null &&
+                              product.imageUrl!.isNotEmpty
+                          ? Colors.white
+                          : Colors.black,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  // Rating Star
+                ),
+                // Star rating bottom right - only show if NOT ulasan terbanyak
+                if (!isUlasanTerbanyak)
                   Positioned(
-                    bottom: 0,
-                    right: 0,
+                    bottom: 12,
+                    right: 16,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(
                           Icons.star,
-                          size: 20,
-                          color: Color(0xFF424242),
+                          size: 16,
+                          color: Color(0xFFFFE14F),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           product.averageRating.toStringAsFixed(1),
                           style: GoogleFonts.poppins(
                             fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF424242),
+                            fontWeight: FontWeight.w600,
+                            color:
+                                product.imageUrl != null &&
+                                    product.imageUrl!.isNotEmpty
+                                ? Colors.white
+                                : Colors.black,
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
-            // Bottom Part: Darker Grey
-            Container(
-              color: const Color(
-                0xFFBDBDBD,
-              ), // Matches the darker strip in the design
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          'Rp${_formatPriceWithDots(product.price)}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Flexible(
-                          child: Text(
-                            'Stok ${product.stock} Helai',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+          ),
+          // Bottom Part: Details
+          Container(
+            height: 60,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                if (!isUlasanTerbanyak) ...[
+                  // Default view: Price | Stock
+                  Text(
+                    'Rp${_formatPriceWithDots(product.price)}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () async {
-                      await context.push(
-                        '/seller/product/detail',
-                        extra: product,
-                      );
-                      _fetchData();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 10,
+                  Container(height: 16, width: 1, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Stok ${product.stock} Helai',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.white,
                       ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF616161),
-                        borderRadius: BorderRadius.circular(24),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ] else ...[
+                  // Ulasan Terbanyak view: Star Metric | X Ulasan
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.star,
+                        size: 16,
+                        color: Color(0xFFFFE14F),
                       ),
-                      child: Text(
-                        'Lihat',
+                      const SizedBox(width: 4),
+                      Text(
+                        product.averageRating.toStringAsFixed(1),
                         style: GoogleFonts.poppins(
                           fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(width: 8),
+                  Container(height: 16, width: 1, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${product.totalReviews} Ulasan',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
-              ),
+
+                GestureDetector(
+                  onTap: () async {
+                    await context.push('/product/detail', extra: product);
+                    _fetchData();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF54B7C2),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      'Lihat',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

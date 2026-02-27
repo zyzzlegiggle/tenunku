@@ -10,7 +10,8 @@ import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../../core/services/storage_service.dart';
 
 class AddProductPage extends StatefulWidget {
-  const AddProductPage({super.key});
+  final Product? product;
+  const AddProductPage({super.key, this.product});
 
   @override
   State<AddProductPage> createState() => _AddProductPageState();
@@ -49,6 +50,18 @@ class _AddProductPageState extends State<AddProductPage> {
   void initState() {
     super.initState();
     _loadMetadata();
+    if (widget.product != null) {
+      _nameController.text = widget.product!.name;
+      _priceController.text = widget.product!.price.toString();
+      _stockController.text = widget.product!.stock.toString();
+      _descriptionController.text = widget.product!.description ?? '';
+      _selectedCategory = widget.product!.category ?? 'Kain';
+      if (widget.product!.imageUrls.isNotEmpty) {
+        _uploadedImageUrls.addAll(widget.product!.imageUrls);
+      } else if (widget.product!.imageUrl != null) {
+        _uploadedImageUrls.add(widget.product!.imageUrl!);
+      }
+    }
   }
 
   Future<void> _loadMetadata() async {
@@ -62,6 +75,12 @@ class _AddProductPageState extends State<AddProductPage> {
           _patterns = patterns;
           _colors = colors;
           _usages = usages;
+          // Preselect if editing
+          if (widget.product != null) {
+            _selectedPatternId = widget.product!.patternId;
+            _selectedColorId = widget.product!.colorId;
+            _selectedUsageId = widget.product!.usageId;
+          }
         });
       }
     } catch (e) {
@@ -133,7 +152,7 @@ class _AddProductPageState extends State<AddProductPage> {
       return;
     }
 
-    if (_selectedImages.isEmpty) {
+    if (_selectedImages.isEmpty && _uploadedImageUrls.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Minimal satu gambar produk wajib diisi')),
       );
@@ -145,10 +164,6 @@ class _AddProductPageState extends State<AddProductPage> {
     try {
       // Upload images
       final urls = await _uploadImages(_selectedImages);
-      if (urls.isEmpty) {
-        setState(() => _isSaving = false);
-        return; // Stop if upload fails for all images
-      }
       _uploadedImageUrls.addAll(urls);
 
       final user = _authRepo.currentUser;
@@ -159,8 +174,14 @@ class _AddProductPageState extends State<AddProductPage> {
           ? _uploadedImageUrls.first
           : null;
 
-      final newProduct = Product(
-        id: const Uuid().v4(),
+      final isEditing = widget.product != null;
+      final productId = isEditing ? widget.product!.id : const Uuid().v4();
+      final createdTime = isEditing
+          ? widget.product!.createdAt
+          : DateTime.now();
+
+      final productData = Product(
+        id: productId,
         sellerId: user.id,
         name: _nameController.text,
         description: _descriptionController.text,
@@ -169,11 +190,10 @@ class _AddProductPageState extends State<AddProductPage> {
         imageUrls: _uploadedImageUrls,
         category: _selectedCategory,
         stock: int.tryParse(_stockController.text) ?? 0,
-        soldCount: 0,
-        viewCount: 0,
-        averageRating: 0,
-        totalReviews: 0,
-        // Legacy fields filled with Name for fallback/display if join fails
+        soldCount: isEditing ? widget.product!.soldCount : 0,
+        viewCount: isEditing ? widget.product!.viewCount : 0,
+        averageRating: isEditing ? widget.product!.averageRating : 0,
+        totalReviews: isEditing ? widget.product!.totalReviews : 0,
         colorMeaning: _colors
             .where((e) => e.id == _selectedColorId)
             .firstOrNull
@@ -183,18 +203,27 @@ class _AddProductPageState extends State<AddProductPage> {
             .firstOrNull
             ?.name,
         usage: _usages.where((e) => e.id == _selectedUsageId).firstOrNull?.name,
-        // New IDs
         patternId: _selectedPatternId,
         colorId: _selectedColorId,
         usageId: _selectedUsageId,
-        createdAt: DateTime.now(),
+        createdAt: createdTime,
       );
 
-      await _sellerRepo.createProduct(newProduct);
+      if (isEditing) {
+        await _sellerRepo.updateProduct(productData);
+      } else {
+        await _sellerRepo.createProduct(productData);
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Produk berhasil ditambahkan')),
+          SnackBar(
+            content: Text(
+              isEditing
+                  ? 'Produk berhasil diubah'
+                  : 'Produk berhasil ditambahkan',
+            ),
+          ),
         );
         context.pop();
       }
@@ -202,7 +231,7 @@ class _AddProductPageState extends State<AddProductPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Gagal menambahkan produk: $e')));
+        ).showSnackBar(SnackBar(content: Text('Gagal menyimpan produk: $e')));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -216,7 +245,8 @@ class _AddProductPageState extends State<AddProductPage> {
     if (_priceController.text.isNotEmpty) filledFields++;
     if (_stockController.text.isNotEmpty) filledFields++;
     if (_descriptionController.text.isNotEmpty) filledFields++;
-    if (_selectedImages.isNotEmpty) filledFields++;
+    if (_selectedImages.isNotEmpty || _uploadedImageUrls.isNotEmpty)
+      filledFields++;
 
     double progress = filledFields / 5.0;
 
@@ -287,7 +317,9 @@ class _AddProductPageState extends State<AddProductPage> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Tambah Produk Baru',
+                          widget.product == null
+                              ? 'Tambah Produk Baru'
+                              : 'Edit Produk',
                           style: GoogleFonts.poppins(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -368,11 +400,16 @@ class _AddProductPageState extends State<AddProductPage> {
                       height: 120,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
-                        itemCount: _selectedImages.length + 1,
+                        itemCount:
+                            _uploadedImageUrls.length +
+                            _selectedImages.length +
+                            1,
                         separatorBuilder: (context, index) =>
                             const SizedBox(width: 12),
                         itemBuilder: (context, index) {
-                          if (index == _selectedImages.length) {
+                          if (index ==
+                              _uploadedImageUrls.length +
+                                  _selectedImages.length) {
                             return GestureDetector(
                               onTap: _pickImage,
                               child: Container(
@@ -412,6 +449,53 @@ class _AddProductPageState extends State<AddProductPage> {
                             );
                           }
 
+                          if (index < _uploadedImageUrls.length) {
+                            return Stack(
+                              children: [
+                                Container(
+                                  width: 120,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    image: DecorationImage(
+                                      image: NetworkImage(
+                                        _uploadedImageUrls[index],
+                                      ),
+                                      fit: BoxFit.cover,
+                                    ),
+                                    border: Border.all(
+                                      color: Colors.grey[300]!,
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 4,
+                                  right: 4,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _uploadedImageUrls.removeAt(index);
+                                      });
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+
+                          final selectedImageIndex =
+                              index - _uploadedImageUrls.length;
                           return Stack(
                             children: [
                               Container(
@@ -419,7 +503,9 @@ class _AddProductPageState extends State<AddProductPage> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12),
                                   image: DecorationImage(
-                                    image: FileImage(_selectedImages[index]),
+                                    image: FileImage(
+                                      _selectedImages[selectedImageIndex],
+                                    ),
                                     fit: BoxFit.cover,
                                   ),
                                   border: Border.all(color: Colors.grey[300]!),
@@ -429,7 +515,7 @@ class _AddProductPageState extends State<AddProductPage> {
                                 top: 4,
                                 right: 4,
                                 child: GestureDetector(
-                                  onTap: () => _removeImage(index),
+                                  onTap: () => _removeImage(selectedImageIndex),
                                   child: Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: const BoxDecoration(
