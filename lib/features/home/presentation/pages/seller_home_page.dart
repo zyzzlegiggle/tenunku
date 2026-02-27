@@ -93,6 +93,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
     }
 
     return Scaffold(
+      extendBody: true,
       backgroundColor: Colors.white,
       body: SafeArea(
         bottom: false,
@@ -122,29 +123,39 @@ class _SellerHomePageState extends State<SellerHomePage> {
           ],
         ),
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-              offset: Offset(0, -2),
+      bottomNavigationBar: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.bottomCenter,
+        children: [
+          Container(
+            height: 85 + MediaQuery.of(context).padding.bottom,
+            decoration: const BoxDecoration(
+              color: Color(0xFF54B7C2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10,
+                  offset: Offset(0, -2),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            _buildNavItem('Beranda', 0),
-            _buildNavItem('Produk', 1),
-            _buildNavItem('Pesanan', 2),
-            _buildNavItem('Obrolan', 3),
-          ],
-        ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: MediaQuery.of(context).padding.bottom + 12,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _buildNavItem('Beranda', Icons.home_rounded, 0),
+                _buildNavItem('Produk', Icons.inventory_2_rounded, 1),
+                _buildNavItem('Pesanan', Icons.shopping_cart_rounded, 2),
+                _buildNavItem('Obrolan', Icons.chat_rounded, 3),
+              ],
+            ),
+          ),
+        ],
       ),
       floatingActionButton: _currentIndex == 1
           ? FloatingActionButton(
@@ -240,7 +251,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _profile?.description ??
+                        _profile?.bio ??
                             'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
@@ -983,8 +994,11 @@ class _SellerHomePageState extends State<SellerHomePage> {
     );
   }
 
-  Widget _buildNavItem(String label, int index) {
+  Widget _buildNavItem(String label, IconData icon, int index) {
     final bool isActive = _currentIndex == index;
+
+    final double buttonSize = isActive ? 72 : 56;
+    final double iconSize = isActive ? 42 : 32;
 
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
@@ -997,14 +1011,13 @@ class _SellerHomePageState extends State<SellerHomePage> {
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeOutBack,
-              width: isActive ? 80 : 55,
-              height: isActive ? 80 : 55,
+              width: buttonSize,
+              height: buttonSize,
               decoration: BoxDecoration(
-                color: const Color(0xFF9E9E9E),
+                color: isActive
+                    ? const Color(0xFFFFE14F)
+                    : const Color(0xFF31476C),
                 shape: BoxShape.circle,
-                border: isActive
-                    ? Border.all(color: Colors.black54, width: 2)
-                    : null,
                 boxShadow: isActive
                     ? [
                         BoxShadow(
@@ -1015,13 +1028,20 @@ class _SellerHomePageState extends State<SellerHomePage> {
                       ]
                     : null,
               ),
+              child: Icon(
+                icon,
+                color: isActive
+                    ? const Color(0xFF31476C)
+                    : const Color(0xFFFFE14F).withOpacity(0.5),
+                size: iconSize,
+              ),
             ),
             const SizedBox(height: 8),
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
               style: GoogleFonts.poppins(
                 fontSize: 12,
-                color: Colors.black87,
+                color: Colors.white,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
               ),
               child: Text(label),
