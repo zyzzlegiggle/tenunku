@@ -55,6 +55,11 @@ class _SellerChatPageState extends State<SellerChatPage> {
   }
 
   Future<void> _openConversation(ConversationModel conversation) async {
+    final user = _authRepo.currentUser;
+    if (user != null) {
+      // Mark as read immediately when opened
+      await _sellerRepo.markMessagesAsRead(conversation.id, user.id);
+    }
     await context.push('/seller/chat/detail', extra: conversation);
     _fetchConversations();
   }
@@ -109,6 +114,17 @@ class _SellerChatPageState extends State<SellerChatPage> {
   ) {
     final timeString = _formatTime(conversation.lastMessageAt);
 
+    // Profile color logic matching comment section
+    final buyerName = conversation.buyerName ?? 'Nama Pembeli';
+    final colors = [
+      const Color(0xFFF5793B),
+      const Color(0xFF54B7C2),
+      const Color(0xFF31476C),
+      const Color(0xFFFFE14F),
+    ];
+    final colorIndex = buyerName.codeUnitAt(0) % colors.length;
+    final profileColor = colors[colorIndex];
+
     return InkWell(
       onTap: () => _openConversation(conversation),
       child: Container(
@@ -122,11 +138,11 @@ class _SellerChatPageState extends State<SellerChatPage> {
           children: [
             // Avatar
             Container(
-              width: 50,
-              height: 50,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF9E9E9E),
+                color: profileColor,
                 image: conversation.buyerAvatarUrl != null
                     ? DecorationImage(
                         image: NetworkImage(conversation.buyerAvatarUrl!),
@@ -135,7 +151,9 @@ class _SellerChatPageState extends State<SellerChatPage> {
                     : null,
               ),
               child: conversation.buyerAvatarUrl == null
-                  ? const Icon(Icons.person, color: Colors.white, size: 28)
+                  ? const Center(
+                      child: Icon(Icons.person, color: Colors.white, size: 32),
+                    )
                   : null,
             ),
             const SizedBox(width: 12),
@@ -185,14 +203,14 @@ class _SellerChatPageState extends State<SellerChatPage> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF757575),
+                      color: const Color(0xFF54B7C2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       unreadCount.toString(),
                       style: GoogleFonts.poppins(
                         fontSize: 10,
-                        color: Colors.white,
+                        color: const Color(0xFFFFE14F),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -209,13 +227,6 @@ class _SellerChatPageState extends State<SellerChatPage> {
 
   String _formatTime(DateTime? dateTime) {
     if (dateTime == null) return '';
-    final now = DateTime.now();
-    final diff = now.difference(dateTime);
-
-    if (diff.inDays > 0) {
-      return '${dateTime.day}/${dateTime.month}';
-    } else {
-      return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-    }
+    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }

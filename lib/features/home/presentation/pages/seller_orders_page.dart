@@ -60,10 +60,31 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
     // And maybe do a separate quick count if possible (or just fake the counts for the tabs if not critical, but let's try to be real).
 
     // Fetch current tab orders
-    final orders = await _sellerRepo.getSellerOrders(
+    var orders = await _sellerRepo.getSellerOrders(
       _currentUserId,
       status: _selectedStatus,
     );
+
+    // Apply filters if on Diterima tab
+    if (_selectedStatus == 'completed') {
+      if (_selectedFilter == 'Dengan Foto') {
+        // Since we don't have actual review images in order model, we fall back to product image for demo
+        orders = orders
+            .where(
+              (o) => o.productImageUrl != null && o.productImageUrl!.isNotEmpty,
+            )
+            .toList();
+      }
+
+      if (_selectedFilter == 'Terlama') {
+        orders.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      } else if (_selectedFilter == 'Harga Tertinggi') {
+        orders.sort((a, b) => b.totalPrice.compareTo(a.totalPrice));
+      } else {
+        // default to 'Terbaru'
+        orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      }
+    }
 
     // Quick separate fetches for counts (inefficient but works for MVP)
     // Optimization: create a db function to get counts. keeping it simple for now.
@@ -117,10 +138,11 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        const SizedBox(height: 16),
         // Status Tabs/Dashboard
         Container(
           padding: const EdgeInsets.all(16),
-          color: Colors.white,
+          color: const Color(0xFFF5793B),
           child: Row(
             children: [
               Expanded(
@@ -165,15 +187,16 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
         // Filter buttons row - only for Diterima tab
         if (_selectedStatus == 'completed')
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             color: Colors.white,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none, // Allow shadow to not be clipped
               child: Row(
                 children: _filters.map((filter) {
                   final isSelected = _selectedFilter == filter;
                   return Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.only(right: 12),
                     child: GestureDetector(
                       onTap: () {
                         setState(() => _selectedFilter = filter);
@@ -181,27 +204,36 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                          horizontal: 20,
+                          vertical: 10,
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? const Color(0xFF757575)
+                              ? const Color(0xFFFFE14F)
                               : Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: const Color(0xFF757575),
-                            width: 1,
-                          ),
+                          borderRadius: BorderRadius.circular(25),
+                          boxShadow: !isSelected
+                              ? [
+                                  const BoxShadow(
+                                    color:
+                                        Colors.black26, // Thicker shadow color
+                                    blurRadius: 6, // Thicker blur
+                                    spreadRadius:
+                                        1, // Add spread to ensure it's visible outside
+                                    offset: Offset(
+                                      0,
+                                      3,
+                                    ), // slightly deeper offset
+                                  ),
+                                ]
+                              : null,
                         ),
                         child: Text(
                           filter,
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: isSelected
-                                ? Colors.white
-                                : const Color(0xFF757575),
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
                           ),
                         ),
                       ),
@@ -251,13 +283,8 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
     bool isSelected = false,
     required VoidCallback onTap,
   }) {
-    // Selected styles: White background, black border (or shadow/elevation to look distinct?)
-    // Screenshot: "Pesanan Masuk 10" is white with border?
-    // Wait, the screenshot shows "Pesanan Masuk" card is WHITE with rounded borders, while "Dikirim" and "Diterima" are DARK GREY.
-    // This implies the standard "Selected vs Unselected" tab toggle pattern.
-
-    final backgroundColor = isSelected ? Colors.white : const Color(0xFF757575);
-    final textColor = isSelected ? Colors.black : Colors.white;
+    final backgroundColor = isSelected ? const Color(0xFFFFE14F) : Colors.white;
+    final textColor = isSelected ? Colors.black : const Color(0xFF969696);
 
     return GestureDetector(
       onTap: onTap,
@@ -296,10 +323,7 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
               style: GoogleFonts.poppins(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: isSelected
-                    ? Colors.black
-                    : Colors
-                          .white, // Explicitly black for selected, white for unselected
+                color: textColor,
               ),
             ),
           ],
@@ -309,10 +333,115 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
   }
 
   Widget _buildOrderCard(OrderModel order) {
+    if (_selectedStatus == 'shipping') {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF31476C), // Card background
+          borderRadius: BorderRadius.circular(20),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // Header
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        order.buyerName ?? 'Nama Pembeli',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        order.productName ?? 'Nama barang yang dibeli',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${order.quantity} helai',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Product Image Container on right
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD9D9D9),
+                    borderRadius: BorderRadius.circular(12),
+                    image:
+                        order.productImageUrl != null &&
+                            order.productImageUrl!.isNotEmpty
+                        ? DecorationImage(
+                            image: NetworkImage(order.productImageUrl!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child:
+                      order.productImageUrl == null ||
+                          order.productImageUrl!.isEmpty
+                      ? const Icon(Icons.image, color: Colors.grey)
+                      : null,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // Masukan Resi round button
+            Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: () {
+                  _showTrackingDialog(order);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Masukan Resi',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF696969),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Pending state design
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFBDBDBD), // Grey background based on screenshot
+        color: const Color(0xFFF0F0F0),
         borderRadius: BorderRadius.circular(20),
       ),
       padding: const EdgeInsets.all(16),
@@ -333,163 +462,212 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
           // Product Name
           Text(
             order.productName ?? 'Nama barang yang dibeli',
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.black54),
+          ),
+
+          const SizedBox(height: 8),
+
+          Text(
+            '${order.quantity} helai',
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
           ),
 
           const SizedBox(height: 12),
 
-          // Quantity and Actions Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '${order.quantity} helai',
-                style: GoogleFonts.poppins(fontSize: 16, color: Colors.black87),
-              ),
-
-              if (_selectedStatus == 'pending')
-                Row(
-                  children: [
-                    _buildActionButton(
-                      'Tolak',
-                      onTap: () {
-                        _updateStatus(order.id, 'cancelled');
-                      },
-                      isPrimary: false,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildActionButton(
-                      'Terima',
-                      onTap: () {
-                        _updateStatus(order.id, 'shipping');
-                      },
-                      isPrimary: true,
-                    ),
-                  ],
-                )
-              else if (_selectedStatus == 'shipping')
-                Row(
-                  children: [
-                    _buildActionButton(
-                      'Masukan Resi',
-                      onTap: () {
-                        _showTrackingDialog(order);
-                      },
-                      isPrimary: false,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildActionButton(
-                      'Selesaikan',
-                      onTap: () {
-                        _updateStatus(order.id, 'completed');
-                      },
-                      isPrimary: true,
-                    ),
-                  ],
-                ),
-            ],
+          // Actions Row
+          Align(
+            alignment: Alignment.centerRight,
+            child: _selectedStatus == 'pending'
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildActionButton(
+                        'Tolak',
+                        onTap: () {
+                          _showRejectionDialog(order);
+                        },
+                        isPrimary: false,
+                        customBorderColor: const Color(0xFFB3B3B3),
+                        customTextColor: const Color(0xFFB3B3B3),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildActionButton(
+                        'Terima',
+                        onTap: () {
+                          _updateStatus(order.id, 'shipping');
+                        },
+                        isPrimary: true,
+                        customBgColor: const Color(0xFF54B7C2),
+                        customTextColor: Colors.white,
+                      ),
+                    ],
+                  )
+                : const SizedBox(),
           ),
         ],
       ),
     );
   }
 
-  /// Build card for Diterima (completed) orders - shows product images, buyer name, rating, review
+  /// Build card for Diterima (completed) orders - comment layout
   Widget _buildDiterimaOrderCard(OrderModel order) {
     // Format timestamp
     final timeStr = DateFormat('HH:mm').format(order.createdAt.toLocal());
 
+    // Generate random color for profile placeholder based on buyer name
+    final buyerName = order.buyerName ?? 'Nama Pembeli';
+    final colors = [
+      const Color(0xFFF5793B),
+      const Color(0xFF54B7C2),
+      const Color(0xFF31476C),
+      const Color(0xFFFFE14F),
+    ];
+    final colorIndex = buyerName.codeUnitAt(0) % colors.length;
+    final profileColor = colors[colorIndex];
+
+    // Dummy images since order model doesn't fetch review images natively in this slice
+    List<String> images = [];
+    if (order.productImageUrl != null && order.productImageUrl!.isNotEmpty) {
+      images.add(order.productImageUrl!);
+      images.add(order.productImageUrl!); // Added duplicate for demo layout
+      images.add(order.productImageUrl!);
+      images.add(order.productImageUrl!); // +1 left
+    }
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFBDBDBD), // Grey background
-        borderRadius: BorderRadius.circular(20),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 16),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFC3C3C3), width: 1)),
       ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Product images row (grey circles as placeholders) - tappable to show photo modal
-          Row(
-            children: [
-              // Multiple product image circles
-              for (int i = 0; i < 4; i++) ...[
-                GestureDetector(
-                  onTap: () => _showPhotoModal(order, i),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF757575),
-                      shape: BoxShape.circle,
-                    ),
-                    child: order.productImageUrl != null && i == 0
-                        ? ClipOval(
-                            child: Image.network(
-                              order.productImageUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const SizedBox(),
-                            ),
-                          )
-                        : null,
-                  ),
-                ),
-                if (i < 3) const SizedBox(width: 8),
-              ],
-            ],
+          // Profile image
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: profileColor,
+              shape: BoxShape.circle,
+            ),
+            child: const Center(
+              child: Icon(Icons.person, color: Colors.white, size: 32),
+            ),
           ),
+          const SizedBox(width: 12),
+          // Content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Name and Stars
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      buyerName,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    Row(
+                      children: List.generate(5, (index) {
+                        return const Icon(
+                          Icons.star,
+                          size: 14,
+                          color: Color(0xFFFFE14F),
+                        );
+                      }),
+                    ),
+                  ],
+                ),
 
-          const SizedBox(height: 12),
+                const SizedBox(height: 4),
 
-          // Buyer name and rating row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Buyer name
-              Expanded(
-                child: Text(
-                  order.buyerName ?? 'Nama Pembeli',
+                // Comment
+                Text(
+                  'Bahan kain yg dipakai sangat nyaman. Warna tidak luntur. Top banget deh!',
                   style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
                     color: Colors.black87,
                   ),
                 ),
-              ),
-              // Star rating (5 stars default for completed orders)
-              Row(
-                children: List.generate(5, (index) {
-                  return Icon(Icons.star, size: 14, color: Colors.black54);
-                }),
-              ),
-            ],
-          ),
 
-          const SizedBox(height: 4),
+                const SizedBox(height: 12),
 
-          // Review text and timestamp row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Review/description text
-              Expanded(
-                child: Text(
-                  'Lorem ipsum dolor sit amet, consectetur',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: Colors.black54,
+                // Images Row
+                if (images.isNotEmpty)
+                  Row(
+                    children: [
+                      for (int i = 0; i < images.length && i < 3; i++) ...[
+                        GestureDetector(
+                          onTap: () => _showPhotoModal(order, i, images),
+                          child: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: const Color(0xFFE0E0E0),
+                            ),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.network(
+                                    images[i],
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const Icon(
+                                      Icons.image,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ),
+                                if (i == 2 && images.length > 3)
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.5),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '+${images.length - 3}',
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (i < 2 && (i + 1) < images.length)
+                          const SizedBox(width: 8),
+                      ],
+                    ],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+
+                const SizedBox(height: 8),
+
+                // Upload time
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    timeStr,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: Colors.black45,
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              // Timestamp
-              Text(
-                timeStr,
-                style: GoogleFonts.poppins(fontSize: 11, color: Colors.black54),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -500,30 +678,24 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
     String label, {
     required VoidCallback onTap,
     required bool isPrimary,
+    Color? customBgColor,
+    Color? customTextColor,
+    Color? customBorderColor,
   }) {
-    // "Masukan Resi" style check
     final isResiButton = label == 'Masukan Resi';
 
-    // Colors
-    // Primary (Terima): Dark Grey/Black fill (#616161), White Text
-    // Secondary (Tolak): Transparent fill, White Border, White Text
-    // Resi Button: Light Grey/White fill (#E0E0E0 or similar), Black Text
-
-    Color bgColor;
-    Color textColor;
+    Color bgColor =
+        customBgColor ??
+        (isResiButton
+            ? const Color(0xFFE0E0E0).withOpacity(0.8)
+            : (isPrimary ? const Color(0xFF616161) : Colors.transparent));
+    Color textColor =
+        customTextColor ?? (isResiButton ? Colors.black87 : Colors.white);
     Border? border;
 
-    if (isResiButton) {
-      bgColor = const Color(0xFFE0E0E0).withOpacity(0.8); // Light greyish
-      textColor = Colors.black87;
-      border = null;
-    } else if (isPrimary) {
-      bgColor = const Color(0xFF616161);
-      textColor = Colors.white;
-      border = null;
-    } else {
-      bgColor = Colors.transparent;
-      textColor = Colors.white;
+    if (customBorderColor != null) {
+      border = Border.all(color: customBorderColor, width: 2);
+    } else if (!isPrimary && !isResiButton) {
       border = Border.all(color: Colors.white, width: 2);
     }
 
@@ -550,29 +722,29 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
   }
 
   /// Show photo modal for viewing product/review images
-  void _showPhotoModal(OrderModel order, int initialIndex) {
-    // Collect available images (product image + any review images)
-    final List<String?> images = [
-      order.productImageUrl,
-      null, // Placeholder for additional images
-      null,
-      null,
-    ];
-
+  void _showPhotoModal(
+    OrderModel order,
+    int initialIndex,
+    List<String> images,
+  ) {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.7),
+      barrierColor: Colors.black.withOpacity(0.5),
       builder: (context) =>
           _PhotoModal(images: images, initialIndex: initialIndex),
     );
   }
 
-  void _showRejectionDialog(String orderId) {
+  void _showRejectionDialog(OrderModel order) {
     showDialog(
       context: context,
+      barrierColor: Colors.black.withOpacity(
+        0.5,
+      ), // Semi black transparent background
       builder: (context) => _RejectionDialog(
+        order: order,
         onSaved: (reason) {
-          _updateStatus(orderId, 'cancelled', rejectionReason: reason);
+          _updateStatus(order.id, 'cancelled', rejectionReason: reason);
         },
       ),
     );
@@ -581,6 +753,9 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
   void _showTrackingDialog(OrderModel order) {
     showDialog(
       context: context,
+      barrierColor: Colors.black.withOpacity(
+        0.5,
+      ), // Semi black transparent background
       builder: (context) => _TrackingNumberDialog(
         order: order,
         onSaved: (trackingNumber, evidenceUrl) {
@@ -675,170 +850,190 @@ class _TrackingNumberDialogState extends State<_TrackingNumberDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      backgroundColor: const Color(
-        0xFFC4C4C4,
-      ), // Lighter grey background match screenshot
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Info
-            Text(
-              widget.order.buyerName ?? 'Nama Pembeli',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+      backgroundColor: const Color(0xFF31476C), // Dark blue background
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header Section
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: Color(0xFF54B7C2), // Cyan header
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            Text(
-              widget.order.productName ?? 'Nama barang yang dibeli',
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${widget.order.quantity} helai',
-              style: GoogleFonts.poppins(fontSize: 16, color: Colors.black87),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Masukan Resi Input
-            Text(
-              'Masukan Resi',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 4),
-            TextField(
-              controller: _controller,
-              style: GoogleFonts.poppins(color: Colors.black87),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: const Color(0xFFE0E0E0),
-                hintText: 'Nomor Resi',
-                hintStyle: GoogleFonts.poppins(color: Colors.black38),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20), // Rounded pill shape
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Masukan Foto Bukti Pengiriman
-            Text(
-              'Masukan Foto Bukti Pengiriman',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 4),
-            GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                height: 100,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0E0E0),
-                  borderRadius: BorderRadius.circular(20),
-                  image: _evidenceImage != null
-                      ? DecorationImage(
-                          image: FileImage(_evidenceImage!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: _evidenceImage == null
-                    ? const Center(
-                        child: Icon(
-                          Icons.image_outlined,
-                          size: 40,
-                          color: Colors.black45,
-                        ),
-                      )
-                    : null,
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Buttons
-            Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(25),
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'batal',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                Text(
+                  widget.order.buyerName ?? 'Nama Pembeli',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: _isUploading ? null : _submit,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE0E0E0),
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      alignment: Alignment.center,
-                      child: _isUploading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(
-                              'Simpan',
-                              style: GoogleFonts.poppins(
-                                color: Colors.black87,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                    ),
-                  ),
+                const SizedBox(height: 8),
+                Text(
+                  widget.order.productName ?? 'Nama barang yang dibeli',
+                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Jumlah: ${widget.order.quantity} helai',
+                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.white),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+
+          // Body Section
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Masukan Resi Input
+                Text(
+                  'Masukkan Resi',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                TextField(
+                  controller: _controller,
+                  style: GoogleFonts.poppins(color: Colors.black87),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    hintText: 'Nomor Resi',
+                    hintStyle: GoogleFonts.poppins(color: Colors.black38),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Masukan Foto Bukti Pengiriman
+                Text(
+                  'Masukkan Foto Bukti Pengiriman',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    height: 100,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      image: _evidenceImage != null
+                          ? DecorationImage(
+                              image: FileImage(_evidenceImage!),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                    child: _evidenceImage == null
+                        ? const Center(
+                            child: Icon(
+                              Icons.image_outlined,
+                              size: 40,
+                              color: Colors.black45,
+                            ),
+                          )
+                        : null,
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(25),
+                            border: Border.all(color: Colors.white, width: 1.5),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'batal',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _isUploading ? null : _submit,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF54B7C2),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          alignment: Alignment.center,
+                          child: _isUploading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  'Simpan',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
 class _RejectionDialog extends StatefulWidget {
+  final OrderModel order;
   final Function(String) onSaved;
 
-  const _RejectionDialog({required this.onSaved});
+  const _RejectionDialog({required this.order, required this.onSaved});
 
   @override
   State<_RejectionDialog> createState() => _RejectionDialogState();
@@ -853,87 +1048,115 @@ class _RejectionDialogState extends State<_RejectionDialog> {
     'Produk Rusak/Cacat',
     'Terjadi Kesalahan Listing',
     'Kendala Operasional',
-    'Lainnya',
   ];
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      backgroundColor: const Color(0xFF616161),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Pilih Alasan Penolakan',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+      backgroundColor: const Color(0xFF31476C), // Dark blue background
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header Section
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: Color(0xFF54B7C2), // Cyan header
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            // Mock items to match screenshot layout if needed, but simple text for now
-            // Screenshot shows "Nama Pembeli", "Nama Barang", "2 helai" behind the modal?
-            // Or inside? Ah, the modal is just the grey box.
-            const SizedBox(height: 16),
-            ..._reasons.map((reason) => _buildRadioOption(reason)),
-            const SizedBox(height: 24),
-            Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(25),
-                        border: Border.all(color: Colors.white),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'batal',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                Text(
+                  'Pilih Alasan Penolakan',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      if (_selectedReason.isNotEmpty) {
-                        widget.onSaved(_selectedReason);
-                        Navigator.pop(context);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE0E0E0),
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Simpan',
-                        style: GoogleFonts.poppins(
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
+                const SizedBox(height: 8),
+                Text(
+                  widget.order.productName ?? 'Nama barang yang dibeli',
+                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Jumlah: ${widget.order.quantity} helai',
+                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.white),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+
+          // Body Section
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ..._reasons.map((reason) => _buildRadioOption(reason)),
+                const SizedBox(height: 24),
+
+                // Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(25),
+                            border: Border.all(color: Colors.white, width: 1.5),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'batal',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          if (_selectedReason.isNotEmpty) {
+                            widget.onSaved(_selectedReason);
+                            Navigator.pop(context);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF54B7C2),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Simpan',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -960,7 +1183,9 @@ class _RejectionDialogState extends State<_RejectionDialog> {
                         width: 10,
                         height: 10,
                         decoration: const BoxDecoration(
-                          color: Color(0xFF616161),
+                          color: Color(
+                            0xFF31476C,
+                          ), // Inner dot color matches card background
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -968,7 +1193,12 @@ class _RejectionDialogState extends State<_RejectionDialog> {
                   : null,
             ),
             const SizedBox(width: 12),
-            Text(reason, style: GoogleFonts.poppins(color: Colors.white)),
+            Expanded(
+              child: Text(
+                reason,
+                style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+              ),
+            ),
           ],
         ),
       ),
@@ -1004,88 +1234,170 @@ class _PhotoModalState extends State<_PhotoModal> {
     super.dispose();
   }
 
+  void _nextPage() {
+    if (_currentIndex < widget.images.length - 1) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void _prevPage() {
+    if (_currentIndex > 0) {
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.pop(context),
-      child: Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 80),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Photo container
-            Container(
-              height: 280,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() => _currentIndex = index);
-                },
-                itemCount: widget.images.length,
-                itemBuilder: (context, index) {
-                  final imageUrl = widget.images[index];
-                  return Center(
-                    child: imageUrl != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: Image.network(
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 80),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              // Photo container
+              Container(
+                height: 350,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() => _currentIndex = index);
+                  },
+                  itemCount: widget.images.length,
+                  itemBuilder: (context, index) {
+                    final imageUrl = widget.images[index];
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: imageUrl != null && imageUrl.isNotEmpty
+                          ? Image.network(
                               imageUrl,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Icon(
+                              errorBuilder: (_, __, ___) => Container(
+                                color: Colors.white,
+                                child: const Icon(
+                                  Icons.image_outlined,
+                                  size: 60,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            )
+                          : Container(
+                              color: Colors.white,
+                              child: const Icon(
                                 Icons.image_outlined,
                                 size: 60,
-                                color: Colors.grey[400],
+                                color: Colors.grey,
                               ),
                             ),
-                          )
-                        : Icon(
-                            Icons.image_outlined,
-                            size: 60,
-                            color: Colors.grey[400],
-                          ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
 
-            const SizedBox(height: 16),
+              // Left Arrow
+              if (widget.images.length > 1)
+                Positioned(
+                  left: -15, // shifted more to be outside/on edge
+                  child: GestureDetector(
+                    onTap: _prevPage,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Colors.black26, blurRadius: 4),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.chevron_left,
+                        color: Color(0xFF54B7C2),
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ),
 
-            // Pagination dots
+              // Right Arrow
+              if (widget.images.length > 1)
+                Positioned(
+                  right: -15, // shifted more to be outside/on edge
+                  child: GestureDetector(
+                    onTap: _nextPage,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Colors.black26, blurRadius: 4),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.chevron_right,
+                        color: Color(0xFF54B7C2),
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Close Button (Top right corner exactly middle)
+              Positioned(
+                top: -15,
+                right: -15,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF5793B),
+                      shape: BoxShape.circle,
+                    ),
+                    padding: const EdgeInsets.all(8),
+                    child: const Icon(
+                      Icons.close,
+                      color: Color(0xFFFFE14F),
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Pagination dots
+          if (widget.images.length > 1)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(widget.images.length, (index) {
                 final isActive = index == _currentIndex;
                 return Container(
-                  width: 8,
-                  height: 8,
+                  width: 10,
+                  height: 10,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isActive ? Colors.white : Colors.grey[600],
+                    color: isActive ? const Color(0xFFFFE14F) : Colors.white,
                   ),
                 );
               }),
             ),
-
-            const SizedBox(height: 24),
-
-            // "Sentuh Untuk Kembali" text
-            Text(
-              'Sentuh Untuk Kembali',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.white,
-                decoration: TextDecoration.underline,
-                decorationColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }

@@ -128,6 +128,24 @@ class _SellerHomePageState extends State<SellerHomePage> {
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
+                    )
+                  else if (_currentIndex == 2)
+                    Text(
+                      'Pesanan',
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    )
+                  else if (_currentIndex == 3)
+                    Text(
+                      'Obrolan',
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                 ],
               ),

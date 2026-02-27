@@ -118,81 +118,65 @@ class _SellerChatDetailPageState extends State<SellerChatDetailPage> {
   }
 
   Widget _buildChatHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
-      ),
-      child: Row(
-        children: [
-          // Back button
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black87),
-            onPressed: () => Navigator.pop(context),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            splashRadius: 24,
-          ),
-          const SizedBox(width: 16),
+    final buyerName = widget.conversation.buyerName ?? 'Nama Pembeli';
 
-          // Name and status
-          Expanded(
-            child: Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    widget.conversation.buyerName ?? 'Nama Pembeli',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+    return Column(
+      children: [
+        // App header style (Cyan Blue)
+        Container(
+          color: const Color(0xFF54B7C2),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 28,
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFF4CAF50), // Green for online
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Online',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
+              ),
+              Image.asset('assets/logo.png', width: 36, height: 36),
+            ],
+          ),
+        ),
+
+        // Chat info header (White)
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              bottom: BorderSide(color: Color(0xFFC3C3C3), width: 1),
             ),
           ),
-
-          // Right side avatar (kept as requested)
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFF9E9E9E),
-              image: widget.conversation.buyerAvatarUrl != null
-                  ? DecorationImage(
-                      image: NetworkImage(widget.conversation.buyerAvatarUrl!),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
-            ),
-            child: widget.conversation.buyerAvatarUrl == null
-                ? const Icon(Icons.person, color: Colors.white, size: 24)
-                : null,
+          child: Column(
+            children: [
+              Text(
+                'Anda sedang melakukan obrolan dengan',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: const Color(0xFF464646),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                buyerName,
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF464646),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -223,22 +207,34 @@ class _SellerChatDetailPageState extends State<SellerChatDetailPage> {
   Widget _buildMessageBubble(MessageModel message, bool isMe) {
     final timeString = _formatMessageTime(message.createdAt);
 
+    // Common Profile logic
+    final senderName = isMe ? 'User' : (widget.conversation.buyerName ?? 'B');
+    final colors = [
+      const Color(0xFFF5793B),
+      const Color(0xFF54B7C2),
+      const Color(0xFF31476C),
+      const Color(0xFFFFE14F),
+    ];
+    final colorIndex = senderName.codeUnitAt(0) % colors.length;
+    final profileColor = colors[colorIndex];
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         mainAxisAlignment: isMe
             ? MainAxisAlignment.end
             : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment
+            .start, // Align to top (faces down style logic involves tail/placement)
         children: [
           if (!isMe) ...[
-            // Buyer avatar on left for received messages
+            // Buyer avatar on left
             Container(
               width: 32,
               height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF9E9E9E),
+                color: profileColor,
                 image: message.senderAvatarUrl != null
                     ? DecorationImage(
                         image: NetworkImage(message.senderAvatarUrl!),
@@ -247,37 +243,47 @@ class _SellerChatDetailPageState extends State<SellerChatDetailPage> {
                     : null,
               ),
               child: message.senderAvatarUrl == null
-                  ? const Icon(Icons.person, color: Colors.white, size: 18)
+                  ? const Center(
+                      child: Icon(Icons.person, color: Colors.white, size: 20),
+                    )
                   : null,
             ),
             const SizedBox(width: 8),
           ],
+
           // Message bubble
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.only(
+                left: 14,
+                right: 14,
+                top: 10,
+                bottom: 6,
+              ),
               decoration: BoxDecoration(
-                color: isMe ? Colors.white : const Color(0xFFE0E0E0),
+                color: isMe ? const Color(0xFF54B7C2) : const Color(0xFF31476C),
                 borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(16),
-                  topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(isMe ? 16 : 4),
-                  bottomRight: Radius.circular(isMe ? 4 : 16),
+                  bottomLeft: const Radius.circular(16),
+                  bottomRight: const Radius.circular(16),
+                  topLeft: Radius.circular(
+                    isMe ? 16 : 4,
+                  ), // Tail is Top Left for them
+                  topRight: Radius.circular(
+                    isMe ? 4 : 16,
+                  ), // Tail is Top Right for you
                 ),
-                border: isMe
-                    ? Border.all(color: const Color(0xFFE0E0E0), width: 1)
-                    : null,
               ),
               child: Column(
-                crossAxisAlignment: isMe
-                    ? CrossAxisAlignment.end
-                    : CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    message.content,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: Colors.black87,
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      message.content,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: isMe ? Colors.black87 : Colors.white,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -285,13 +291,30 @@ class _SellerChatDetailPageState extends State<SellerChatDetailPage> {
                     timeString,
                     style: GoogleFonts.poppins(
                       fontSize: 10,
-                      color: Colors.grey[500],
+                      color: isMe ? Colors.black54 : Colors.white70,
                     ),
                   ),
                 ],
               ),
             ),
           ),
+
+          if (isMe) ...[
+            const SizedBox(width: 8),
+            // User avatar on right
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color:
+                    profileColor, // using identical color logic for demo or use current user profile
+              ),
+              child: const Center(
+                child: Icon(Icons.person, color: Colors.white, size: 20),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -299,52 +322,54 @@ class _SellerChatDetailPageState extends State<SellerChatDetailPage> {
 
   Widget _buildMessageInput() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
-      ),
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 24, top: 12),
+      color: Colors.white,
       child: SafeArea(
-        child: Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: TextField(
-                  controller: _messageController,
-                  decoration: InputDecoration(
-                    hintText: 'Ketik pesan...',
-                    hintStyle: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.grey[500],
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  style: GoogleFonts.poppins(fontSize: 14),
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: (_) => _sendMessage(),
-                ),
+        top: false,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: _messageController,
+            decoration: InputDecoration(
+              hintText: 'Ketik pesan anda...',
+              hintStyle: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(
+                  color: Colors.white,
+                  width: 1,
+                ), // Optional white line if active
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
               ),
             ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: _sendMessage,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF616161),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.send, color: Colors.white, size: 20),
-              ),
-            ),
-          ],
+            style: GoogleFonts.poppins(fontSize: 14),
+            textInputAction: TextInputAction.send,
+            onSubmitted: (_) => _sendMessage(),
+          ),
         ),
       ),
     );
