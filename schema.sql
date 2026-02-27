@@ -532,3 +532,5 @@ create policy "Usages are viewable by everyone." on benang_usages for select usi
 -- alter table public.products add column color_id uuid references public.benang_colors(id);
 -- alter table public.products add column usage_id uuid references public.benang_usages(id);
 
+ALTER TABLE public.profiles 
+ADD COLUMN qris_url text;

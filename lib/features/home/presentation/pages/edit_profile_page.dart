@@ -34,6 +34,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   String? _avatarUrl;
   File? _bannerFile;
   String? _bannerUrl;
+  File? _qrisFile;
+  String? _qrisUrl;
   bool _isLoading = false;
 
   @override
@@ -57,6 +59,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         _ageController.text = profile.age?.toString() ?? '';
         _avatarUrl = profile.avatarUrl;
         _bannerUrl = profile.bannerUrl;
+        _qrisUrl = profile.qrisUrl;
       }
     } catch (e) {
       if (mounted) {
@@ -86,19 +89,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
-  Future<void> _pickBanner() async {
+  Future<void> _pickQris() async {
     try {
       final File? image = await _storageService.pickImage();
       if (image != null) {
         setState(() {
-          _bannerFile = image;
+          _qrisFile = image;
         });
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Gagal mengambil banner: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengambil gambar Q-RIS: $e')),
+        );
       }
     }
   }
@@ -126,6 +129,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
         _bannerUrl = url;
       }
 
+      // proper upload if qris file exists
+      if (_qrisFile != null) {
+        final url = await _storageService.uploadImage(
+          'qris',
+          _qrisFile!,
+          path: '$_userId/qris.jpg',
+        );
+        _qrisUrl = url;
+      }
+
       final updatedProfile = Profile(
         id: _userId,
         fullName: _fullNameController.text,
@@ -137,6 +150,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         age: int.tryParse(_ageController.text),
         avatarUrl: _avatarUrl,
         bannerUrl: _bannerUrl,
+        qrisUrl: _qrisUrl,
       );
 
       await _sellerRepo.updateProfile(updatedProfile);
@@ -160,21 +174,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF54B7C2),
         elevation: 0,
         leading: const BackButton(color: Colors.black87),
-        title: Text(
-          'TENUNKu',
-          style: GoogleFonts.poppins(
-            color: const Color(0xFF212121),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: Image.asset('assets/logo.png', width: 36, height: 36),
+        centerTitle: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined, color: Color(0xFF757575)),
-            onPressed: () {},
+            icon: const Icon(
+              Icons.settings,
+              color: Color(0xFFFFE14F),
+              size: 28,
+            ),
+            onPressed: () => context.push('/seller/settings'),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
@@ -188,7 +202,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFAAAAAA),
+                      color: const Color(0xFF31476C),
                       image: _bannerFile != null
                           ? DecorationImage(
                               image: FileImage(_bannerFile!),
@@ -214,11 +228,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               child: Stack(
                                 children: [
                                   Container(
-                                    width: 100,
-                                    height: 100,
+                                    width: 170,
+                                    height: 170,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: const Color(0xFF616161),
+                                      color: const Color(0xFFF5793B),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Colors.black26,
+                                          blurRadius: 10,
+                                          offset: Offset(0, 4),
+                                        ),
+                                      ],
                                       image: _avatarFile != null
                                           ? DecorationImage(
                                               image: FileImage(_avatarFile!),
@@ -237,25 +258,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                         ? const Center(
                                             child: Icon(
                                               Icons.person,
-                                              size: 50,
+                                              size: 60,
                                               color: Colors.white,
                                             ),
                                           )
                                         : null,
                                   ),
                                   Positioned(
-                                    right: 0,
-                                    bottom: 0,
+                                    right: 4,
+                                    bottom: 4,
                                     child: Container(
-                                      padding: const EdgeInsets.all(4),
+                                      padding: const EdgeInsets.all(6),
                                       decoration: const BoxDecoration(
-                                        color: Colors.white,
+                                        color: Color(0xFFFFE14F),
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Icon(
                                         Icons.edit,
-                                        size: 16,
-                                        color: Colors.black54,
+                                        size: 20,
+                                        color: Color(0xFF31476C),
                                       ),
                                     ),
                                   ),
@@ -292,28 +313,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        GestureDetector(
-                          onTap: _pickBanner,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF616161),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              'Masukan Gambar Banner',
-                              style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -345,47 +344,158 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     child: Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: Colors
-                            .transparent, // Wrapper is transparent, inner is styled
-                      ),
-                      child: ClipRRect(
+                        color: const Color(0xFFF0F0F0),
                         borderRadius: BorderRadius.circular(20),
-                        child: Column(
-                          children: [
-                            // Header
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(16),
-                              color: const Color(
-                                0xFF616161,
-                              ), // Dark Grey Header
-                              child: Text(
-                                'Data Diri',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                      ),
+                      child: Column(
+                        children: [
+                          // Header
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF31476C),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Data Diri',
+                              style: GoogleFonts.poppins(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          // Body
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            color: Colors.transparent,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildLabel('Nama Lengkap', isDarkText: true),
+                                _buildRoundedInput(_fullNameController),
+                                const SizedBox(height: 12),
+                                _buildLabel('Umur', isDarkText: true),
+                                _buildRoundedInput(_ageController),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Q-RIS Section
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0F0F0),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Column(
+                        children: [
+                          // Header
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF31476C),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Kode Q-RIS Toko',
+                              style: GoogleFonts.poppins(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          // Body
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              children: [
+                                Text(
+                                  'Unggah kode Q-RIS Anda di bawah ini',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
-                              ),
+                                const SizedBox(height: 16),
+                                GestureDetector(
+                                  onTap: _pickQris,
+                                  child: Container(
+                                    width: 150,
+                                    height: 150,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFD9D9D9),
+                                      borderRadius: BorderRadius.circular(16),
+                                      image: _qrisFile != null
+                                          ? DecorationImage(
+                                              image: FileImage(_qrisFile!),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : _qrisUrl != null
+                                          ? DecorationImage(
+                                              image: NetworkImage(_qrisUrl!),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null,
+                                    ),
+                                    child:
+                                        (_qrisFile == null && _qrisUrl == null)
+                                        ? Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              const Icon(
+                                                Icons.add,
+                                                color: Color(0xFF54B7C2),
+                                                size: 32,
+                                              ),
+                                              const SizedBox(height: 12),
+                                              const Icon(
+                                                Icons.image_outlined,
+                                                color: Color(0xFFB3B3B3),
+                                                size: 24,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Klik disini',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 10,
+                                                  color: const Color(
+                                                    0xFFB3B3B3,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        : const SizedBox(),
+                                  ),
+                                ),
+                              ],
                             ),
-                            // Body
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(16),
-                              color: const Color(0xFFEEEEEE), // Light Grey Body
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildLabel('Nama Lengkap', isDarkText: true),
-                                  _buildRoundedInput(_fullNameController),
-                                  const SizedBox(height: 12),
-                                  _buildLabel('Umur', isDarkText: true),
-                                  _buildRoundedInput(_ageController),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -398,25 +508,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: const BoxDecoration(
-              color: Color(0xFF616161),
+              color: Color(0xFF54B7C2),
               border: Border(top: BorderSide(color: Colors.white12)),
             ),
             child: Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: ElevatedButton(
                     onPressed: () => context.pop(),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.white),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: Text(
                       'Batal',
                       style: GoogleFonts.poppins(
-                        color: Colors.white,
+                        color: const Color(0xFFB8B8B8),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -427,9 +538,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _saveProfile,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD6D6D6),
+                      backgroundColor: const Color(0xFFFFE14F),
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
@@ -437,12 +549,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         ? const SizedBox(
                             height: 20,
                             width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.black,
+                            ),
                           )
                         : Text(
                             'Simpan',
                             style: GoogleFonts.poppins(
-                              color: Colors.black87,
+                              color: Colors.black,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -467,26 +582,31 @@ class _EditProfilePageState extends State<EditProfilePage> {
       margin: const EdgeInsets.only(bottom: 4),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEEEEE), // Light Greyish like Keseharian
-        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFFD9D9D9).withOpacity(0.5),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: TextField(
         controller: controller,
         style: GoogleFonts.poppins(
           fontSize: fontSize,
           fontWeight: fontWeight,
-          color: Colors.black87, // Dark Text
+          color: Colors.white,
         ),
         maxLines: maxLines,
         decoration: InputDecoration(
           isDense: true,
           contentPadding: EdgeInsets.zero,
           border: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          hoverColor: Colors.transparent,
+          fillColor: Colors.transparent,
+          filled: true,
           hintText: hintText,
           hintStyle: GoogleFonts.poppins(
             fontSize: fontSize,
             fontWeight: fontWeight,
-            color: Colors.black38, // Dark Hint
+            color: Colors.white70,
           ),
         ),
       ),
@@ -500,20 +620,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
   ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F0F0),
+          borderRadius: BorderRadius.circular(20),
+        ),
         child: Column(
           children: [
             // Header
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              color: const Color(0xFF616161), // Dark Grey Header
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF31476C),
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: Text(
                 title,
                 style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                   color: Colors.white,
                 ),
               ),
@@ -522,17 +648,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
-              color: const Color(0xFFEEEEEE), // Light Grey Body
+              color: Colors.transparent,
               child: TextField(
                 controller: controller,
                 style: GoogleFonts.poppins(
                   fontSize: 12,
-                  color: Colors.black87, // Black text on light body
+                  color: Colors.black87,
                   height: 1.5,
                 ),
                 maxLines: null,
                 decoration: InputDecoration(
                   border: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  hoverColor: Colors.transparent,
+                  fillColor: Colors.transparent,
+                  filled: true,
                   isDense: true,
                   contentPadding: EdgeInsets.zero,
                   hintText: placeholder,
@@ -567,13 +698,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEEEEE), // Light Greyish like Keseharian
+        color: Colors.white,
         borderRadius: BorderRadius.circular(30),
       ),
       child: TextField(
         controller: controller,
-        style: GoogleFonts.poppins(color: Colors.black87), // Dark Text
-        decoration: const InputDecoration(border: InputBorder.none),
+        style: GoogleFonts.poppins(color: Colors.black87),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          hoverColor: Colors.transparent,
+          fillColor: Colors.transparent,
+          filled: true,
+        ),
       ),
     );
   }

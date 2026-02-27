@@ -11,6 +11,7 @@ class Profile {
   final String? hope;
   final String? dailyActivity;
   final int? age;
+  final String? qrisUrl;
 
   Profile({
     required this.id,
@@ -25,6 +26,7 @@ class Profile {
     this.hope,
     this.dailyActivity,
     this.age,
+    this.qrisUrl,
   });
 
   factory Profile.fromJson(Map<String, dynamic> json) {
@@ -41,6 +43,7 @@ class Profile {
       hope: json['hope'],
       dailyActivity: json['daily_activity'],
       age: json['age'],
+      qrisUrl: json['qris_url'],
     );
   }
 
@@ -58,6 +61,7 @@ class Profile {
       'hope': hope,
       'daily_activity': dailyActivity,
       'age': age,
+      'qris_url': qrisUrl,
     };
   }
 }

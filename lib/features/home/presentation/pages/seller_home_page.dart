@@ -450,7 +450,11 @@ class _SellerHomePageState extends State<SellerHomePage> {
                       style: GoogleFonts.poppins(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color:
+                            product.imageUrl != null &&
+                                product.imageUrl!.isNotEmpty
+                            ? Colors.white
+                            : Colors.black,
                       ),
                       children: [
                         if (additionalMetricLabel.isNotEmpty)
@@ -459,7 +463,11 @@ class _SellerHomePageState extends State<SellerHomePage> {
                             style: GoogleFonts.poppins(
                               fontSize: 12, // Subscript size
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              color:
+                                  product.imageUrl != null &&
+                                      product.imageUrl!.isNotEmpty
+                                  ? Colors.white
+                                  : Colors.black,
                             ),
                           ),
                       ],
