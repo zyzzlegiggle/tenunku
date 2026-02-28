@@ -6,7 +6,8 @@ import '../../data/repositories/buyer_repository.dart';
 import '../../data/models/profile_model.dart';
 
 class BuyerAccountPage extends StatefulWidget {
-  const BuyerAccountPage({super.key});
+  final VoidCallback? onFavoritesTap;
+  const BuyerAccountPage({super.key, this.onFavoritesTap});
 
   @override
   State<BuyerAccountPage> createState() => _BuyerAccountPageState();
@@ -234,7 +235,13 @@ class _BuyerAccountPageState extends State<BuyerAccountPage> {
                     _buildActivityCard(
                       icon: Icons.favorite,
                       label: 'Favorit Saya',
-                      onTap: () => context.push('/buyer/favorites'),
+                      onTap: () {
+                        if (widget.onFavoritesTap != null) {
+                          widget.onFavoritesTap!();
+                        } else {
+                          context.push('/buyer/favorites');
+                        }
+                      },
                     ),
                     const SizedBox(height: 12),
                     _buildActivityCard(

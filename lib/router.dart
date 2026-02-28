@@ -119,8 +119,20 @@ final router = GoRouter(
         return OtpPage(email: email);
       },
     ),
-    GoRoute(path: '/home', builder: (context, state) => const HomePage()),
-    GoRoute(path: '/buyer', builder: (context, state) => const HomePage()),
+    GoRoute(
+      path: '/home',
+      builder: (context, state) {
+        final initialIndex = state.extra is int ? state.extra as int : 0;
+        return HomePage(initialIndex: initialIndex);
+      },
+    ),
+    GoRoute(
+      path: '/buyer',
+      builder: (context, state) {
+        final initialIndex = state.extra is int ? state.extra as int : 0;
+        return HomePage(initialIndex: initialIndex);
+      },
+    ),
     GoRoute(
       path: '/buyer/payment',
       builder: (context, state) {

@@ -8,21 +8,24 @@ import '../widgets/home_view_body.dart';
 import 'explore_page.dart';
 import 'cart_page.dart';
 import 'buyer_account_page.dart';
+import 'favorites_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final int initialIndex;
+  const HomePage({super.key, this.initialIndex = 0});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  int _currentIndex = 0;
+  late int _currentIndex;
   static const String _onboardingKey = 'buyer_onboarding_completed';
 
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     _checkAndShowOnboarding();
   }
 
@@ -232,54 +235,74 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       extendBody: true,
-      body: Container(
-        color: Colors.white,
-        child: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              // Fixed Header - Cyan blue background
-              Container(
-                color: cyanBlue,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 14,
-                ),
-                child: Row(
-                  children: [
-                    Image.asset('assets/logo.png', width: 36, height: 36),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: () => context.push('/buyer/settings'),
-                      child: const Icon(
-                        Icons.settings,
-                        color: yellow,
-                        size: 28,
-                      ),
+      body: WillPopScope(
+        onWillPop: () async {
+          if (_currentIndex == 4) {
+            setState(() => _currentIndex = 3);
+            return false;
+          }
+          if (_currentIndex != 0) {
+            setState(() => _currentIndex = 0);
+            return false;
+          }
+          return true;
+        },
+        child: Container(
+          color: Colors.white,
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                // Fixed Header - Cyan blue background
+                if (_currentIndex != 4)
+                  Container(
+                    color: cyanBlue,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
                     ),
-                  ],
-                ),
-              ),
+                    child: Row(
+                      children: [
+                        Image.asset('assets/logo.png', width: 36, height: 36),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () => context.push('/buyer/settings'),
+                          child: const Icon(
+                            Icons.settings,
+                            color: yellow,
+                            size: 28,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
-              // Scrollable Content
-              Expanded(
-                child: IndexedStack(
-                  index: _currentIndex,
-                  children: [
-                    // Index 0: Home Body
-                    HomeViewBody(
-                      onSearchTap: () => setState(() => _currentIndex = 1),
-                    ),
-                    // Index 1: Explore Page
-                    const ExplorePage(),
-                    // Index 2: Keranjang
-                    const CartPage(),
-                    // Index 3: Akun Saya
-                    const BuyerAccountPage(),
-                  ],
+                // Scrollable Content
+                Expanded(
+                  child: IndexedStack(
+                    index: _currentIndex,
+                    children: [
+                      // Index 0: Home Body
+                      HomeViewBody(
+                        onSearchTap: () => setState(() => _currentIndex = 1),
+                      ),
+                      // Index 1: Explore Page
+                      const ExplorePage(),
+                      // Index 2: Keranjang
+                      const CartPage(),
+                      // Index 3: Akun Saya
+                      BuyerAccountPage(
+                        onFavoritesTap: () => setState(() => _currentIndex = 4),
+                      ),
+                      // Index 4: Favorit Saya
+                      FavoritesPage(
+                        onBack: () => setState(() => _currentIndex = 3),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -302,7 +325,8 @@ class _HomePageState extends State<HomePage> {
   Widget _buildNavItem(String label, int index, IconData icon) {
     const yellow = Color(0xFFFFE14F);
     const navyBlue = Color(0xFF31476C);
-    final bool isActive = _currentIndex == index;
+    final bool isActive =
+        _currentIndex == index || (_currentIndex == 4 && index == 3);
 
     return GestureDetector(
       onTap: () {
