@@ -34,6 +34,7 @@ import 'features/home/presentation/pages/buy_again_page.dart';
 import 'features/home/presentation/pages/recently_viewed_page.dart';
 import 'features/home/presentation/pages/submit_review_page.dart';
 import 'features/home/presentation/pages/payment_page.dart';
+import 'features/home/presentation/pages/qris_payment_page.dart';
 import 'features/home/presentation/pages/seller_biography_page.dart';
 import 'features/home/presentation/pages/benang_membumi_page.dart';
 import 'features/home/presentation/pages/warna_detail_page.dart';
@@ -126,6 +127,18 @@ final router = GoRouter(
         final cartItems = state.extra as List<CartItem>;
         return PaymentPage(cartItems: cartItems);
       },
+      routes: [
+        GoRoute(
+          path: 'qris',
+          builder: (context, state) {
+            final args = state.extra as Map<String, dynamic>;
+            return QrisPaymentPage(
+              totalAmount: args['totalAmount'] as double,
+              qrisUrl: args['qrisUrl'] as String?,
+            );
+          },
+        ),
+      ],
     ),
     GoRoute(
       path: '/seller/biography',

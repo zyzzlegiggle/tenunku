@@ -7,6 +7,7 @@ import '../widgets/onboarding_single_dialog.dart';
 import '../widgets/home_view_body.dart';
 import 'explore_page.dart';
 import 'cart_page.dart';
+import 'buyer_account_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -274,7 +275,7 @@ class _HomePageState extends State<HomePage> {
                     // Index 2: Keranjang
                     const CartPage(),
                     // Index 3: Akun Saya
-                    const Center(child: Text("Akun Saya")),
+                    const BuyerAccountPage(),
                   ],
                 ),
               ),
@@ -305,11 +306,7 @@ class _HomePageState extends State<HomePage> {
 
     return GestureDetector(
       onTap: () {
-        if (index == 3) {
-          context.push('/buyer/account');
-        } else {
-          setState(() => _currentIndex = index);
-        }
+        setState(() => _currentIndex = index);
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,

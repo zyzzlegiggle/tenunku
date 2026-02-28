@@ -50,119 +50,132 @@ class _BuyerAccountPageState extends State<BuyerAccountPage> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Profile Header
+              // Profile Section
               Container(
-                padding: const EdgeInsets.all(24),
-                child: Column(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF31476C), // Dark blue background
+                  image: _profile?.bannerUrl != null
+                      ? DecorationImage(
+                          image: NetworkImage(_profile!.bannerUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Avatar
                     Container(
-                      width: 100,
-                      height: 100,
+                      width: 120,
+                      height: 120,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFFE0E0E0),
-                        border: Border.all(color: Colors.white, width: 3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
+                        color: const Color(0xFF616161),
+                        border: Border.all(
+                          color: const Color(0xFFFFE14F),
+                          width: 6,
+                        ),
+                        image: _profile?.avatarUrl != null
+                            ? DecorationImage(
+                                image: NetworkImage(_profile!.avatarUrl!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: _profile?.avatarUrl == null
+                          ? const Icon(
+                              Icons.person,
+                              color: Colors.white,
+                              size: 60,
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 20),
+                    // Info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _profile?.fullName ?? 'Nama User',
+                            style: GoogleFonts.poppins(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFFFE14F),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _profile?.bio ?? 'Bio: -',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: Colors.white70,
+                              height: 1.2,
+                            ),
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Jenis Kelamin: Laki-laki',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: Colors.white70,
+                            ),
+                          ),
+                          Text(
+                            'Alamat: ${_profile?.description ?? '-'}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: Colors.white70,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            'Nomor Telepon: ${_profile?.phone ?? '-'}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: Colors.white70,
+                            ),
                           ),
                         ],
                       ),
-                      child: _profile?.avatarUrl != null
-                          ? ClipOval(
-                              child: Image.network(
-                                _profile!.avatarUrl!,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          : const Icon(
-                              Icons.person,
-                              size: 50,
-                              color: Color(0xFF9E9E9E),
-                            ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Name
-                    Text(
-                      _profile?.fullName ?? 'Nama User',
-                      style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF333333),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // User Info Stats
-                    _buildInfoRow('Jenis Kelamin', 'Laki-laki'),
-                    _buildInfoRow('Alamat', _profile?.description ?? 'Alamat'),
-                    _buildInfoRow('Nomor Telepon', _profile?.phone ?? '-'),
-                    const SizedBox(height: 20),
-
-                    // Action Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              context.push('/buyer/edit-profile');
-                            },
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              side: const BorderSide(color: Color(0xFF424242)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: Text(
-                              'Edit Profil',
-                              style: GoogleFonts.poppins(
-                                color: const Color(0xFF424242),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              // Share profile functionality
-                            },
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              side: const BorderSide(color: Color(0xFF424242)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: Text(
-                              'Bagikan Profil',
-                              style: GoogleFonts.poppins(
-                                color: const Color(0xFF424242),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
               ),
 
-              // Pesanan Saya Section
+              // Action Buttons
               Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE0E0E0)),
+                color: const Color(0xFF54B7C2), // Cyan blue background
+                padding: const EdgeInsets.only(
+                  left: 16.0,
+                  right: 16.0,
+                  bottom: 24.0,
+                  top: 16.0,
                 ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildActionButton(
+                        'Edit Profil',
+                        () => context.push('/buyer/edit-profile'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildActionButton('Bagikan Profil')),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Pesanan Saya Section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -171,27 +184,28 @@ class _BuyerAccountPageState extends State<BuyerAccountPage> {
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF333333),
+                        color: Colors.black, // Left side in black
                       ),
                     ),
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _buildOrderStatusItem(
-                          icon: Icons.inventory_2_outlined,
+                        _buildOrderCard(
+                          image: 'assets/homepage/belumbayar.png',
+                          label: 'Belum Bayar',
+                        ),
+                        _buildOrderCard(
+                          image: 'assets/homepage/dikemas.png',
                           label: 'Dikemas',
-                          count: 0,
                         ),
-                        _buildOrderStatusItem(
-                          icon: Icons.local_shipping_outlined,
+                        _buildOrderCard(
+                          image: 'assets/homepage/dikirim.png',
                           label: 'Dikirim',
-                          count: 0,
                         ),
-                        _buildOrderStatusItem(
-                          icon: Icons.star_outline,
+                        _buildOrderCard(
+                          image: 'assets/homepage/beripenilaian.png',
                           label: 'Beri Penilaian',
-                          count: 0,
                           onTap: () => context.push('/buyer/submit-review'),
                         ),
                       ],
@@ -199,17 +213,12 @@ class _BuyerAccountPageState extends State<BuyerAccountPage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 32),
 
               // Aktivitas Saya Section
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE0E0E0)),
-                ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -218,31 +227,32 @@ class _BuyerAccountPageState extends State<BuyerAccountPage> {
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF333333),
+                        color: Colors.black, // Left side in black
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    _buildActivityMenuItem(
-                      icon: Icons.favorite_outline,
+                    const SizedBox(height: 16),
+                    _buildActivityCard(
+                      icon: Icons.favorite,
                       label: 'Favorit Saya',
                       onTap: () => context.push('/buyer/favorites'),
                     ),
-                    const Divider(height: 1),
-                    _buildActivityMenuItem(
-                      icon: Icons.refresh,
+                    const SizedBox(height: 12),
+                    _buildActivityCard(
+                      icon: Icons.shopping_cart,
                       label: 'Beli Lagi',
                       onTap: () => context.push('/buyer/buy-again'),
                     ),
-                    const Divider(height: 1),
-                    _buildActivityMenuItem(
-                      icon: Icons.access_time,
+                    const SizedBox(height: 12),
+                    _buildActivityCard(
+                      icon: null,
                       label: 'Terakhir Dilihat',
                       onTap: () => context.push('/buyer/recently-viewed'),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+
+              const SizedBox(height: 120), // Padding bottom for scroll view
             ],
           ),
         ),
@@ -250,97 +260,120 @@ class _BuyerAccountPageState extends State<BuyerAccountPage> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Text(
-        '$label: $value',
-        style: GoogleFonts.poppins(
-          fontSize: 13,
-          color: const Color(0xFF666666),
+  Widget _buildActionButton(String label, [VoidCallback? onTap]) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 48,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white, // Button is white
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildOrderStatusItem({
-    required IconData icon,
+  Widget _buildOrderCard({
+    required String image,
     required String label,
-    required int count,
     VoidCallback? onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        children: [
-          Stack(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, size: 28, color: const Color(0xFF424242)),
-              ),
-              if (count > 0)
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      count.toString(),
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: const Color(0xFF666666),
+      child: Container(
+        width: 80,
+        height: 100, // Added fixed height to force equal size
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, 2),
             ),
-          ),
-        ],
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(image, width: 32, height: 32),
+            const SizedBox(height: 8),
+            Expanded(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 10,
+                  color: const Color(0xFF727272),
+                  fontWeight: FontWeight.w500,
+                  height:
+                      1.1, // Added line height for better multi-line readability
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildActivityMenuItem({
-    required IconData icon,
+  Widget _buildActivityCard({
+    required IconData? icon,
     required String label,
     required VoidCallback onTap,
   }) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
         child: Row(
           children: [
-            Icon(icon, size: 22, color: const Color(0xFF424242)),
-            const SizedBox(width: 14),
+            if (icon != null) ...[
+              Icon(icon, color: const Color(0xFFF5793B), size: 24),
+              const SizedBox(width: 16),
+            ] else ...[
+              const SizedBox(
+                width: 40,
+              ), // Placeholder width if no icon for alignment
+            ],
             Expanded(
               child: Text(
                 label,
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: const Color(0xFF333333),
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black,
                 ),
               ),
             ),
-            const Icon(Icons.chevron_right, color: Color(0xFF9E9E9E)),
+            const Icon(
+              Icons.chevron_right,
+              color: Color(0xFFFFE14F), // Yellow right arrow
+              size: 28,
+            ),
           ],
         ),
       ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/cart_item_model.dart';
 import '../../data/repositories/buyer_repository.dart';
@@ -18,11 +17,18 @@ class PaymentPage extends StatefulWidget {
 class _PaymentPageState extends State<PaymentPage> {
   final BuyerRepository _repository = BuyerRepository();
   bool _isLoading = false;
+  late List<CartItem> _localCartItems;
+
+  @override
+  void initState() {
+    super.initState();
+    _localCartItems = List.from(widget.cartItems);
+  }
 
   // Group cart items by seller
   Map<String, List<CartItem>> get _groupedItems {
     final Map<String, List<CartItem>> grouped = {};
-    for (final item in widget.cartItems) {
+    for (final item in _localCartItems) {
       grouped.putIfAbsent(item.sellerId, () => []).add(item);
     }
     return grouped;
@@ -30,7 +36,7 @@ class _PaymentPageState extends State<PaymentPage> {
 
   double get _subtotal {
     double total = 0;
-    for (final item in widget.cartItems) {
+    for (final item in _localCartItems) {
       total += (item.productPrice ?? 0) * item.quantity;
     }
     return total;
@@ -41,7 +47,7 @@ class _PaymentPageState extends State<PaymentPage> {
 
   double get _total => _subtotal + _shippingCost;
 
-  int get _totalProducts => widget.cartItems.length;
+  int get _totalProducts => _localCartItems.length;
 
   Future<void> _checkout() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -51,7 +57,7 @@ class _PaymentPageState extends State<PaymentPage> {
 
     try {
       // Validate stock first
-      for (final item in widget.cartItems) {
+      for (final item in _localCartItems) {
         final productData = await _repository.getProductWithSeller(
           item.productId,
         );
@@ -65,7 +71,7 @@ class _PaymentPageState extends State<PaymentPage> {
       }
 
       // Create orders for each cart item
-      for (final item in widget.cartItems) {
+      for (final item in _localCartItems) {
         await _repository.createOrder(
           buyerId: userId,
           sellerId: item.sellerId,
@@ -76,17 +82,29 @@ class _PaymentPageState extends State<PaymentPage> {
         // Decrement stock
         await _repository.decrementStock(item.productId, item.quantity);
 
-        // Remove from cart after order created
-        await _repository.removeFromCart(item.id);
+        // Remove from cart after order created (skip for direct purchases)
+        if (item.id != 'temp') {
+          await _repository.removeFromCart(item.id);
+        }
+      }
+
+      String? qris;
+      try {
+        if (_localCartItems.isNotEmpty) {
+          final sellerProfile = await _repository.getProfile(
+            _localCartItems.first.sellerId,
+          );
+          qris = sellerProfile?.qrisUrl;
+        }
+      } catch (e) {
+        // Ignore
       }
 
       if (mounted) {
-        // Show success modal
-        await _showSuccessModal();
-        // Navigate back to home
-        if (mounted) {
-          context.go('/buyer');
-        }
+        context.go(
+          '/buyer/payment/qris',
+          extra: {'totalAmount': _total, 'qrisUrl': qris},
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -105,141 +123,55 @@ class _PaymentPageState extends State<PaymentPage> {
     }
   }
 
-  Future<void> _showSuccessModal() async {
-    return showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Close button
-              Align(
-                alignment: Alignment.topRight,
-                child: GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.close, color: Colors.grey),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Title
-              Text(
-                'Pembelian\nBerhasil!',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF333333),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Product thumbnails
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: widget.cartItems.take(2).map((item) {
-                  return Container(
-                    width: 80,
-                    height: 80,
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE0E0E0),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        item.productImageUrl != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  item.productImageUrl!,
-                                  width: 50,
-                                  height: 50,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (c, e, s) => Icon(
-                                    Icons.image,
-                                    color: Colors.grey[400],
-                                  ),
-                                ),
-                              )
-                            : Icon(Icons.image, color: Colors.grey[400]),
-                        const SizedBox(height: 4),
-                        Text(
-                          item.productName ?? 'Produk',
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                            fontSize: 8,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 24),
-              // Message
-              Text(
-                'Ditunggu ya, Penenun\nakan segera menyiapkan\npesanan kamu!',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF54B7C2),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF424242)),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.pop(),
         ),
-        title: Text(
-          'Pembayaran',
-          style: GoogleFonts.poppins(
-            color: const Color(0xFF333333),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Center(
-              child: Text(
-                '$_totalProducts Produk',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ),
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.white),
+            onPressed: () {},
           ),
         ],
       ),
       body: Column(
         children: [
+          const SizedBox(height: 8), // small white space
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                '$_totalProducts Produk',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF757575),
+                ),
+              ),
+            ),
+          ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -247,59 +179,56 @@ class _PaymentPageState extends State<PaymentPage> {
                   ..._groupedItems.entries.map((entry) {
                     return _buildSellerGroup(entry.key, entry.value);
                   }),
-                  const SizedBox(height: 24),
-                  // Order summary
-                  _buildOrderSummary(),
-                  const SizedBox(height: 24),
-                  // Shipping info
-                  _buildShippingInfo(),
-                  const SizedBox(height: 100),
+                  const SizedBox(height: 48),
                 ],
               ),
             ),
           ),
-          // Checkout button
-          _buildCheckoutButton(),
+          // Bottom Payment Section
+          _buildPaymentSummary(),
         ],
       ),
     );
   }
 
   Widget _buildSellerGroup(String sellerId, List<CartItem> items) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Seller header
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF424242),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
+          Row(
+            children: [
+              Image.asset(
+                'assets/homepage/namatoko.png',
+                width: 24,
+                height: 24,
+                errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.store, color: Color(0xFF757575), size: 24),
               ),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  'Nama Toko',
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF31476C),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Nama Toko', // Extendable via join later
                   style: GoogleFonts.poppins(
+                    color: Colors.white,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          // Items
-          ...items.map((item) => _buildOrderItem(item)),
+          const SizedBox(height: 12),
+          Column(children: items.map((item) => _buildOrderItem(item)).toList()),
         ],
       ),
     );
@@ -307,36 +236,32 @@ class _PaymentPageState extends State<PaymentPage> {
 
   Widget _buildOrderItem(CartItem item) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16), // Padding for individual cards
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+        color: const Color(0xFFF0F0F0),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Product image
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE0E0E0),
-              borderRadius: BorderRadius.circular(8),
-            ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
             child: item.productImageUrl != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      item.productImageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (c, e, s) => Center(
-                        child: Icon(Icons.image, color: Colors.grey[400]),
-                      ),
+                ? Image.network(
+                    item.productImageUrl!,
+                    width: 70,
+                    height: 70,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 70,
+                      height: 70,
+                      color: Colors.grey[300],
                     ),
                   )
-                : Center(child: Icon(Icons.image, color: Colors.grey[400])),
+                : Container(width: 70, height: 70, color: Colors.grey[300]),
           ),
-          const SizedBox(width: 12),
-          // Product info
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,33 +269,111 @@ class _PaymentPageState extends State<PaymentPage> {
                 Text(
                   item.productName ?? 'Produk',
                   style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF757575),
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'x${item.quantity}',
+                  'Rp ${item.productPrice?.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.') ?? 0}',
                   style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: Colors.grey[500],
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF757575),
                   ),
                 ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFE0E0E0)),
+                        color: Colors.white,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              if (item.quantity > 1) {
+                                setState(() {
+                                  final index = _localCartItems.indexWhere(
+                                    (e) => e.id == item.id,
+                                  );
+                                  if (index != -1) {
+                                    _localCartItems[index] = item.copyWith(
+                                      quantity: item.quantity - 1,
+                                    );
+                                  }
+                                });
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF54B7C2),
+                                borderRadius: BorderRadius.horizontal(
+                                  left: Radius.circular(8),
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.remove,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            color: Colors.white,
+                            child: Text(
+                              '${item.quantity}',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: const Color(0xFF757575),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                final index = _localCartItems.indexWhere(
+                                  (e) => e.id == item.id,
+                                );
+                                if (index != -1) {
+                                  _localCartItems[index] = item.copyWith(
+                                    quantity: item.quantity + 1,
+                                  );
+                                }
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF54B7C2),
+                                borderRadius: BorderRadius.horizontal(
+                                  right: Radius.circular(8),
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.add,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ],
-            ),
-          ),
-          // Price
-          Text(
-            NumberFormat.currency(
-              locale: 'id_ID',
-              symbol: 'Rp',
-              decimalDigits: 0,
-            ).format((item.productPrice ?? 0) * item.quantity),
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -378,70 +381,141 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-  Widget _buildOrderSummary() {
+  Widget _buildPaymentSummary() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Ringkasan Belanja',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Subtotal
-          _buildSummaryRow(
-            'Subtotal ($_totalProducts produk)',
-            NumberFormat.currency(
-              locale: 'id_ID',
-              symbol: 'Rp',
-              decimalDigits: 0,
-            ).format(_subtotal),
-          ),
-          const SizedBox(height: 8),
-          // Shipping
-          _buildSummaryRow(
-            'Ongkos Kirim',
-            NumberFormat.currency(
-              locale: 'id_ID',
-              symbol: 'Rp',
-              decimalDigits: 0,
-            ).format(_shippingCost),
-          ),
-          const Divider(height: 24),
-          // Total
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Total',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                NumberFormat.currency(
-                  locale: 'id_ID',
-                  symbol: 'Rp',
-                  decimalDigits: 0,
-                ).format(_total),
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
+        color: const Color(0xFFF9F9F9),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, -4),
+            blurRadius: 10,
           ),
         ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Ringkasan Belanja',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF757575),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Subtotal
+            _buildSummaryRow(
+              'Subtotal ($_totalProducts produk)',
+              'Rp ${_subtotal.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
+            ),
+            const SizedBox(height: 8),
+            // Shipping
+            _buildSummaryRow(
+              'Ongkos Kirim',
+              'Rp ${_shippingCost.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Divider(color: Color(0xFFE0E0E0)),
+            ),
+            // Total
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Total',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF757575),
+                  ),
+                ),
+                Text(
+                  'Rp ${_total.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFF5793B),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // Checkout button
+            GestureDetector(
+              onTap: _isLoading ? null : _checkout,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: _isLoading
+                      ? Colors.grey[400]
+                      : const Color(0xFFF5793B),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: _isLoading
+                    ? const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        'Lanjutkan Pembayaran',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Informasi Pengiriman Card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE9E9E9)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Informasi Pengiriman',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF757575),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Produk akan dikirim langsung dari penenun di Badui. Estimasi pengiriman 7-14 hari kerja.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -452,95 +526,16 @@ class _PaymentPageState extends State<PaymentPage> {
       children: [
         Text(
           label,
-          style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+          style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
         ),
         Text(
           value,
-          style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: const Color(0xFF757575),
+          ),
         ),
       ],
-    );
-  }
-
-  Widget _buildShippingInfo() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Informasi Pengiriman',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Produk akan dikirim menggunakan ekspedisi dan akan diinformasikan nomor resi ke halaman pesanan di Akun Saya.',
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              color: Colors.grey[600],
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCheckoutButton() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: GestureDetector(
-          onTap: _isLoading ? null : _checkout,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: _isLoading ? Colors.grey[400] : const Color(0xFF424242),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: _isLoading
-                ? const Center(
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    ),
-                  )
-                : Text(
-                    'Checkout',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-          ),
-        ),
-      ),
     );
   }
 }

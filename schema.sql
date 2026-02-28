@@ -534,3 +534,26 @@ create policy "Usages are viewable by everyone." on benang_usages for select usi
 
 ALTER TABLE public.profiles 
 ADD COLUMN qris_url text;
+
+
+-- 1. Add an expiry timestamp to the orders table
+ALTER TABLE public.orders 
+ADD COLUMN payment_expires_at timestamp with time zone;
+
+-- 2. Create a database function that automatically calculates the expiry
+-- time upon creation (for instance, setting it to 24 hours into the future)
+CREATE OR REPLACE FUNCTION set_payment_expiration()
+RETURNS trigger AS $$
+BEGIN
+  IF NEW.status = 'pending' AND NEW.payment_expires_at IS NULL THEN
+    NEW.payment_expires_at := now() + interval '24 hours';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 3. Set a trigger on the orders table to fire that logic automatically
+CREATE TRIGGER tr_set_payment_expiration
+BEFORE INSERT ON public.orders
+FOR EACH ROW
+EXECUTE FUNCTION set_payment_expiration();
