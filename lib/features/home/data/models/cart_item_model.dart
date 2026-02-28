@@ -11,6 +11,7 @@ class CartItem {
   final String? productName;
   final String? productImageUrl;
   final double? productPrice;
+  final String? sellerName;
 
   CartItem({
     required this.id,
@@ -23,6 +24,7 @@ class CartItem {
     this.productName,
     this.productImageUrl,
     this.productPrice,
+    this.sellerName,
   });
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
@@ -43,6 +45,9 @@ class CartItem {
       productPrice: json['products'] != null
           ? (json['products']['price'] as num?)?.toDouble()
           : null,
+      sellerName: json['profiles'] != null
+          ? (json['profiles']['shop_name'] ?? json['profiles']['full_name'])
+          : null,
     );
   }
 
@@ -55,6 +60,7 @@ class CartItem {
       'quantity': quantity,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
+      // joined fields not usually serialized back for inserts
     };
   }
 
@@ -69,6 +75,7 @@ class CartItem {
     String? productName,
     String? productImageUrl,
     double? productPrice,
+    String? sellerName,
   }) {
     return CartItem(
       id: id ?? this.id,
@@ -81,6 +88,7 @@ class CartItem {
       productName: productName ?? this.productName,
       productImageUrl: productImageUrl ?? this.productImageUrl,
       productPrice: productPrice ?? this.productPrice,
+      sellerName: sellerName ?? this.sellerName,
     );
   }
 }

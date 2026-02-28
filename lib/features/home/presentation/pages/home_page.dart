@@ -21,6 +21,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late int _currentIndex;
   static const String _onboardingKey = 'buyer_onboarding_completed';
+  bool _hideFooter = false;
 
   @override
   void initState() {
@@ -289,7 +290,15 @@ class _HomePageState extends State<HomePage> {
                       // Index 1: Explore Page
                       const ExplorePage(),
                       // Index 2: Keranjang
-                      const CartPage(),
+                      CartPage(
+                        onSelectionChanged: (hasSelection) {
+                          if (mounted) {
+                            setState(() {
+                              _hideFooter = hasSelection;
+                            });
+                          }
+                        },
+                      ),
                       // Index 3: Akun Saya
                       BuyerAccountPage(
                         onFavoritesTap: () => setState(() => _currentIndex = 4),
@@ -306,19 +315,21 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        color: const Color(0xFF54B7C2), // Cyan blue background
-        padding: const EdgeInsets.only(bottom: 16, top: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildNavItem('Beranda', 0, Icons.home),
-            _buildNavItem('Telusuri', 1, Icons.search),
-            _buildNavItem('Keranjang', 2, Icons.shopping_cart),
-            _buildNavItem('Akun Saya', 3, Icons.person),
-          ],
-        ),
-      ),
+      bottomNavigationBar: (_currentIndex == 2 && _hideFooter)
+          ? null
+          : Container(
+              color: const Color(0xFF54B7C2), // Cyan blue background
+              padding: const EdgeInsets.only(bottom: 16, top: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildNavItem('Beranda', 0, Icons.home),
+                  _buildNavItem('Telusuri', 1, Icons.search),
+                  _buildNavItem('Keranjang', 2, Icons.shopping_cart),
+                  _buildNavItem('Akun Saya', 3, Icons.person),
+                ],
+              ),
+            ),
     );
   }
 

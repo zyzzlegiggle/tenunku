@@ -7,7 +7,9 @@ import '../../data/models/cart_item_model.dart';
 import '../../data/repositories/buyer_repository.dart';
 
 class CartPage extends StatefulWidget {
-  const CartPage({super.key});
+  final Function(bool)? onSelectionChanged;
+
+  const CartPage({super.key, this.onSelectionChanged});
 
   @override
   State<CartPage> createState() => _CartPageState();
@@ -66,6 +68,7 @@ class _CartPageState extends State<CartPage> {
         _selectedItems = _cartItems.map((e) => e.id).toSet();
       }
     });
+    widget.onSelectionChanged?.call(_selectedItems.isNotEmpty);
   }
 
   void _toggleItemSelection(String itemId) {
@@ -76,6 +79,7 @@ class _CartPageState extends State<CartPage> {
         _selectedItems.add(itemId);
       }
     });
+    widget.onSelectionChanged?.call(_selectedItems.isNotEmpty);
   }
 
   Future<void> _updateQuantity(CartItem item, int newQuantity) async {
@@ -104,6 +108,7 @@ class _CartPageState extends State<CartPage> {
       _cartItems.removeWhere((e) => e.id == item.id);
       _selectedItems.remove(item.id);
     });
+    widget.onSelectionChanged?.call(_selectedItems.isNotEmpty);
 
     try {
       await _repository.removeFromCart(item.id);
@@ -135,7 +140,7 @@ class _CartPageState extends State<CartPage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFF5F5F5),
+      color: Colors.white,
       child: Column(
         children: [
           // Header
@@ -166,8 +171,8 @@ class _CartPageState extends State<CartPage> {
                 ? _buildEmptyState()
                 : _buildCartList(),
           ),
-          // Bottom bar
-          if (_cartItems.isNotEmpty) _buildBottomBar(),
+          // Footer
+          if (_selectedItems.isNotEmpty) _buildFooter(),
         ],
       ),
     );
@@ -199,53 +204,74 @@ class _CartPageState extends State<CartPage> {
     final sellerIds = grouped.keys.toList();
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       itemCount: sellerIds.length,
       itemBuilder: (context, index) {
         final sellerId = sellerIds[index];
         final items = grouped[sellerId]!;
-        return _buildSellerGroup(sellerId, items);
+        return _buildSellerCard(sellerId, items);
       },
     );
   }
 
-  Widget _buildSellerGroup(String sellerId, List<CartItem> items) {
-    // Get seller name from first item (they're all from the same seller)
-    // In real app, you'd fetch seller profile
+  Widget _buildSellerCard(String sellerId, List<CartItem> items) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
+        color: const Color(0xFFF0F0F0),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Seller header
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF424242),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
+          // Store Header
+          Row(
+            children: [
+              Image.asset(
+                'assets/homepage/namatoko.png',
+                width: 24,
+                height: 24,
+                errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.store, color: Color(0xFF757575), size: 24),
               ),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  'Nama Toko',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF31476C),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    items.first.sellerName ?? 'Nama Toko',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          // Items
-          ...items.map((item) => _buildCartItem(item)),
+          const SizedBox(height: 16),
+          // Products
+          ...items.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final item = entry.value;
+            return Column(
+              children: [
+                _buildCartItem(item),
+                if (idx < items.length - 1) const SizedBox(height: 16),
+              ],
+            );
+          }),
         ],
       ),
     );
@@ -254,243 +280,229 @@ class _CartPageState extends State<CartPage> {
   Widget _buildCartItem(CartItem item) {
     final isSelected = _selectedItems.contains(item.id);
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Checkbox
-          GestureDetector(
-            onTap: () => _toggleItemSelection(item.id),
-            child: Container(
-              width: 20,
-              height: 20,
-              margin: const EdgeInsets.only(right: 12, top: 4),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? const Color(0xFF424242) : Colors.grey,
-                  width: 2,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Checkbox
+        _buildCheckbox(isSelected, () => _toggleItemSelection(item.id)),
+        const SizedBox(width: 12),
+        // Image
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: item.productImageUrl != null
+              ? Image.network(
+                  item.productImageUrl!,
+                  width: 70,
+                  height: 70,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: 70,
+                    height: 70,
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.image, color: Colors.grey),
+                  ),
+                )
+              : Container(
+                  width: 70,
+                  height: 70,
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.image, color: Colors.grey),
                 ),
-                color: isSelected
-                    ? const Color(0xFF424242)
-                    : Colors.transparent,
+        ),
+        const SizedBox(width: 16),
+        // Info
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.productName ?? 'Produk',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF757575),
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              child: isSelected
-                  ? const Icon(Icons.check, size: 14, color: Colors.white)
-                  : null,
-            ),
-          ),
-          // Product image
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE0E0E0),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: item.productImageUrl != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      item.productImageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (c, e, s) => _buildProductPlaceholder(),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Rp ${NumberFormat.decimalPattern('id').format(item.productPrice ?? 0)}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF757575),
                     ),
-                  )
-                : _buildProductPlaceholder(),
-          ),
-          const SizedBox(width: 12),
-          // Product info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.productName ?? 'Produk',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Lorem ipsum dolor sit amet',
-                  style: GoogleFonts.poppins(
-                    fontSize: 10,
-                    color: Colors.grey[500],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(
-                      NumberFormat.currency(
-                        locale: 'id_ID',
-                        symbol: 'Rp',
-                        decimalDigits: 0,
-                      ).format(item.productPrice ?? 0),
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFE0E0E0)),
+                      color: Colors.white,
                     ),
-                    const Spacer(),
-                    // Quantity controls
-                    _buildQuantityControls(item),
-                  ],
-                ),
-              ],
-            ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: () => _updateQuantity(item, item.quantity - 1),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF54B7C2),
+                              borderRadius: BorderRadius.horizontal(
+                                left: Radius.circular(8),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.remove,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          color: Colors.white,
+                          child: Text(
+                            '${item.quantity}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: const Color(0xFF757575),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => _updateQuantity(item, item.quantity + 1),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF54B7C2),
+                              borderRadius: BorderRadius.horizontal(
+                                right: Radius.circular(8),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.add,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          // Delete button
-          GestureDetector(
-            onTap: () => _removeItem(item),
-            child: Icon(
-              Icons.delete_outline,
-              size: 20,
-              color: Colors.grey[400],
-            ),
+        ),
+        const SizedBox(width: 8),
+        // Delete
+        GestureDetector(
+          onTap: () => _removeItem(item),
+          child: Icon(Icons.delete_outline, size: 20, color: Colors.grey[400]),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCheckbox(
+    bool isSelected,
+    VoidCallback onTap, [
+    bool isDarkBackground = false,
+  ]) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFFF5793B)
+              : (isDarkBackground ? Colors.transparent : Colors.white),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFFF5793B)
+                : (isDarkBackground ? Colors.white : const Color(0xFFE0E0E0)),
+            width: 1,
           ),
-        ],
+        ),
+        child: isSelected
+            ? const Icon(
+                Icons.check,
+                size: 14,
+                color: Color(0xFFFFE14F), // Yellow checkmark
+              )
+            : null,
       ),
     );
   }
 
-  Widget _buildProductPlaceholder() {
-    return Center(child: Icon(Icons.image, color: Colors.grey[400], size: 24));
-  }
-
-  Widget _buildQuantityControls(CartItem item) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GestureDetector(
-            onTap: () => _updateQuantity(item, item.quantity - 1),
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              child: Icon(Icons.remove, size: 14, color: Colors.grey[600]),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(
-              '${item.quantity}',
-              style: GoogleFonts.poppins(fontSize: 12),
-            ),
-          ),
-          GestureDetector(
-            onTap: () => _updateQuantity(item, item.quantity + 1),
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              child: Icon(Icons.add, size: 14, color: Colors.grey[600]),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomBar() {
+  Widget _buildFooter() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF54B7C2), // Cyan blue background
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
       child: SafeArea(
         top: false,
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Select all checkbox
-            GestureDetector(
-              onTap: _toggleSelectAll,
-              child: Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: _allSelected ? const Color(0xFF424242) : Colors.grey,
-                    width: 2,
-                  ),
-                  color: _allSelected
-                      ? const Color(0xFF424242)
-                      : Colors.transparent,
-                ),
-                child: _allSelected
-                    ? const Icon(Icons.check, size: 14, color: Colors.white)
-                    : null,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text('Semua', style: GoogleFonts.poppins(fontSize: 12)),
-            const Spacer(),
-            // Total
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
+            const Divider(height: 1, color: Colors.white24),
+            const SizedBox(height: 16),
+            Row(
               children: [
+                _buildCheckbox(_allSelected, _toggleSelectAll, true),
+                const SizedBox(width: 8),
                 Text(
-                  'Total',
-                  style: GoogleFonts.poppins(
-                    fontSize: 10,
-                    color: Colors.grey[600],
-                  ),
+                  'Semua',
+                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
                 ),
+                const Spacer(),
                 Text(
-                  NumberFormat.currency(
-                    locale: 'id_ID',
-                    symbol: 'Rp',
-                    decimalDigits: 0,
-                  ).format(_selectedTotal),
+                  'Rp ${NumberFormat.decimalPattern('id').format(_selectedTotal)}',
                   style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 16),
-            // Pembayaran button
-            GestureDetector(
-              onTap: _goToPayment,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF424242),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Pembayaran',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: _goToPayment,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Pembayaran',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF54B7C2),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

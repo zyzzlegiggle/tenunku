@@ -120,7 +120,10 @@ class SellerBiographyPage extends StatelessWidget {
                         // Button
                         ElevatedButton(
                           onPressed: () {
-                            // Navigation logic for detail if needed
+                            context.push(
+                              '/seller/biography/detail',
+                              extra: seller,
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF31476C),

@@ -234,7 +234,7 @@ class BuyerRepository {
   Future<List<CartItem>> getCartItems(String userId) async {
     final data = await _supabase
         .from('cart_items')
-        .select('*, products(*)')
+        .select('*, products(*), profiles:seller_id(full_name, shop_name)')
         .eq('buyer_id', userId)
         .order('created_at', ascending: false);
 

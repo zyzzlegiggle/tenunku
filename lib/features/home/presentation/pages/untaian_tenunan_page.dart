@@ -196,7 +196,7 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
                   titleIconPath: 'assets/waktu/titleicon.png',
                   descIconPaths: const {
                     1: 'assets/waktu/sarungicon.png',
-                    2: 'assets/waktu/motificon.png',
+                    2: 'assets/waktu/rumiticon.png',
                     3: 'assets/waktu/selendangicon.png',
                     4: 'assets/waktu/pewarnaanicon.png',
                   },
@@ -521,6 +521,17 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              if (descIcon != null) ...[
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 32),
+                                  child: Image.asset(
+                                    descIcon,
+                                    width: 40,
+                                    height: 40,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                              ],
                               Expanded(
                                 child: Align(
                                   alignment: Alignment.centerLeft,
@@ -546,10 +557,6 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
                                   ),
                                 ),
                               ),
-                              if (descIcon != null) ...[
-                                const SizedBox(width: 12),
-                                Image.asset(descIcon, width: 40, height: 40),
-                              ],
                             ],
                           ),
                         );

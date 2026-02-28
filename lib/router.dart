@@ -40,6 +40,7 @@ import 'features/home/presentation/pages/benang_membumi_page.dart';
 import 'features/home/presentation/pages/warna_detail_page.dart';
 import 'features/home/presentation/pages/pola_detail_page.dart';
 
+import 'features/home/presentation/pages/seller_profile_detail_page.dart';
 import 'features/home/presentation/pages/penggunaan_detail_page.dart';
 import 'features/home/presentation/pages/untaian_tenunan_page.dart';
 import 'features/home/data/models/product_model.dart';
@@ -158,6 +159,15 @@ final router = GoRouter(
         final seller = state.extra as Profile;
         return SellerBiographyPage(seller: seller);
       },
+      routes: [
+        GoRoute(
+          path: 'detail',
+          builder: (context, state) {
+            final seller = state.extra as Profile;
+            return SellerProfileDetailPage(seller: seller);
+          },
+        ),
+      ],
     ),
     GoRoute(
       path: '/seller-home',
