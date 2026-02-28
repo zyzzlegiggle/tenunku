@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import '../../data/repositories/product_repository.dart';
+import '../../data/models/product_model.dart';
+import 'dart:math';
 
 class UntaianTenunanPage extends StatefulWidget {
   const UntaianTenunanPage({super.key});
@@ -10,9 +13,41 @@ class UntaianTenunanPage extends StatefulWidget {
 }
 
 class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
-  int _selectedTabIndex = 0;
+  int _tahapanIndex = 0;
+  int _waktuIndex = 0;
+  final ProductRepository _productRepository = ProductRepository();
 
-  final List<String> _tabs = ['Proses', 'Filosofi', 'Adat Istiadat', 'Sejarah'];
+  final List<String> _tahapanTitles = [
+    '',
+    'Pemilihan Benang',
+    'Pewarnaan Alami',
+    'Persiapan Lungsi',
+    'Penyelesaian',
+  ];
+
+  final List<String> _tahapanBodys = [
+    'Proses pembuatan kain tenun Badui adalah sebuah ritual yang penuh makna dan kesabaran. Setiap tahapan dilakukan dengan penuh kehati-hatian dan doa.',
+    'Benang kapas dipilih dengan teliti, biasanya yang berwarna putih alami atau biru indigo',
+    'Menggunakan pewarna dari tumbuhan seperti tarum untuk warna biru, mengkudu untuk merah, dan kunyit untuk kuning',
+    'Benang lungsi (benang vertikal) ditata pada alat tenun tradisional yang disebut "Cukrik"',
+    'Kain yang sudah jadi dicuci dan dijemur dengan cara tradisional',
+  ];
+
+  final List<String> _waktuTitles = [
+    '',
+    'Kain sarung sederhana:',
+    'Kain dengan motif rumit:',
+    'Selendang panjang:',
+    'Pewarnaan:',
+  ];
+
+  final List<String> _waktuBodys = [
+    'Sehelai kain tenun berukuran sedang membutuhkan waktu 2-4 minggu untuk diselesaikan. Ini belum termasuk waktu untuk pewarnaan alami yang bisa memakan waktu berhari-hari.',
+    '1-2 minggu',
+    '3-4 minggu',
+    '1 bulan',
+    '3-7 hari proses perendaman',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -22,84 +57,80 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
         slivers: [
           // App bar
           SliverAppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: const Color(0xFF54B7C2),
             elevation: 0,
             pinned: true,
             floating: false,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Color(0xFF424242)),
+              icon: const Icon(Icons.arrow_back, color: Color(0xFFFFE14F)),
               onPressed: () => context.pop(),
             ),
-            title: Text(
-              'Untaian Setiap Tenunan',
-              style: GoogleFonts.poppins(
-                color: const Color(0xFF333333),
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
+            actions: [
+              IconButton(
+                onPressed: () => context.push('/buyer/settings'),
+                icon: const Icon(Icons.settings, color: Color(0xFFFFE14F)),
               ),
-            ),
-            centerTitle: true,
+              const SizedBox(width: 8),
+            ],
+            centerTitle: false,
+            titleSpacing: 0,
           ),
           // Content
           SliverToBoxAdapter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header section
-                _buildHeaderSection(),
+                const SizedBox(height: 16),
+                Center(
+                  child: Column(
+                    children: [
+                      Image.asset('assets/logo.png', width: 60, height: 60),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Untaian Setiap Tenunan',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF31476C),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 24),
                 // Intro Cards (Replaces Banner/Video)
                 _buildIntroCards(),
+                const SizedBox(height: 32),
+                // New Image Section
+                _buildProcessHeader(),
                 const SizedBox(height: 24),
-                // Tabs (2 Columns)
-                _buildTabGrid(),
-                const SizedBox(height: 16),
-                // Carousel
-                _buildImageCarousel(),
-                const SizedBox(height: 16),
-                // Tab content
-                _buildTabContent(),
+                // Carousel Section 1
+                _buildCarouselSection(
+                  title: 'Tahapan Menenun Tradisional',
+                  imagePath: 'assets/tenun/tahapan.png',
+                  titles: _tahapanTitles,
+                  bodys: _tahapanBodys,
+                  index: _tahapanIndex,
+                  onTap: () =>
+                      setState(() => _tahapanIndex = (_tahapanIndex + 1) % 5),
+                ),
+                const SizedBox(height: 24),
+                // Carousel Section 2
+                _buildCarouselSection(
+                  title: 'Waktu dan Dedikasi',
+                  imagePath:
+                      'assets/tenun/prosespembuatantenun.png', // Assuming reuse or similar placeholder
+                  titles: _waktuTitles,
+                  bodys: _waktuBodys,
+                  index: _waktuIndex,
+                  onTap: () =>
+                      setState(() => _waktuIndex = (_waktuIndex + 1) % 5),
+                ),
+                const SizedBox(height: 48),
+                // CTA Section
+                _buildCTASection(),
                 const SizedBox(height: 100),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeaderSection() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.all(16),
-      width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center, // Centered
-        children: [
-          // Logo Placeholder
-          Container(
-            width: 60,
-            height: 60,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE0E0E0),
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              'Logo',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[600],
-                fontSize: 12,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Untaian Setiap Tenunan',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -117,7 +148,11 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              gradient: const RadialGradient(
+                colors: [Colors.white, Color(0xFF54B7C2)],
+                center: Alignment.center,
+                radius: 1.0,
+              ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -135,7 +170,7 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF616161),
+                    color: const Color(0xFF31476C),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -144,7 +179,7 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: const Color(0xFF31476C),
                     height: 1.5,
                   ),
                 ),
@@ -157,7 +192,11 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              gradient: const RadialGradient(
+                colors: [Colors.white, Color(0xFF54B7C2)],
+                center: Alignment.center,
+                radius: 1.5,
+              ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -188,7 +227,7 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF616161),
+                    color: const Color(0xFFF5793B),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -197,7 +236,7 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                     fontSize: 10,
-                    color: Colors.grey[600],
+                    color: const Color(0xFF31476C),
                   ),
                 ),
               ],
@@ -208,7 +247,11 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              gradient: const RadialGradient(
+                colors: [Colors.white, Color(0xFF54B7C2)],
+                center: Alignment.center,
+                radius: 1.5,
+              ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -239,7 +282,7 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF616161),
+                    color: const Color(0xFFF5793B),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -248,7 +291,7 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                     fontSize: 10,
-                    color: Colors.grey[600],
+                    color: const Color(0xFF31476C),
                   ),
                 ),
               ],
@@ -259,91 +302,176 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
     );
   }
 
-  Widget _buildTabGrid() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 2.5, // Buttons
-        ),
-        itemCount: _tabs.length,
-        itemBuilder: (context, index) {
-          final isSelected = _selectedTabIndex == index;
-          return GestureDetector(
-            onTap: () => setState(() => _selectedTabIndex = index),
-            child: Container(
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF424242) : Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected
-                      ? Colors.transparent
-                      : const Color(0xFFE0E0E0),
-                ),
+  Widget _buildProcessHeader() {
+    return Column(
+      children: [
+        Stack(
+          children: [
+            SizedBox(
+              height: 350, // Increased size
+              width: double.infinity,
+              child: Image.asset(
+                'assets/tenun/prosespembuatantenun.png',
+                fit: BoxFit.cover,
               ),
-              child: Text(
-                _tabs[index],
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: isSelected ? Colors.white : Colors.grey[700],
+            ),
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Colors.white.withOpacity(0.8)],
+                    stops: const [0.6, 1.0],
+                  ),
                 ),
               ),
             ),
-          );
-        },
-      ),
+            Positioned(
+              bottom: 24,
+              left: 24,
+              child: Text(
+                'Proses\nPembuatan\nTenun',
+                style: GoogleFonts.poppins(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  height: 1.1,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withOpacity(0.3),
+                      offset: const Offset(0, 2),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
-  Widget _buildImageCarousel() {
-    String placeholderText = '';
-    switch (_selectedTabIndex) {
-      case 0:
-        placeholderText = 'foto kolase proses';
-        break;
-      case 1:
-        placeholderText = 'foto para suku badui';
-        break;
-      case 2:
-        placeholderText = 'foto para penenun saat berkegiatan';
-        break;
-      case 3:
-        placeholderText = 'foto para suku badui';
-        break;
-      default:
-        placeholderText = 'foto kolase proses';
-    }
-
-    return Container(
-      width: double.infinity,
-      height: 180, // Adjust height as needed
-      color: const Color(0xFFE0E0E0), // Light grey background
-      child: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildCarouselSection({
+    required String title,
+    required String imagePath,
+    required List<String> titles,
+    required List<String> bodys,
+    required int index,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        height: 250,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          image: DecorationImage(
+            image: AssetImage(imagePath),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Stack(
           children: [
-            IconButton(
-              onPressed: () {}, // No action yet
-              icon: const Icon(Icons.chevron_left, color: Color(0xFF757575)),
-            ),
-            Text(
-              placeholderText,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: const Color(0xFF757575),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: Colors.black.withOpacity(0.3),
               ),
-              textAlign: TextAlign.center,
             ),
-            IconButton(
-              onPressed: () {}, // No action yet
-              icon: const Icon(Icons.chevron_right, color: Color(0xFF757575)),
+            Positioned(
+              top: 16,
+              left: 16,
+              right: 16,
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'ikon',
+                      style: GoogleFonts.poppins(
+                        fontSize: 10,
+                        color: const Color(0xFF31476C),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              bottom: 16,
+              left: 24,
+              right: 24,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: onTap,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: RichText(
+                        textAlign: TextAlign.left, // Left aligned
+                        text: TextSpan(
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 12,
+                            height: 1.4,
+                          ),
+                          children: [
+                            if (titles[index].isNotEmpty)
+                              TextSpan(
+                                text: '${titles[index]}\n',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            TextSpan(text: bodys[index]),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (dotIndex) {
+                      final isActive = index == dotIndex;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: isActive ? 10 : 8,
+                        height: isActive ? 10 : 8,
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? const Color(0xFFF5793B)
+                              : Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -351,481 +479,47 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
     );
   }
 
-  Widget _buildTabContent() {
-    switch (_selectedTabIndex) {
-      case 0:
-        return _buildTahapanMenenunTab();
-      case 1:
-        return _buildFilosofiTab();
-      case 2:
-        return _buildAdatIstiadatTab();
-      case 3:
-        return _buildSejarahTab();
-      default:
-        return _buildTahapanMenenunTab();
-    }
-  }
-
-  Widget _buildTahapanMenenunTab() {
+  Widget _buildCTASection() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: _buildContentCard(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF757575),
-                  shape: BoxShape.circle,
-                ),
-                child: const Text(
-                  'Ikon',
-                  style: TextStyle(color: Colors.white, fontSize: 10),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Tahapan Menenun\nTradisional',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF616161),
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            'Sudah Punya Karya Tenun Asli?',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFFF5793B),
+            ),
           ),
           const SizedBox(height: 12),
           Text(
-            'Proses pembuatan kain tenun Badui adalah sebuah ritual yang penuh makna dan kesabaran. Setiap tahapan dilakukan dengan penuh kehati-hatian dan doa.',
+            'Setelah memahami makna dan proses pembuatannya, kini saatnya Anda memiliki dan melestarikan warisan budaya ini.',
+            textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
               fontSize: 12,
-              color: Colors.grey[600],
+              color: const Color(0xFF31476C),
               height: 1.5,
             ),
           ),
           const SizedBox(height: 24),
-          _buildInfoCard(
-            leading: const Icon(Icons.check, color: Color(0xFF424242)),
-            title: 'Pemilihan Benang',
-            description:
-                'Benang kapas dipilih dengan teliti, biasanya yang berwarna putih alami atau biru indigo',
-          ),
-          const SizedBox(height: 12),
-          _buildInfoCard(
-            leading: const Icon(Icons.check, color: Color(0xFF424242)),
-            title: 'Pewarnaan Alami',
-            description:
-                'Menggunakan pewarna dari tumbuhan seperti tarum untuk warna biru, mengkudu untuk merah, dan kunyit untuk kuning',
-          ),
-          const SizedBox(height: 12),
-          _buildInfoCard(
-            leading: const Icon(Icons.check, color: Color(0xFF424242)),
-            title: 'Persiapan Lungsi',
-            description:
-                'Benang lungsi (benang vertikal) ditata pada alat tenun tradisional yang disebut "Cukrik"',
-          ),
-          const SizedBox(height: 12),
-          _buildInfoCard(
-            leading: const Icon(Icons.check, color: Color(0xFF424242)),
-            title: 'Penyelesaian',
-            description:
-                'Kain yang sudah jadi dicuci dan dijemur dengan cara tradisional',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilosofiTab() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: [
-          _buildContentCard(
-            children: [
-              Text(
-                'Makna Spiritual Menenun',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF616161),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Bagi masyarakat Badui, menenun adalah bentuk ibadah dan meditasi.',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildInfoCard(
-                leading: const Icon(Icons.check, color: Color(0xFF424242)),
-                title: 'Kesabaran dan Ketekunan',
-                description:
-                    'Proses menenun yang lama mengajarkan kesabaran dan ketekunan.',
-              ),
-              const SizedBox(height: 12),
-              _buildInfoCard(
-                leading: const Icon(Icons.check, color: Color(0xFF424242)),
-                title: 'Harmoni dengan Alam',
-                description:
-                    'Pewarnaan alami menciptakan kain cerah yang unik.',
-              ),
-              const SizedBox(height: 12),
-              _buildInfoCard(
-                leading: const Icon(Icons.check, color: Color(0xFF424242)),
-                title: 'Warisan Leluhur',
-                description:
-                    'Setiap motif merupakan warisan yang tidak boleh diubah.',
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildContentCard(
-            children: [
-              Text(
-                'Simbolisme Warna',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF616161),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildInfoCard(
-                leading: const Icon(
-                  Icons.circle,
-                  color: Colors.white,
-                  size: 14,
-                ), // White circle for Putih? Need contrasting background or border? Icon is just symbol.
-                title: 'Putih',
-                description: 'Kesucian dan kemurnian, hanya untuk Badui Dalam.',
-              ),
-              const SizedBox(height: 12),
-              _buildInfoCard(
-                leading: const Icon(
-                  Icons.circle,
-                  color: Colors.black,
-                  size: 14,
-                ),
-                title: 'Biru/Hitam',
-                description: 'Kebijaksanaan untuk Badui Luar.',
-              ),
-              const SizedBox(height: 12),
-              _buildInfoCard(
-                leading: const Icon(Icons.circle, color: Colors.red, size: 14),
-                title: 'Merah',
-                description: 'Keberanian (Simbolis).',
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildQuestionCardWithButtons(
-            title: 'Tertarik Memiliki Karya Tenun Asli?',
-            description:
-                'Setelah memahami makna dan proses pembuatannya, kini saatnya untuk memiliki dan melestarikan warisan budaya ini.',
-            buttons: [
-              'Katalog Marketplace Budaya',
-              'Kenali Para Penenun',
-              'Lihat Koleksi Tenun',
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAdatIstiadatTab() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: [
-          _buildContentCard(
-            children: [
-              Text(
-                'Kewajiban Perempuan Badui',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF616161),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildInfoCard(
-                leading: const Icon(Icons.check, color: Color(0xFF424242)),
-                title: 'Pendidikan Dini',
-                description:
-                    'Anak perempuan sudah mulai belajar menenun sejak usia dini.',
-              ),
-              const SizedBox(height: 12),
-              _buildInfoCard(
-                leading: const Icon(Icons.check, color: Color(0xFF424242)),
-                title: 'Simbol Kedewasaan',
-                description:
-                    'Menenun merupakan simbol kedewasaan dan kesiapan menikah.',
-              ),
-              const SizedBox(height: 12),
-              _buildInfoCard(
-                leading: const Icon(Icons.check, color: Color(0xFF424242)),
-                title: 'Upacara Adat',
-                description:
-                    'Kain hasil tenunan digunakan untuk upacara adat penting.',
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildContentCard(
-            children: [
-              Text(
-                'Ritual dan Tradisi',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF616161),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildInfoCard(
-                leading: const Icon(Icons.check, color: Color(0xFF424242)),
-                title: 'Doa Sebelum Menenun',
-                description: 'Doa dan ritual harus dilakukan sebelum menenun.',
-              ),
-              const SizedBox(height: 12),
-              _buildInfoCard(
-                leading: const Icon(Icons.check, color: Color(0xFF424242)),
-                title: 'Hari Sakral',
-                description:
-                    'Terdapat hari-hari tertentu yang dianggap sakral untuk menenun.',
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildQuestionCard(
-            title: 'Tertarik Memiliki Karya Tenun Asli?',
-            description:
-                'Jelajahi koleksi tenun tradisional asli dari para penenun Badui dan daerah lainnya di Indonesia.',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSejarahTab() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: [
-          _buildContentCard(
-            children: [
-              Text(
-                "Alat Tenun 'Cukrik'",
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF616161),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "Alat tenun yang digunakan disebut 'Cukrik' atau 'Gedogan'.",
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildInfoCard(
-                leading: const Icon(Icons.check, color: Color(0xFF424242)),
-                title: 'Bahan Alami',
-                description:
-                    'Dibuat dari kayu pilihan seperti kayu nangka atau kayu asem.',
-              ),
-              const SizedBox(height: 12),
-              _buildInfoCard(
-                leading: const Icon(Icons.check, color: Color(0xFF424242)),
-                title: 'Tanpa Logam',
-                description:
-                    'Tidak menggunakan paku atau baut logam, hanya ikatan tali dan rotan.',
-              ),
-              const SizedBox(height: 12),
-              _buildInfoCard(
-                leading: const Icon(Icons.check, color: Color(0xFF424242)),
-                title: 'Desain Warisan',
-                description:
-                    'Diwariskan antargenerasi tenun secara alami tanpa mengubah teknik.',
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildContentCard(
-            children: [
-              Text(
-                'Generasi ke Generasi',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF616161),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildInfoCard(
-                leading: const Icon(Icons.check, color: Color(0xFF424242)),
-                title: 'Pendidikan Lisan',
-                description:
-                    'Tidak ada sekolah formal, semua pembelajaran dilakukan dari ibu ke anak.',
-              ),
-              const SizedBox(height: 12),
-              _buildInfoCard(
-                leading: const Icon(Icons.check, color: Color(0xFF424242)),
-                title: 'Milik Keluarga',
-                description:
-                    'Setiap keluarga memiliki alat tenun sendiri yang diwariskan.',
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Question card with buttons
-          _buildQuestionCardWithButtons(
-            title: 'Tertarik Memiliki Karya Tenun Asli?',
-            description:
-                'Setelah memahami makna dan proses pembuatannya, kini saatnya untuk memiliki dan melestarikan warisan budaya ini.',
-            buttons: [
-              'Katalog Marketplace Budaya',
-              'Kenali Para Penenun',
-              'Lihat Koleksi Tenun',
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContentCard({required List<Widget> children}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: children,
-      ),
-    );
-  }
-
-  Widget _buildInfoCard({
-    required Widget leading,
-    required String title,
-    required String description,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEEEEEE),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            // Checkmark or Number wrapper if needed, but leading can handle it.
-            // If the leading is just an icon, we might want to wrap it here or pass the wrapped widget.
-            // In usage, I'm passing Icon.
-            // But aligned to top.
-            alignment: Alignment.topCenter,
-            child: leading,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF424242),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: Colors.grey[600],
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuestionCard({
-    required String title,
-    required String description,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF424242),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            description,
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              color: Colors.grey[300],
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
+          GestureDetector(
+            onTap: () => _showMarketplaceModal(context),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                color: const Color(0xFF54B7C2),
+                borderRadius: BorderRadius.circular(12),
               ),
+              alignment: Alignment.center,
               child: Text(
-                'Pelajari Lebih Lanjut',
+                'Yuk, jelajah lebih lanjut!',
                 style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF424242),
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
             ),
@@ -835,65 +529,88 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
     );
   }
 
-  // _buildCategoryGridItem Removed
+  void _showMarketplaceModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            padding: const EdgeInsets.all(24),
+            child: FutureBuilder<List<Product>>(
+              future: _productRepository.getRecommendedProducts(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 200,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
 
-  Widget _buildQuestionCardWithButtons({
-    required String title,
-    required String description,
-    required List<String> buttons,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+                Product? product;
+                if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                  product =
+                      snapshot.data![Random().nextInt(snapshot.data!.length)];
+                }
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Marketplace Budaya',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: product?.imageUrl != null
+                          ? Image.network(
+                              product!.imageUrl!,
+                              width: double.infinity,
+                              height: 200,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Image.asset(
+                                    'assets/tenun/tahapan.png',
+                                    width: double.infinity,
+                                    height: 200,
+                                    fit: BoxFit.cover,
+                                  ),
+                            )
+                          : Image.asset(
+                              'assets/tenun/tahapan.png',
+                              width: double.infinity,
+                              height: 200,
+                              fit: BoxFit.cover,
+                            ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Jelajahi berbagai macam produk kain tenun berkualitas dan original',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: const Color(0xFF31476C),
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                );
+              },
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            description,
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              color: Colors.grey[600],
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Action buttons
-          ...buttons.map(
-            (button) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF424242),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  button,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

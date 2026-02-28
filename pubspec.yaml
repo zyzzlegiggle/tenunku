@@ -71,6 +71,7 @@ flutter:
     - assets/onboardDialog/
     - assets/homepage/
     - assets/benangmembumi/
+    - assets/tenun/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
