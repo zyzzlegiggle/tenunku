@@ -76,19 +76,23 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    const cyanBlue = Color(0xFF54B7C2);
+    const yellow = Color(0xFFFFE14F);
+    const orange = Color(0xFFF5793B);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: cyanBlue,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back, color: yellow),
           onPressed: () => context.pop(),
         ),
         title: Text(
-          'Bahasa',
+          'Bahasa / Language',
           style: GoogleFonts.poppins(
-            color: Colors.black87,
+            color: Colors.white,
             fontWeight: FontWeight.w600,
             fontSize: 18,
           ),
@@ -97,100 +101,148 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4, bottom: 8),
-                    child: Text(
-                      'Bahasa | Language',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+          : Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 16),
-                        Text(
-                          'Bahasa Saya',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87,
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            left: 24,
+                            top: 20,
+                            bottom: 8,
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFE0E0E0)),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _selectedLanguage,
-                              isExpanded: true,
-                              icon: _isSaving
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.keyboard_arrow_down),
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: Colors.black87,
-                              ),
-                              items: [
-                                DropdownMenuItem(
-                                  value: 'id',
-                                  child: Text(
-                                    'Bahasa Indonesia',
-                                    style: GoogleFonts.poppins(fontSize: 14),
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'en',
-                                  child: Text(
-                                    'English',
-                                    style: GoogleFonts.poppins(fontSize: 14),
-                                  ),
-                                ),
-                              ],
-                              onChanged: _isSaving
-                                  ? null
-                                  : (value) {
-                                      if (value != null &&
-                                          value != _selectedLanguage) {
-                                        _saveLanguage(value);
-                                      }
-                                    },
+                          child: Text(
+                            'Pilih Bahasa',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: const Color(0xFF6B6B6B),
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        _buildLanguageOption(
+                          context,
+                          id: 'id',
+                          title: 'Bahasa Indonesia',
+                          isSelected: _selectedLanguage == 'id',
+                          orange: orange,
+                        ),
+                        const Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: Colors
+                              .white, // Separator if needed, although mostly relies on bg
+                        ),
+                        _buildLanguageOption(
+                          context,
+                          id: 'en',
+                          title: 'English',
+                          isSelected: _selectedLanguage == 'en',
+                          orange: orange,
+                        ),
                       ],
                     ),
                   ),
-                ],
+                ),
+              ],
+            ),
+      bottomNavigationBar: Container(
+        color: cyanBlue,
+        padding: const EdgeInsets.only(bottom: 16, top: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildNavItem(context, 'Beranda', 0, Icons.home),
+            _buildNavItem(context, 'Telusuri', 1, Icons.search),
+            _buildNavItem(context, 'Keranjang', 2, Icons.shopping_cart),
+            _buildNavItem(context, 'Akun Saya', 3, Icons.person),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageOption(
+    BuildContext context, {
+    required String id,
+    required String title,
+    required bool isSelected,
+    required Color orange,
+  }) {
+    return InkWell(
+      onTap: _isSaving ? null : () => _saveLanguage(id),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        color: isSelected ? orange : const Color(0xFFF4F4F4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: isSelected ? Colors.white : const Color(0xFF6B6B6B),
+                ),
               ),
             ),
+            if (isSelected)
+              const Icon(Icons.check, color: Colors.white, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(
+    BuildContext context,
+    String label,
+    int index,
+    IconData icon,
+  ) {
+    const yellow = Color(0xFFFFE14F);
+    const navyBlue = Color(0xFF31476C);
+    final bool isActive = index == 3;
+
+    return GestureDetector(
+      onTap: () {
+        if (isActive) {
+          context.pop();
+        } else {
+          context.go('/buyer', extra: index);
+        }
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: isActive ? yellow : navyBlue,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: isActive ? navyBlue : Colors.grey[400],
+              size: 26,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              color: Colors.white,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

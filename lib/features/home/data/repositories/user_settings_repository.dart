@@ -45,11 +45,14 @@ class UserSettingsRepository {
     // Return defaults if not found
     return {
       'app': true,
+      'app_sound': true,
       'surat': false,
       'orders': true,
       'chat': true,
       'email': true,
+      'email_orders': true,
       'whatsapp': false,
+      'whatsapp_orders': true,
     };
   }
 

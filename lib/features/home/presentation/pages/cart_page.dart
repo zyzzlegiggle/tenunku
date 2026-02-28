@@ -143,26 +143,6 @@ class _CartPageState extends State<CartPage> {
       color: Colors.white,
       child: Column(
         children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                Text(
-                  'Keranjang',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                GestureDetector(
-                  onTap: () => context.push('/buyer/settings'),
-                  child: Icon(Icons.settings_outlined, color: Colors.grey[700]),
-                ),
-              ],
-            ),
-          ),
           // Content
           Expanded(
             child: _isLoading

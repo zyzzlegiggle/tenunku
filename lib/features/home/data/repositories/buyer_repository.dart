@@ -33,6 +33,23 @@ class BuyerRepository {
     await _supabase.from('profiles').update(updates).eq('id', profile.id);
   }
 
+  // ==================== ADDRESS METHODS ====================
+
+  Future<List<Map<String, dynamic>>> getAddresses(String userId) async {
+    final data = await _supabase
+        .from('addresses')
+        .select()
+        .eq('user_id', userId)
+        .order('is_primary', ascending: false)
+        .order('created_at', ascending: false);
+
+    return List<Map<String, dynamic>>.from(data);
+  }
+
+  Future<void> addAddress(Map<String, dynamic> address) async {
+    await _supabase.from('addresses').insert(address);
+  }
+
   // ==================== FAVORITES METHODS ====================
 
   Future<List<Product>> getFavorites(String userId) async {
