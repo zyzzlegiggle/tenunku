@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../data/repositories/product_repository.dart';
 import '../../data/models/product_model.dart';
 import 'dart:math';
+import 'dart:async';
 
 class UntaianTenunanPage extends StatefulWidget {
   const UntaianTenunanPage({super.key});
@@ -17,12 +18,65 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
   int _waktuIndex = 0;
   final ProductRepository _productRepository = ProductRepository();
 
+  late PageController _tahapanController;
+  late PageController _waktuController;
+  Timer? _tahapanTimer;
+  Timer? _waktuTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _tahapanController = PageController();
+    _waktuController = PageController();
+
+    // Auto slide every 5 seconds for tahapan
+    _tahapanTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (_tahapanController.hasClients) {
+        int nextPage = (_tahapanIndex + 1) % 5;
+        _tahapanController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+
+    // Auto slide every 7 seconds for waktu
+    _waktuTimer = Timer.periodic(const Duration(seconds: 7), (timer) {
+      if (_waktuController.hasClients) {
+        int nextPage = (_waktuIndex + 1) % 5;
+        _waktuController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tahapanTimer?.cancel();
+    _waktuTimer?.cancel();
+    _tahapanController.dispose();
+    _waktuController.dispose();
+    super.dispose();
+  }
+
   final List<String> _tahapanTitles = [
     '',
     'Pemilihan Benang',
     'Pewarnaan Alami',
     'Persiapan Lungsi',
     'Penyelesaian',
+  ];
+
+  final List<String> _tahapanImages = [
+    'assets/tenun/tahapan.png',
+    'assets/tenun/tahapan2.png',
+    'assets/tenun/tahapan3.png',
+    'assets/tenun/tahapan4.png',
+    'assets/tenun/tahapan5.png',
   ];
 
   final List<String> _tahapanBodys = [
@@ -47,6 +101,14 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
     '3-4 minggu',
     '1 bulan',
     '3-7 hari proses perendaman',
+  ];
+
+  final List<String> _waktuImages = [
+    'assets/waktu/waktu.png',
+    'assets/waktu/waktu2.png',
+    'assets/waktu/waktu3.png',
+    'assets/waktu/waktu4.png',
+    'assets/waktu/waktu5.png',
   ];
 
   @override
@@ -107,24 +169,37 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
                 // Carousel Section 1
                 _buildCarouselSection(
                   title: 'Tahapan Menenun Tradisional',
-                  imagePath: 'assets/tenun/tahapan.png',
+                  imagePaths: _tahapanImages,
                   titles: _tahapanTitles,
                   bodys: _tahapanBodys,
                   index: _tahapanIndex,
-                  onTap: () =>
-                      setState(() => _tahapanIndex = (_tahapanIndex + 1) % 5),
+                  controller: _tahapanController,
+                  onPageChanged: (i) => setState(() => _tahapanIndex = i),
+                  titleIconPath: 'assets/tenun/titleicon.png',
+                  descIconPaths: const {
+                    1: 'assets/tenun/descicon.png',
+                    2: 'assets/tenun/pewarnaanicon.png',
+                    3: 'assets/tenun/descicon.png',
+                    4: 'assets/tenun/descicon.png',
+                  },
                 ),
                 const SizedBox(height: 24),
                 // Carousel Section 2
                 _buildCarouselSection(
                   title: 'Waktu dan Dedikasi',
-                  imagePath:
-                      'assets/tenun/prosespembuatantenun.png', // Assuming reuse or similar placeholder
+                  imagePaths: _waktuImages,
                   titles: _waktuTitles,
                   bodys: _waktuBodys,
                   index: _waktuIndex,
-                  onTap: () =>
-                      setState(() => _waktuIndex = (_waktuIndex + 1) % 5),
+                  controller: _waktuController,
+                  onPageChanged: (i) => setState(() => _waktuIndex = i),
+                  titleIconPath: 'assets/waktu/titleicon.png',
+                  descIconPaths: const {
+                    1: 'assets/waktu/sarungicon.png',
+                    2: 'assets/waktu/motificon.png',
+                    3: 'assets/waktu/selendangicon.png',
+                    4: 'assets/waktu/pewarnaanicon.png',
+                  },
                 ),
                 const SizedBox(height: 48),
                 // CTA Section
@@ -355,12 +430,19 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
 
   Widget _buildCarouselSection({
     required String title,
-    required String imagePath,
+    required List<String> imagePaths,
     required List<String> titles,
     required List<String> bodys,
     required int index,
-    required VoidCallback onTap,
+    required PageController controller,
+    required Function(int) onPageChanged,
+    String? titleIconPath,
+    Map<int, String>? descIconPaths,
   }) {
+    String currentImagePath = imagePaths.length == 1
+        ? imagePaths[0]
+        : (index < imagePaths.length ? imagePaths[index] : imagePaths[0]);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -368,7 +450,7 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           image: DecorationImage(
-            image: AssetImage(imagePath),
+            image: AssetImage(currentImagePath),
             fit: BoxFit.cover,
           ),
         ),
@@ -377,7 +459,7 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withOpacity(0.35),
               ),
             ),
             Positioned(
@@ -386,23 +468,25 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
               right: 16,
               child: Row(
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      'ikon',
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        color: const Color(0xFF31476C),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                  titleIconPath != null
+                      ? Image.asset(titleIconPath, width: 40, height: 40)
+                      : Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'ikon',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              color: const Color(0xFF31476C),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -418,40 +502,61 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
               ),
             ),
             Positioned(
-              bottom: 16,
-              left: 24,
-              right: 24,
+              bottom: 12,
+              left: 0,
+              right: 0,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  GestureDetector(
-                    onTap: onTap,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: RichText(
-                        textAlign: TextAlign.left, // Left aligned
-                        text: TextSpan(
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 12,
-                            height: 1.4,
-                          ),
-                          children: [
-                            if (titles[index].isNotEmpty)
-                              TextSpan(
-                                text: '${titles[index]}\n',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+                  SizedBox(
+                    height: 120,
+                    child: PageView.builder(
+                      controller: controller,
+                      onPageChanged: onPageChanged,
+                      itemCount: 5,
+                      itemBuilder: (context, i) {
+                        String? descIcon = descIconPaths?[i];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: RichText(
+                                    textAlign: TextAlign.left,
+                                    text: TextSpan(
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        height: 1.4,
+                                      ),
+                                      children: [
+                                        if (titles[i].isNotEmpty)
+                                          TextSpan(
+                                            text: '${titles[i]}\n',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        TextSpan(text: bodys[i]),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
-                            TextSpan(text: bodys[index]),
-                          ],
-                        ),
-                      ),
+                              if (descIcon != null) ...[
+                                const SizedBox(width: 12),
+                                Image.asset(descIcon, width: 40, height: 40),
+                              ],
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(5, (dotIndex) {

@@ -500,63 +500,70 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Grey Profile Box - Left Aligned
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF0F0F0),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.white,
-                backgroundImage: _sellerProfile?.avatarUrl != null
-                    ? NetworkImage(_sellerProfile!.avatarUrl!)
-                    : null,
-                child: _sellerProfile?.avatarUrl == null
-                    ? const Icon(Icons.person, color: Colors.grey, size: 30)
-                    : null,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _sellerProfile?.fullName ??
-                          _sellerProfile?.shopName ??
-                          'Nama Penenun',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF424242),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on,
-                          size: 14,
-                          color: Color(0xFFF5793B), // Orange location icon
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Desa Kanekes',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: Colors.grey[600], // Gray text
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+        GestureDetector(
+          onTap: () {
+            if (_sellerProfile != null) {
+              context.push('/seller/biography', extra: _sellerProfile);
+            }
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0F0F0),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.white,
+                  backgroundImage: _sellerProfile?.avatarUrl != null
+                      ? NetworkImage(_sellerProfile!.avatarUrl!)
+                      : null,
+                  child: _sellerProfile?.avatarUrl == null
+                      ? const Icon(Icons.person, color: Colors.grey, size: 30)
+                      : null,
                 ),
-              ),
-            ],
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _sellerProfile?.fullName ??
+                            _sellerProfile?.shopName ??
+                            'Nama Penenun',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF424242),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on,
+                            size: 14,
+                            color: Color(0xFFF5793B), // Orange location icon
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Desa Kanekes',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.grey[600], // Gray text
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 24),
