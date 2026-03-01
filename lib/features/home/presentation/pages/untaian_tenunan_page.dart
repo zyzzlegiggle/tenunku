@@ -642,85 +642,181 @@ class _UntaianTenunanPageState extends State<UntaianTenunanPage> {
   }
 
   void _showMarketplaceModal(BuildContext context) {
+    final List<Map<String, String>> cards = [
+      {
+        'title': 'Marketplace\nBudaya',
+        'desc':
+            'Jelajahi berbagai macam produk kain tenun berkualitas dan original',
+        'image': 'assets/jelajah/marketplace.png',
+      },
+      {
+        'title': 'Biografi\nPenenun',
+        'desc': 'Kenali para penenun dan kisah dibaliknya',
+        'image': 'assets/jelajah/biografi.png',
+      },
+      {
+        'title': 'Benang\nMembumi',
+        'desc': 'Ketahui detail di balik setiap Tenunannya',
+        'image': 'assets/jelajah/benang.png',
+      },
+    ];
+
     showDialog(
       context: context,
       builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            padding: const EdgeInsets.all(24),
-            child: FutureBuilder<List<Product>>(
-              future: _productRepository.getRecommendedProducts(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const SizedBox(
-                    height: 200,
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-
-                Product? product;
-                if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                  product =
-                      snapshot.data![Random().nextInt(snapshot.data!.length)];
-                }
-
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Marketplace Budaya',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[500],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: product?.imageUrl != null
-                          ? Image.network(
-                              product!.imageUrl!,
-                              width: double.infinity,
-                              height: 200,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Image.asset(
-                                    'assets/tenun/tahapan.png',
-                                    width: double.infinity,
-                                    height: 200,
-                                    fit: BoxFit.cover,
+        int currentIndex = 0;
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: 400,
+                    child: PageView.builder(
+                      itemCount: cards.length,
+                      controller: PageController(viewportFraction: 0.85),
+                      onPageChanged: (index) {
+                        setModalState(() {
+                          currentIndex = index;
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        final card = cards[index];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.pop(context);
+                              if (index == 0) {
+                                context.pushReplacement('/buyer', extra: 0);
+                              } else if (index == 1) {
+                                context.pushReplacement('/buyer', extra: 1);
+                              } else if (index == 2) {
+                                context.pushReplacement('/benang-membumi');
+                              }
+                            },
+                            child: Stack(
+                              children: [
+                                // Base container for image and border/glow
+                                Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(
+                                      color: const Color(0xFFD97745),
+                                      width: 2,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFFD97745,
+                                        ).withOpacity(0.4),
+                                        blurRadius: 20,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                    image: DecorationImage(
+                                      image: AssetImage(card['image']!),
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
-                            )
-                          : Image.asset(
-                              'assets/tenun/tahapan.png',
-                              width: double.infinity,
-                              height: 200,
-                              fit: BoxFit.cover,
+                                ),
+                                // Gradient overlay
+                                Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(24),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.black.withOpacity(0.6),
+                                        Colors.transparent,
+                                        Colors.black.withOpacity(0.8),
+                                      ],
+                                      stops: const [0.0, 0.5, 1.0],
+                                    ),
+                                  ),
+                                ),
+                                // Content
+                                Positioned(
+                                  top: 32,
+                                  left: 28,
+                                  right: 28,
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: 36,
+                                        height: 36,
+                                        margin: const EdgeInsets.only(top: 4),
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFF757575),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Text(
+                                          card['title']!,
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 32,
+                                  left: 28,
+                                  right: 28,
+                                  child: Text(
+                                    card['desc']!,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      color: Colors.white,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Jelajahi berbagai macam produk kain tenun berkualitas dan original',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: const Color(0xFF31476C),
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                );
-              },
-            ),
-          ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Dots indicator
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(cards.length, (dotIndex) {
+                      final isActive = currentIndex == dotIndex;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: isActive ? 12 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? const Color(0xFFF5793B)
+                              : Colors.white.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          },
         );
       },
     );

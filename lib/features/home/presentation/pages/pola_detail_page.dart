@@ -1,19 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
+import '../../data/models/product_model.dart';
 
-class PolaDetailPage extends StatelessWidget {
-  final Map<String, String> polaData;
+class PolaDetailPage extends StatefulWidget {
+  final Map<String, dynamic> polaData;
 
   const PolaDetailPage({super.key, required this.polaData});
 
   @override
+  State<PolaDetailPage> createState() => _PolaDetailPageState();
+}
+
+class _PolaDetailPageState extends State<PolaDetailPage> {
+  Future<List<Product>>? _productsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    final name = widget.polaData['name'] ?? 'Pola';
+    _productsFuture = _fetchProductsForPattern(name);
+  }
+
+  Future<List<Product>> _fetchProductsForPattern(String patternName) async {
+    try {
+      final supabase = Supabase.instance.client;
+
+      // Try fetching by legacy text field first
+      final legacyRes = await supabase
+          .from('products')
+          .select('*, benang_patterns(*), benang_colors(*), benang_usages(*)')
+          .ilike('pattern_meaning', '%$patternName%')
+          .limit(10);
+
+      if ((legacyRes as List).isNotEmpty) {
+        return legacyRes.map((e) => Product.fromJson(e)).toList();
+      }
+
+      // If no results, try fetching via pattern_id relation
+      final patternRes = await supabase
+          .from('benang_patterns')
+          .select('id')
+          .ilike('name', '%$patternName%')
+          .maybeSingle();
+
+      if (patternRes != null) {
+        final relRes = await supabase
+            .from('products')
+            .select('*, benang_patterns(*), benang_colors(*), benang_usages(*)')
+            .eq('pattern_id', patternRes['id'])
+            .limit(10);
+        return (relRes as List).map((e) => Product.fromJson(e)).toList();
+      }
+
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final name = polaData['name'] ?? 'Pola';
-    final displayTitle = polaData['displayTitle'] ?? 'Pola $name';
-    final imagePath = polaData['image'] ?? '';
+    final name = widget.polaData['name'] ?? 'Pola';
+    final displayTitle = widget.polaData['displayTitle'] ?? 'Pola $name';
+    final imagePath = widget.polaData['image'] ?? '';
     final description =
-        polaData['description'] ??
+        widget.polaData['description'] ??
         'Pola ini merupakan salah satu motif tenun khas yang memiliki makna mendalam dalam budaya masyarakat.';
 
     final isPoleng = name == 'Poleng';
@@ -256,11 +310,201 @@ class PolaDetailPage extends StatelessWidget {
                       ],
                     ),
                   ],
+
+                  // ---- REKOMENDASI PRODUK ----
+                  const SizedBox(height: 32),
+                  Text(
+                    'Rekomendasi Produk dengan Pola Ini',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF5A5A5A),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FutureBuilder<List<Product>>(
+                    future: _productsFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Padding(
+                          padding: EdgeInsets.only(top: 20),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF54B7C2),
+                            ),
+                          ),
+                        );
+                      }
+                      if (snapshot.hasError ||
+                          !snapshot.hasData ||
+                          snapshot.data!.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 20),
+                          child: Text(
+                            'Belum ada produk untuk pola ini.',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: const Color(0xFF9E9E9E),
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        );
+                      }
+
+                      final products = snapshot.data!;
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        clipBehavior: Clip.none,
+                        child: Row(
+                          children: products.map((product) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: _RekomendasiCard(product: product),
+                            );
+                          }).toList(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RekomendasiCard extends StatelessWidget {
+  final Product product;
+  const _RekomendasiCard({required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    final formatCurrency = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
+
+    return GestureDetector(
+      onTap: () {
+        context.push('/product/detail', extra: product);
+      },
+      child: Container(
+        width: 140, // slightly wider to fit real names
+        decoration: BoxDecoration(
+          color: const Color(0xFF31476C),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 130,
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF0F0F0),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
+                child: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                    ? Image.network(
+                        product.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Center(
+                            child: Text(
+                              'Foto Produk',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: const Color(0xFFD0D0D0),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                    : Center(
+                        child: Text(
+                          'Foto Produk',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: const Color(0xFFD0D0D0),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          formatCurrency.format(product.price),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF54B7C2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          'Lihat',
+                          style: GoogleFonts.poppins(
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

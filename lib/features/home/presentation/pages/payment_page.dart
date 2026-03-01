@@ -71,14 +71,17 @@ class _PaymentPageState extends State<PaymentPage> {
       }
 
       // Create orders for each cart item
+      List<String> orderIds = [];
       for (final item in _localCartItems) {
-        await _repository.createOrder(
+        final orderId = await _repository.createOrder(
           buyerId: userId,
           sellerId: item.sellerId,
           productId: item.productId,
           quantity: item.quantity,
           totalPrice: (item.productPrice ?? 0) * item.quantity,
         );
+        orderIds.add(orderId);
+
         // Decrement stock
         await _repository.decrementStock(item.productId, item.quantity);
 
@@ -103,7 +106,12 @@ class _PaymentPageState extends State<PaymentPage> {
       if (mounted) {
         context.go(
           '/buyer/payment/qris',
-          extra: {'totalAmount': _total, 'qrisUrl': qris},
+          extra: {
+            'totalAmount': _total,
+            'qrisUrl': qris,
+            'orderIds': orderIds,
+            'items': _localCartItems,
+          },
         );
       }
     } catch (e) {

@@ -43,6 +43,7 @@ import 'features/home/presentation/pages/pola_detail_page.dart';
 import 'features/home/presentation/pages/seller_profile_detail_page.dart';
 import 'features/home/presentation/pages/penggunaan_detail_page.dart';
 import 'features/home/presentation/pages/untaian_tenunan_page.dart';
+import 'features/home/presentation/pages/biography_product_detail_page.dart';
 import 'features/home/data/models/product_model.dart';
 import 'features/home/data/models/cart_item_model.dart';
 import 'features/home/data/models/profile_model.dart';
@@ -97,7 +98,7 @@ final router = GoRouter(
     GoRoute(
       path: '/benang-membumi/pola',
       builder: (context, state) {
-        final polaData = state.extra as Map<String, String>;
+        final polaData = state.extra as Map<String, dynamic>;
         return PolaDetailPage(polaData: polaData);
       },
     ),
@@ -116,8 +117,8 @@ final router = GoRouter(
     GoRoute(
       path: '/otp',
       builder: (context, state) {
-        final email = state.extra as String;
-        return OtpPage(email: email);
+        final phone = state.extra as String;
+        return OtpPage(phone: phone);
       },
     ),
     GoRoute(
@@ -148,6 +149,8 @@ final router = GoRouter(
             return QrisPaymentPage(
               totalAmount: args['totalAmount'] as double,
               qrisUrl: args['qrisUrl'] as String?,
+              orderIds: args['orderIds'] as List<String>,
+              items: args['items'] as List<CartItem>,
             );
           },
         ),
@@ -167,11 +170,23 @@ final router = GoRouter(
             return SellerProfileDetailPage(seller: seller);
           },
         ),
+        GoRoute(
+          path: 'product',
+          builder: (context, state) {
+            final args = state.extra as Map<String, dynamic>;
+            final product = args['product'] as Product;
+            final seller = args['seller'] as Profile;
+            return BiographyProductDetailPage(product: product, seller: seller);
+          },
+        ),
       ],
     ),
     GoRoute(
       path: '/seller-home',
-      builder: (context, state) => const SellerHomePage(),
+      builder: (context, state) {
+        final initialIndex = state.extra is int ? state.extra as int : 0;
+        return SellerHomePage(initialIndex: initialIndex);
+      },
     ),
     GoRoute(
       path: '/seller/edit-profile',

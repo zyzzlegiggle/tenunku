@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/seller_repository.dart';
 import '../../data/models/profile_model.dart';
 import '../../data/models/product_model.dart';
@@ -9,14 +10,15 @@ import 'seller_orders_page.dart';
 import 'seller_chat_page.dart';
 
 class SellerHomePage extends StatefulWidget {
-  const SellerHomePage({super.key});
+  final int initialIndex;
+  const SellerHomePage({super.key, this.initialIndex = 0});
 
   @override
   State<SellerHomePage> createState() => _SellerHomePageState();
 }
 
 class _SellerHomePageState extends State<SellerHomePage> {
-  int _currentIndex = 0;
+  late int _currentIndex;
   final SellerRepository _sellerRepo = SellerRepository();
   final AuthRepository _authRepo = AuthRepository();
 
@@ -31,9 +33,14 @@ class _SellerHomePageState extends State<SellerHomePage> {
   String _selectedSort = 'Terbaru'; // Default sort
   String _selectedFilter = 'Aktif'; // Default filter
 
+  // Selection mode for "Disembunyikan" tab
+  final Set<String> _selectedProductIds = {};
+  bool _isSelectionMode = false;
+
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     _fetchData();
   }
 
@@ -59,12 +66,17 @@ class _SellerHomePageState extends State<SellerHomePage> {
   }
 
   List<Product> get _filteredAndSortedProducts {
-    // Apply Filter
-    if (_selectedFilter == 'Disembunyikan') {
-      return [];
+    List<Product> filtered = List.from(_products);
+
+    if (_selectedFilter == 'Aktif') {
+      filtered = filtered.where((p) => p.status == 'aktif').toList();
+    } else if (_selectedFilter == 'Disembunyikan') {
+      filtered = filtered.where((p) => p.status == 'disembunyikan').toList();
     }
-    // _products is already sorted by _sortProducts
-    return List.from(_products);
+    // 'Ulasan Terbanyak' uses default filter (usually active) but sorted differently
+    // which is already handled in _sortProducts.
+
+    return filtered;
   }
 
   void _sortProducts() {
@@ -192,12 +204,19 @@ class _SellerHomePageState extends State<SellerHomePage> {
       floatingActionButton: _currentIndex == 1
           ? FloatingActionButton(
               onPressed: () async {
-                await context.push('/seller/product/add');
-                _fetchData();
+                if (_isSelectionMode) {
+                  _showActionDialog();
+                } else {
+                  await context.push('/seller/product/add');
+                  _fetchData();
+                }
               },
               backgroundColor: const Color(0xFFF5793B),
               shape: const CircleBorder(),
-              child: const Icon(Icons.add, color: Colors.white),
+              child: Icon(
+                _isSelectionMode ? Icons.edit : Icons.add,
+                color: Colors.white,
+              ),
             )
           : null,
     );
@@ -608,7 +627,10 @@ class _SellerHomePageState extends State<SellerHomePage> {
                   ),
                 GestureDetector(
                   onTap: () async {
-                    await context.push('/seller/product/add', extra: product);
+                    await context.push(
+                      '/seller/product/detail',
+                      extra: product,
+                    );
                     _fetchData();
                   },
                   child: Container(
@@ -796,6 +818,9 @@ class _SellerHomePageState extends State<SellerHomePage> {
             _selectedSort = 'Terbaru'; // Reset sort when changing main filter
             _selectedFilter = label;
           }
+          // Reset selection mode when switching tabs
+          _isSelectionMode = false;
+          _selectedProductIds.clear();
           _sortProducts();
         });
       },
@@ -890,65 +915,328 @@ class _SellerHomePageState extends State<SellerHomePage> {
     );
   }
 
+  void _toggleProductSelection(String productId) {
+    setState(() {
+      if (_selectedProductIds.contains(productId)) {
+        _selectedProductIds.remove(productId);
+        if (_selectedProductIds.isEmpty) {
+          _isSelectionMode = false;
+        }
+      } else {
+        _selectedProductIds.add(productId);
+        _isSelectionMode = true;
+      }
+    });
+  }
+
+  Future<void> _updateProductsStatus(String status) async {
+    try {
+      for (final id in _selectedProductIds) {
+        await _supabase
+            .from('products')
+            .update({'status': status})
+            .eq('id', id);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              status == 'aktif'
+                  ? 'Produk berhasil ditampilkan'
+                  : 'Produk berhasil disembunyikan',
+            ),
+          ),
+        );
+        setState(() {
+          _isSelectionMode = false;
+          _selectedProductIds.clear();
+        });
+        _fetchData();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal memperbarui produk: $e')));
+      }
+    }
+  }
+
+  void _showActionDialog() {
+    String localStatus = _selectedFilter == 'Disembunyikan'
+        ? 'aktif'
+        : 'disembunyikan';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(
+                color: Color(0xFF31476C),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF54B7C2),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      'Pilih Tindakan',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildActionOption(
+                    'Tetap Sembunyikan Produk',
+                    'disembunyikan',
+                    localStatus,
+                    (val) => setModalState(() => localStatus = val!),
+                  ),
+                  _buildActionOption(
+                    'Tampilkan Produk Secara Publik',
+                    'aktif',
+                    localStatus,
+                    (val) => setModalState(() => localStatus = val!),
+                  ),
+                  const SizedBox(height: 32),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.white),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            'Kembali',
+                            style: GoogleFonts.poppins(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _updateProductsStatus(localStatus);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF54B7C2),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            'Lanjutkan',
+                            style: GoogleFonts.poppins(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildActionOption(
+    String title,
+    String value,
+    String groupValue,
+    ValueChanged<String?> onChanged,
+  ) {
+    return RadioListTile<String>(
+      title: Text(
+        title,
+        style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+      ),
+      value: value,
+      groupValue: groupValue,
+      onChanged: onChanged,
+      activeColor: Colors.white,
+      contentPadding: EdgeInsets.zero,
+    );
+  }
+
+  final SupabaseClient _supabase = Supabase.instance.client;
+
   Widget _buildProductCard(Product product) {
     final bool isUlasanTerbanyak = _selectedSort == 'Ulasan Terbanyak';
+    final bool isSelected = _selectedProductIds.contains(product.id);
 
-    return Container(
-      width: double.infinity,
-      height: 240,
-      decoration: BoxDecoration(
-        color: const Color(0xFF31476C),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        children: [
-          // Top Part: Image covering 3/4
-          Container(
-            height: 180,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: const Color(0xFFD9D9D9),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
+    return GestureDetector(
+      onLongPress: () {
+        if (_selectedFilter == 'Disembunyikan') {
+          _toggleProductSelection(product.id);
+        }
+      },
+      onTap: () async {
+        if (_isSelectionMode) {
+          _toggleProductSelection(product.id);
+        } else {
+          await context.push('/seller/product/detail', extra: product);
+          _fetchData();
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        height: 240,
+        decoration: BoxDecoration(
+          color: const Color(0xFF31476C),
+          borderRadius: BorderRadius.circular(24),
+          border: isSelected
+              ? Border.all(color: const Color(0xFFFFE14F), width: 2)
+              : null,
+        ),
+        child: Column(
+          children: [
+            // Top Part: Image covering 3/4
+            Container(
+              height: 180,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFFD9D9D9),
+                borderRadius: BorderRadius.circular(24),
+                image: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(product.imageUrl!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
-              image: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                  ? DecorationImage(
-                      image: NetworkImage(product.imageUrl!),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
-            ),
-            child: Stack(
-              children: [
-                // Product name bottom left
-                Positioned(
-                  bottom: 12,
-                  left: 16,
-                  right: 80,
-                  child: Text(
-                    product.name,
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color:
-                          product.imageUrl != null &&
-                              product.imageUrl!.isNotEmpty
-                          ? Colors.white
-                          : Colors.black,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                // Star rating bottom right - only show if NOT ulasan terbanyak
-                if (!isUlasanTerbanyak)
+              child: Stack(
+                children: [
+                  // Product name bottom left
                   Positioned(
                     bottom: 12,
-                    right: 16,
-                    child: Row(
+                    left: 16,
+                    right: 80,
+                    child: Text(
+                      product.name,
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color:
+                            product.imageUrl != null &&
+                                product.imageUrl!.isNotEmpty
+                            ? Colors.white
+                            : Colors.black,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  // Star rating bottom right - only show if NOT ulasan terbanyak
+                  if (!isUlasanTerbanyak)
+                    Positioned(
+                      bottom: 12,
+                      right: 16,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.star,
+                            size: 16,
+                            color: Color(0xFFFFE14F),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            product.averageRating.toStringAsFixed(1),
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  product.imageUrl != null &&
+                                      product.imageUrl!.isNotEmpty
+                                  ? Colors.white
+                                  : Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  // Selection Checkbox
+                  if (_isSelectionMode)
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFFF5793B)
+                              : Colors.white24,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: Icon(
+                          Icons.check,
+                          size: 16,
+                          color: isSelected ? Colors.white : Colors.transparent,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            // Bottom Part: Details
+            Container(
+              height: 60,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  if (!isUlasanTerbanyak) ...[
+                    // Default view: Price | Stock
+                    Text(
+                      'Rp${_formatPriceWithDots(product.price)}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(height: 16, width: 1, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Stok ${product.stock} Helai',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ] else ...[
+                    // Ulasan Terbanyak view: Star Metric | X Ulasan
+                    Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(
@@ -962,112 +1250,59 @@ class _SellerHomePageState extends State<SellerHomePage> {
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color:
-                                product.imageUrl != null &&
-                                    product.imageUrl!.isNotEmpty
-                                ? Colors.white
-                                : Colors.black,
+                            color: Colors.white,
                           ),
                         ),
                       ],
                     ),
-                  ),
-              ],
-            ),
-          ),
-          // Bottom Part: Details
-          Container(
-            height: 60,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                if (!isUlasanTerbanyak) ...[
-                  // Default view: Price | Stock
-                  Text(
-                    'Rp${_formatPriceWithDots(product.price)}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(height: 16, width: 1, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Stok ${product.stock} Helai',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.white,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ] else ...[
-                  // Ulasan Terbanyak view: Star Metric | X Ulasan
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.star,
-                        size: 16,
-                        color: Color(0xFFFFE14F),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        product.averageRating.toStringAsFixed(1),
+                    const SizedBox(width: 8),
+                    Container(height: 16, width: 1, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '${product.totalReviews} Ulasan',
                         style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
                           color: Colors.white,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
-                  const SizedBox(width: 8),
-                  Container(height: 16, width: 1, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '${product.totalReviews} Ulasan',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.white,
-                      ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
 
-                GestureDetector(
-                  onTap: () async {
-                    await context.push('/product/detail', extra: product);
-                    _fetchData();
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF54B7C2),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      'Lihat',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                  if (!_isSelectionMode)
+                    GestureDetector(
+                      onTap: () async {
+                        await context.push(
+                          '/seller/product/detail',
+                          extra: product,
+                        );
+                        _fetchData();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF54B7C2),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          'Lihat',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

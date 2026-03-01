@@ -557,3 +557,17 @@ CREATE TRIGGER tr_set_payment_expiration
 BEFORE INSERT ON public.orders
 FOR EACH ROW
 EXECUTE FUNCTION set_payment_expiration();
+
+
+ALTER TABLE public.reviews 
+ADD COLUMN video_url text;
+
+
+-- Add status column to handle active and hidden products
+ALTER TABLE public.products 
+ADD COLUMN status text DEFAULT 'aktif' 
+CHECK (status IN ('aktif', 'disembunyikan'));
+
+-- Add payment_proof_url to orders
+ALTER TABLE public.orders
+ADD COLUMN payment_proof_url text;

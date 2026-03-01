@@ -9,6 +9,21 @@ class AuthRepository {
   /// Listen to auth state changes.
   Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
 
+  /// Formats phone number to E.164 (defaults to +62 for Indonesia)
+  String _formatPhone(String phone) {
+    String p = phone.replaceAll(RegExp(r'\D'), ''); // Remove non-digits
+    if (p.startsWith('0')) {
+      return '+62${p.substring(1)}';
+    } else if (p.startsWith('62')) {
+      return '+$p';
+    } else if (!p.startsWith('+')) {
+      // If it doesn't have a country code and doesn't start with 0,
+      // assume it's a local number missing the leading 0
+      return '+62$p';
+    }
+    return phone;
+  }
+
   /// Sign Up with Email and Password
   Future<AuthResponse> signUp({
     required String email,
@@ -20,6 +35,7 @@ class AuthRepository {
     String? birthDate,
     String? nik,
   }) async {
+    final formattedPhone = _formatPhone(phone);
     // We store extra data in metadata first.
     // The Trigger in Supabase will copy this to the public.profiles table.
     return await _supabase.auth.signUp(
@@ -28,7 +44,7 @@ class AuthRepository {
       data: {
         'full_name': fullName,
         'username': username,
-        'phone': phone,
+        'phone': formattedPhone,
         'role': role,
         'birth_date': birthDate,
         'nik': nik,
@@ -112,7 +128,7 @@ class AuthRepository {
   /// Sign In with OTP (Phone)
   Future<void> signInWithOtp({required String phone}) async {
     await _supabase.auth.signInWithOtp(
-      phone: phone,
+      phone: _formatPhone(phone),
       // If using email OTP, use email: email
     );
   }
@@ -135,7 +151,7 @@ class AuthRepository {
     required String token,
   }) async {
     return await _supabase.auth.verifyOTP(
-      phone: phone,
+      phone: _formatPhone(phone),
       token: token,
       type: OtpType.sms,
     );

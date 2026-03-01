@@ -25,6 +25,7 @@ class Product {
   final BenangColor? benangColor;
   final BenangUsage? benangUsage;
   final DateTime createdAt;
+  final String status; // 'aktif', 'disembunyikan'
 
   Product({
     required this.id,
@@ -50,6 +51,7 @@ class Product {
     this.benangColor,
     this.benangUsage,
     required this.createdAt,
+    this.status = 'aktif',
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -85,6 +87,7 @@ class Product {
           ? BenangUsage.fromJson(json['benang_usages'])
           : null,
       createdAt: DateTime.parse(json['created_at']),
+      status: json['status'] ?? 'aktif',
     );
   }
 
@@ -110,6 +113,7 @@ class Product {
       'color_id': colorId,
       'usage_id': usageId,
       'created_at': createdAt.toIso8601String(),
+      'status': status,
     };
   }
 }

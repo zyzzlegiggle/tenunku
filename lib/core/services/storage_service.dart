@@ -17,6 +17,16 @@ class StorageService {
     return File(image.path);
   }
 
+  /// Picks a video from the gallery
+  Future<File?> pickVideo() async {
+    final XFile? video = await _picker.pickVideo(
+      source: ImageSource.gallery,
+      maxDuration: const Duration(minutes: 1), // Optional limit
+    );
+    if (video == null) return null;
+    return File(video.path);
+  }
+
   /// Uploads an image to the specified bucket and returns the public URL
   ///
   /// [bucketName] - Name of the bucket (products, avatars, shipping_evidence)
@@ -52,6 +62,35 @@ class StorageService {
       return publicUrl;
     } catch (e) {
       throw Exception('Failed to upload image: $e');
+    }
+  }
+
+  /// Uploads a video to the specified bucket and returns the public URL
+  Future<String> uploadVideo(
+    String bucketName,
+    File file, {
+    String? path,
+  }) async {
+    final fileExt = file.path.split('.').last;
+    final fileName = path ?? '${const Uuid().v4()}.$fileExt';
+    final storagePath = path ?? '$fileName';
+
+    try {
+      await _supabase.storage
+          .from(bucketName)
+          .upload(
+            storagePath,
+            file,
+            fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+          );
+
+      final String publicUrl = _supabase.storage
+          .from(bucketName)
+          .getPublicUrl(storagePath);
+
+      return publicUrl;
+    } catch (e) {
+      throw Exception('Failed to upload video: $e');
     }
   }
 }

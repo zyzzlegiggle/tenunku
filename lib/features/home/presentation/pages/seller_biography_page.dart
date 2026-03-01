@@ -2,15 +2,51 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/models/profile_model.dart';
+import '../../data/models/product_model.dart';
+import '../../data/repositories/product_repository.dart';
 
-class SellerBiographyPage extends StatelessWidget {
+class SellerBiographyPage extends StatefulWidget {
   final Profile seller;
 
   const SellerBiographyPage({super.key, required this.seller});
 
   @override
+  State<SellerBiographyPage> createState() => _SellerBiographyPageState();
+}
+
+class _SellerBiographyPageState extends State<SellerBiographyPage> {
+  final ProductRepository _productRepository = ProductRepository();
+  List<Product> _products = [];
+  bool _isLoadingProducts = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      final products = await _productRepository.getProductsBySeller(
+        widget.seller.id,
+      );
+      if (mounted) {
+        setState(() {
+          _products = products;
+          _isLoadingProducts = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingProducts = false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
+    final seller = widget.seller;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -46,7 +82,7 @@ class SellerBiographyPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 120), // More space for the circle overlap
-            // Card Section
+            // Profile Card Section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Stack(
@@ -166,11 +202,12 @@ class SellerBiographyPage extends StatelessWidget {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
+                            color: Colors.black.withOpacity(0.1),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
                         ],
+                        border: Border.all(color: Colors.white, width: 4),
                       ),
                       child: ClipOval(
                         child: seller.avatarUrl != null
@@ -198,6 +235,163 @@ class SellerBiographyPage extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Downward Chevron Icon
+            const Icon(
+              Icons.keyboard_arrow_down,
+              color: Color(0xFF54B7C2), // Cyan color
+              size: 32,
+            ),
+            const SizedBox(height: 16),
+
+            // Products Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                  border: Border.all(color: Colors.grey.withOpacity(0.1)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Produk dari ${seller.fullName ?? "Penenun"}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF616161),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _isLoadingProducts
+                        ? const Center(child: CircularProgressIndicator())
+                        : _products.isEmpty
+                        ? Text(
+                            'Belum ada produk.',
+                            style: GoogleFonts.poppins(color: Colors.grey),
+                          )
+                        : ListView.separated(
+                            physics: const NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            padding: EdgeInsets.zero,
+                            itemCount: _products.length,
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final product = _products[index];
+                              return GestureDetector(
+                                onTap: () {
+                                  context.push(
+                                    '/seller/biography/product',
+                                    extra: {
+                                      'product': product,
+                                      'seller': seller,
+                                    },
+                                  );
+                                },
+                                child: Container(
+                                  height: 100,
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    color: Colors.grey[300],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      if (product.imageUrl != null)
+                                        Image.network(
+                                          product.imageUrl!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  const Icon(
+                                                    Icons.image_not_supported,
+                                                    color: Colors.grey,
+                                                  ),
+                                        ),
+                                      // Gradient Overlay
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Colors.transparent,
+                                              const Color(
+                                                0xFF31476C,
+                                              ).withOpacity(0.9),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      // Content overlay
+                                      Padding(
+                                        padding: const EdgeInsets.all(12.0),
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.end,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    product.name,
+                                                    style: GoogleFonts.poppins(
+                                                      color: Colors.white,
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                  Text(
+                                                    'Rp ${product.price.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
+                                                    style: GoogleFonts.poppins(
+                                                      color: Colors.white,
+                                                      fontSize: 11,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const Icon(
+                                              Icons.chevron_right,
+                                              color: Colors.white,
+                                              size: 24,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 48),

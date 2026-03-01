@@ -455,7 +455,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
 
     return GestureDetector(
       onTap: () {
-        // Navigate to product detail if needed
+        context.push('/product/detail', extra: product);
       },
       child: Container(
         width: 130,
@@ -693,11 +693,14 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(20),
                 ),
-                child: Image.asset(
-                  imagePath,
-                  height: 280,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+                child: Transform.scale(
+                  scale: 1.2,
+                  child: Image.asset(
+                    imagePath,
+                    height: 280,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               // Navy fog gradient at bottom of image

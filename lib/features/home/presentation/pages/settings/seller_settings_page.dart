@@ -2,42 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../auth/data/repositories/auth_repository.dart';
+import 'seller_settings_layout.dart';
 
 class SellerSettingsPage extends StatelessWidget {
   const SellerSettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          'Pengaturan Akun',
-          style: GoogleFonts.poppins(
-            color: Colors.black87,
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-      ),
+    return SellerSettingsLayout(
+      title: 'Pengaturan Akun',
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Column(
           children: [
+            const SizedBox(height: 16),
             _buildSection([
               _buildMenuItem(
                 context,
                 'Akun & Keamanan',
                 onTap: () => context.push('/seller/settings/account-security'),
               ),
-              const Divider(height: 1),
+              const Divider(height: 1, color: Color(0xFFF5793B)),
               _buildMenuItem(
                 context,
                 'Alamat Saya',
@@ -52,7 +36,7 @@ class SellerSettingsPage extends StatelessWidget {
                 'Pusat Bantuan',
                 onTap: () => context.push('/seller/settings/help-center'),
               ),
-              const Divider(height: 1),
+              const Divider(height: 1, color: Color(0xFFF5793B)),
               _buildMenuItem(
                 context,
                 'Pengaturan Notifikasi',
@@ -69,9 +53,9 @@ class SellerSettingsPage extends StatelessWidget {
                   AuthRepository().signOut();
                   context.go('/login');
                 },
-                icon: Icons.logout,
               ),
             ]),
+            const SizedBox(height: 120), // padding for bottom nav
           ],
         ),
       ),
@@ -80,10 +64,7 @@ class SellerSettingsPage extends StatelessWidget {
 
   Widget _buildSection(List<Widget> children) {
     return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
-        borderRadius: BorderRadius.circular(12),
-      ),
+      color: Colors.white,
       child: Column(children: children),
     );
   }
@@ -94,11 +75,11 @@ class SellerSettingsPage extends StatelessWidget {
     VoidCallback? onTap,
     String? trailingText,
     bool isLogOut = false,
-    IconData? icon,
   }) {
     return InkWell(
       onTap: onTap,
-      child: Padding(
+      child: Container(
+        color: isLogOut ? const Color(0xFFEAEAEA) : Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
           children: [
@@ -124,9 +105,20 @@ class SellerSettingsPage extends StatelessWidget {
                 ),
               ),
             if (isLogOut)
-              Icon(icon ?? Icons.logout, size: 20, color: Colors.black54)
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.black45,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Icon(Icons.logout, size: 16, color: Colors.white),
+              )
             else
-              const Icon(Icons.chevron_right, size: 20, color: Colors.black54),
+              const Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: Color(0xFF54B7C2),
+              ),
           ],
         ),
       ),

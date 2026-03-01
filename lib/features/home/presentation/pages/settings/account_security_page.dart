@@ -1,69 +1,87 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'seller_settings_layout.dart';
+import '../../../../auth/data/repositories/auth_repository.dart';
+import '../../../data/repositories/seller_repository.dart';
+import '../../../data/models/profile_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class AccountSecurityPage extends StatelessWidget {
+class AccountSecurityPage extends StatefulWidget {
   const AccountSecurityPage({super.key});
 
   @override
+  State<AccountSecurityPage> createState() => _AccountSecurityPageState();
+}
+
+class _AccountSecurityPageState extends State<AccountSecurityPage> {
+  final _sellerRepo = SellerRepository();
+  final _authRepo = AuthRepository();
+  Profile? _profile;
+  User? _user;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    final user = _authRepo.currentUser;
+    if (user != null) {
+      final profile = await _sellerRepo.getProfile(user.id);
+      if (mounted) {
+        setState(() {
+          _user = user;
+          _profile = profile;
+          _isLoading = false;
+        });
+      }
+    } else {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          'Akun & Keamanan',
-          style: GoogleFonts.poppins(
-            color: Colors.black87,
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            children: [
-              _buildMenuItem(
-                context,
-                'No. Handphone',
-                trailingText: 'Atur Sekarang',
+    return SellerSettingsLayout(
+      title: 'Akun & Keamanan',
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 16),
+                  Container(
+                    color: Colors.white,
+                    child: Column(
+                      children: [
+                        _buildMenuItem(
+                          context,
+                          'No. Handphone',
+                          trailingText: _profile?.phone ?? 'Belum diatur',
+                        ),
+                        const Divider(height: 1, color: Color(0xFFF5793B)),
+                        _buildMenuItem(
+                          context,
+                          'Email',
+                          trailingText: _user?.email ?? 'Belum diatur',
+                        ),
+                        const Divider(height: 1, color: Color(0xFFF5793B)),
+                        _buildMenuItem(
+                          context,
+                          'Ganti Kata Sandi',
+                          onTap: () =>
+                              context.push('/seller/settings/change-password'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 120), // Padding for bottom nav
+                ],
               ),
-              const Divider(height: 1),
-              _buildMenuItem(
-                context,
-                'Email',
-                trailingText: '**/**/****', // Placeholder masking as per design
-              ),
-              const Divider(height: 1),
-              _buildMenuItem(
-                context,
-                'Ganti Password',
-                // The design shows a phone number here which is likely an error.
-                // I will skip the trailing text for password change or clarify it later.
-                // For now, adhering to standard "Change Password" flow.
-                trailingText:
-                    '08xxxxxxxx', // Keeping it to match design strictly if required, but it looks wrong.
-                // I'll keep it as the user asked for "first principles" which implies doing it right,
-                // but also "this is seller setting" implies following screen.
-                // I will compromise: Use the text from screenshot but functionality of password change.
-                onTap: () => context.push('/seller/settings/change-password'),
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 
@@ -75,7 +93,8 @@ class AccountSecurityPage extends StatelessWidget {
   }) {
     return InkWell(
       onTap: onTap,
-      child: Padding(
+      child: Container(
+        color: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
           children: [
@@ -100,7 +119,7 @@ class AccountSecurityPage extends StatelessWidget {
                   ),
                 ),
               ),
-            const Icon(Icons.chevron_right, size: 20, color: Colors.black54),
+            const Icon(Icons.chevron_right, size: 20, color: Color(0xFF54B7C2)),
           ],
         ),
       ),

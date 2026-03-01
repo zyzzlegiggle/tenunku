@@ -30,6 +30,18 @@ class _HomePageState extends State<HomePage> {
     _checkAndShowOnboarding();
   }
 
+  @override
+  void didUpdateWidget(HomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialIndex != widget.initialIndex) {
+      if (mounted) {
+        setState(() {
+          _currentIndex = widget.initialIndex;
+        });
+      }
+    }
+  }
+
   Future<void> _checkAndShowOnboarding() async {
     // Check user role first
     final user = Supabase.instance.client.auth.currentUser;

@@ -1,98 +1,116 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'seller_settings_layout.dart';
+import '../../../../auth/data/repositories/auth_repository.dart';
+import '../../../data/repositories/seller_repository.dart';
+import '../../../data/models/profile_model.dart';
 
-class MyAddressPage extends StatelessWidget {
+class MyAddressPage extends StatefulWidget {
   const MyAddressPage({super.key});
 
   @override
+  State<MyAddressPage> createState() => _MyAddressPageState();
+}
+
+class _MyAddressPageState extends State<MyAddressPage> {
+  final _sellerRepo = SellerRepository();
+  final _authRepo = AuthRepository();
+  Profile? _profile;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfile();
+  }
+
+  Future<void> _fetchProfile() async {
+    final user = _authRepo.currentUser;
+    if (user != null) {
+      final profile = await _sellerRepo.getProfile(user.id);
+      if (mounted) {
+        setState(() {
+          _profile = profile;
+          _isLoading = false;
+        });
+      }
+    } else {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          'Alamat Saya',
-          style: GoogleFonts.poppins(
-            color: Colors.black87,
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(
-              0xFFF5F5F5,
-            ), // Light grey background for container
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Nama Penjual',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '08xxxxxxxxxx',
-                style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Alamatnya, Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.black87,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: Implement address editing
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(
-                      0xFF757575,
-                    ), // Dark grey button
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Ubah',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
+    return SellerSettingsLayout(
+      title: 'Alamat Saya',
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: () {
+                      // TODO: Handle address edit
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      color: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _profile?.fullName ?? 'Nama Penenun',
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: const Color(
+                                      0xFF31476C,
+                                    ), // matching dark blue
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _profile?.phone ?? 'Belum mengatur no HP',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _profile?.shopAddress ??
+                                      'Belum mengatur alamat',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: Colors.black54,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.chevron_right,
+                            color: Color(0xFF54B7C2), // Cyan arrow
+                            size: 20,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 120), // Padding for bottom nav
+                ],
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }

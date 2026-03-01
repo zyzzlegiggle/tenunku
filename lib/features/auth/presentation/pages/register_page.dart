@@ -88,24 +88,43 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
+  bool _isValidUsername(String username) {
+    return RegExp(r'^[a-zA-Z0-9_]{4,}$').hasMatch(username);
+  }
+
+  bool _isValidPassword(String password) {
+    // Min 8 chars, at least one letter and one number
+    return RegExp(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$').hasMatch(password);
+  }
+
   Future<void> _register() async {
     try {
-      bool isValid = false;
+      bool isFieldsFilled = false;
       if (_selectedRoleIndex == 0) {
         // Pembeli Step 2: Username, Password
-        isValid =
+        isFieldsFilled =
             _usernameController.text.isNotEmpty &&
             _passwordController.text.isNotEmpty;
+
+        if (isFieldsFilled) {
+          if (!_isValidUsername(_usernameController.text)) {
+            throw 'Username minimal 4 karakter dan hanya boleh mengandung huruf, angka, atau underscore';
+          }
+        }
       } else {
         // Penjual Step 2: Phone, Email, Password
-        isValid =
+        isFieldsFilled =
             _phoneController.text.isNotEmpty &&
             _emailController.text.isNotEmpty &&
             _passwordController.text.isNotEmpty;
       }
 
-      if (!isValid) {
+      if (!isFieldsFilled) {
         throw 'Harap isi semua kolom';
+      }
+
+      if (!_isValidPassword(_passwordController.text)) {
+        throw 'Kata sandi minimal 8 karakter, harus mengandung huruf dan angka';
       }
 
       final authRepo = AuthRepository();
@@ -126,24 +145,19 @@ class _RegisterPageState extends State<RegisterPage> {
         password: _passwordController.text,
       );
 
+      // OTP temporarily deactivated
+      // await authRepo.signInWithOtp(phone: _phoneController.text);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Registrasi Berhasil. Silakan masuk dengan akun Anda.',
-            ),
-          ),
+          const SnackBar(content: Text('Registrasi Berhasil. Selamat Datang!')),
         );
-        // OTP temporarily disabled
-        // context.push('/otp', extra: _emailController.text);
 
-        // Logic routing based on role
+        // Direct routing based on role
         if (_selectedRoleIndex == 1) {
-          // Penjual -> Step 3
           context.go('/seller-setup');
         } else {
-          // Pembeli -> Login
-          context.go('/login');
+          context.go('/home');
         }
       }
     } catch (e) {
@@ -189,7 +203,9 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               const SizedBox(height: 30),
               // Logo Placeholder
-              Center(child: Image.asset('logo.png', width: 120, height: 120)),
+              Center(
+                child: Image.asset('assets/logo.png', width: 120, height: 120),
+              ),
               const SizedBox(height: 30),
 
               // Step 1: Role Toggle

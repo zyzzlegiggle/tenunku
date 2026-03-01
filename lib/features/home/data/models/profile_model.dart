@@ -11,6 +11,7 @@ class Profile {
   final String? hope;
   final String? dailyActivity;
   final int? age;
+  final String? shopAddress;
   final String? qrisUrl;
 
   Profile({
@@ -26,6 +27,7 @@ class Profile {
     this.hope,
     this.dailyActivity,
     this.age,
+    this.shopAddress,
     this.qrisUrl,
   });
 
@@ -43,6 +45,7 @@ class Profile {
       hope: json['hope'],
       dailyActivity: json['daily_activity'],
       age: json['age'],
+      shopAddress: json['shop_address'],
       qrisUrl: json['qris_url'],
     );
   }
@@ -61,6 +64,7 @@ class Profile {
       'hope': hope,
       'daily_activity': dailyActivity,
       'age': age,
+      'shop_address': shopAddress,
       'qris_url': qrisUrl,
     };
   }

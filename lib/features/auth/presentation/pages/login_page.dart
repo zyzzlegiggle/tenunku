@@ -53,7 +53,9 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 30),
               // Logo Placeholder
-              Center(child: Image.asset('logo.png', width: 120, height: 120)),
+              Center(
+                child: Image.asset('assets/logo.png', width: 120, height: 120),
+              ),
               const SizedBox(height: 30),
               // Role Toggle
               Container(

@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/buyer_repository.dart';
 import '../../data/models/product_model.dart';
-import '../widgets/buyer_product_detail_modal.dart';
 
 class FavoritesPage extends StatefulWidget {
   final VoidCallback? onBack;
@@ -356,9 +355,9 @@ class _FavoritesPageState extends State<FavoritesPage> {
                         itemCount: _filteredFavorites.length,
                         itemBuilder: (context, index) {
                           return GestureDetector(
-                            onTap: () => showBuyerProductDetailModal(
-                              context,
-                              _filteredFavorites[index],
+                            onTap: () => context.push(
+                              '/product/detail',
+                              extra: _filteredFavorites[index],
                             ),
                             child: _buildProductCard(_filteredFavorites[index]),
                           );

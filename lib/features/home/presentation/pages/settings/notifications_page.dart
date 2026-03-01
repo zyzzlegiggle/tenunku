@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'seller_settings_layout.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -11,158 +11,204 @@ class NotificationsPage extends StatefulWidget {
 
 class _NotificationsPageState extends State<NotificationsPage> {
   bool _appNotifications = true;
-  bool _orderIncoming = true;
-  bool _orderReceived = true;
-  bool _chatNewBuyer = true;
-  bool _chatIncoming = true;
-  bool _emailOrderStatus = true;
-  bool _emailOrderReceived = true;
+  bool _pesananMaster = true;
+  bool _orderIncoming = false;
+  bool _orderReceived = false;
+
+  bool _obrolanMaster = true;
+  bool _chatNewBuyer = false;
+  bool _chatIncoming = false;
+
+  bool _emailMaster = true;
+  bool _emailOrderStatus = false;
+  bool _emailOrderReceived = false;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          'Notifikasi di Aplikasi',
-          style: GoogleFonts.poppins(
-            color: Colors.black87,
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-      ),
+    return SellerSettingsLayout(
+      title: 'Notifikasi di Aplikasi',
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Column(
           children: [
-            _buildSection(
-              children: [
-                _buildSwitchItem(
-                  'Notifikasi di Aplikasi',
-                  _appNotifications,
-                  (val) => setState(() => _appNotifications = val),
-                ),
-              ],
-            ),
             const SizedBox(height: 16),
-            _buildSection(
-              title: 'Pesanan',
-              children: [
-                _buildSwitchItem(
-                  'Pesanan Masuk',
-                  _orderIncoming,
-                  (val) => setState(() => _orderIncoming = val),
-                  showDivider: true,
-                ),
-                _buildSwitchItem(
-                  'Pesanan Diterima',
-                  _orderReceived,
-                  (val) => setState(() => _orderReceived = val),
-                ),
-              ],
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                children: [
+                  _buildMasterSwitch(
+                    'Notifikasi di Aplikasi',
+                    _appNotifications,
+                    (v) => setState(() => _appNotifications = v),
+                    isFirst: true,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Pesanan Group
+                  _buildMasterSwitch(
+                    'Pesanan',
+                    _pesananMaster,
+                    (v) => setState(() {
+                      _pesananMaster = v;
+                      if (!v) {
+                        _orderIncoming = false;
+                        _orderReceived = false;
+                      }
+                    }),
+                  ),
+                  _buildChildSwitches([
+                    _buildChildSwitch(
+                      'Pesanan Masuk',
+                      _orderIncoming,
+                      (v) => setState(() => _orderIncoming = v),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildChildSwitch(
+                      'Pesanan Diterima',
+                      _orderReceived,
+                      (v) => setState(() => _orderReceived = v),
+                    ),
+                  ]),
+                  const SizedBox(height: 16),
+
+                  // Obrolan Group
+                  _buildMasterSwitch(
+                    'Obrolan',
+                    _obrolanMaster,
+                    (v) => setState(() {
+                      _obrolanMaster = v;
+                      if (!v) {
+                        _chatNewBuyer = false;
+                        _chatIncoming = false;
+                      }
+                    }),
+                  ),
+                  _buildChildSwitches([
+                    _buildChildSwitch(
+                      'Obrolan Pembeli Baru',
+                      _chatNewBuyer,
+                      (v) => setState(() => _chatNewBuyer = v),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildChildSwitch(
+                      'Pesan Masuk',
+                      _chatIncoming,
+                      (v) => setState(() => _chatIncoming = v),
+                    ),
+                  ]),
+                  const SizedBox(height: 16),
+
+                  // Email Group
+                  _buildMasterSwitch(
+                    'Email',
+                    _emailMaster,
+                    (v) => setState(() {
+                      _emailMaster = v;
+                      if (!v) {
+                        _emailOrderStatus = false;
+                        _emailOrderReceived = false;
+                      }
+                    }),
+                  ),
+                  _buildChildSwitches([
+                    _buildChildSwitch(
+                      'Status Pesanan',
+                      _emailOrderStatus,
+                      (v) => setState(() => _emailOrderStatus = v),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildChildSwitch(
+                      'Pesanan Diterima',
+                      _emailOrderReceived,
+                      (v) => setState(() => _emailOrderReceived = v),
+                    ),
+                  ]),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            _buildSection(
-              title: 'Obrolan',
-              children: [
-                _buildSwitchItem(
-                  'Obrolan Pembeli Baru',
-                  _chatNewBuyer,
-                  (val) => setState(() => _chatNewBuyer = val),
-                  showDivider: true,
-                ),
-                _buildSwitchItem(
-                  'Pesan Masuk',
-                  _chatIncoming,
-                  (val) => setState(() => _chatIncoming = val),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildSection(
-              title: 'Email',
-              children: [
-                _buildSwitchItem(
-                  'Status Pesanan',
-                  _emailOrderStatus,
-                  (val) => setState(() => _emailOrderStatus = val),
-                  showDivider: true,
-                ),
-                _buildSwitchItem(
-                  'Pesanan Diterima',
-                  _emailOrderReceived,
-                  (val) => setState(() => _emailOrderReceived = val),
-                ),
-              ],
-            ),
+            const SizedBox(height: 120), // Bottom nav padding
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSection({String? title, required List<Widget> children}) {
+  Widget _buildMasterSwitch(
+    String title,
+    bool value,
+    ValueChanged<bool> onChanged, {
+    bool isFirst = false,
+  }) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5), // Light grey background
-        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
+        borderRadius: BorderRadius.circular(8),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (title != null) ...[
-            Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          ...children,
+          Text(
+            title,
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: Colors.white,
+            activeTrackColor: const Color(0xFFF5793B),
+            inactiveThumbColor: Colors.white,
+            inactiveTrackColor: Colors.grey[300],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSwitchItem(
-    String label,
+  Widget _buildChildSwitches(List<Widget> children) {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: Color(0xFFF0F0F0),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(8),
+          bottomRight: Radius.circular(8),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildChildSwitch(
+    String title,
     bool value,
-    ValueChanged<bool> onChanged, {
-    bool showDivider = false,
-  }) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.poppins(fontSize: 13, color: Colors.black87),
-            ),
-            Switch(
+    ValueChanged<bool> onChanged,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.poppins(fontSize: 13, color: Colors.black87),
+          ),
+          SizedBox(
+            height: 32,
+            child: Switch(
               value: value,
               onChanged: onChanged,
-              activeColor: Colors.grey[700],
-              activeTrackColor: Colors.grey[300],
+              activeColor: Colors.white,
+              activeTrackColor: const Color(0xFFF5793B),
+              inactiveThumbColor: Colors.white,
+              inactiveTrackColor: const Color(
+                0xFFDCDCDC,
+              ), // Slightly darker grey for child switch
             ),
-          ],
-        ),
-        if (showDivider)
-          const Divider(height: 24, thickness: 1, color: Color(0xFFE0E0E0)),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }

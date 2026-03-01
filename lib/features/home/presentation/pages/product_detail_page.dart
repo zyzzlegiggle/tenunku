@@ -20,11 +20,76 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   final BuyerRepository _buyerRepository = BuyerRepository();
   Profile? _sellerProfile;
   int _selectedTabIndex = 0; // 0 = Biografi Penenun, 1 = Benang Membumi
+  bool _isFavorite = false;
+  bool _isLoadingFavorite = true;
 
   @override
   void initState() {
     super.initState();
     _loadSellerProfile();
+    _loadFavoriteStatus();
+    _trackView();
+  }
+
+  Future<void> _trackView() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId != null) {
+      await _buyerRepository.trackProductView(userId, widget.product.id);
+    }
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      if (mounted) setState(() => _isLoadingFavorite = false);
+      return;
+    }
+
+    final isFav = await _buyerRepository.isFavorite(userId, widget.product.id);
+    if (mounted) {
+      setState(() {
+        _isFavorite = isFav;
+        _isLoadingFavorite = false;
+      });
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Silakan login terlebih dahulu')),
+      );
+      return;
+    }
+
+    setState(() => _isFavorite = !_isFavorite); // optimistic update
+
+    try {
+      if (_isFavorite) {
+        await _buyerRepository.addFavorite(userId, widget.product.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Ditambahkan ke favorit')),
+          );
+        }
+      } else {
+        await _buyerRepository.removeFavorite(userId, widget.product.id);
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Dihapus dari favorit')));
+        }
+      }
+    } catch (e) {
+      // Revert on failure
+      if (mounted) {
+        setState(() => _isFavorite = !_isFavorite);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Terjadi kesalahan: $e')));
+      }
+    }
   }
 
   Future<void> _loadSellerProfile() async {
@@ -215,18 +280,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ],
                   // Heart icon at bottom right of image
                   Positioned(
-                    bottom: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.favorite_border,
-                        color: Color(0xFFF5793B),
-                        size: 20,
+                    bottom: 12,
+                    right: 12,
+                    child: GestureDetector(
+                      onTap: _isLoadingFavorite ? null : _toggleFavorite,
+                      child: Icon(
+                        _isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: const Color(0xFFF5793B),
+                        size: 24,
                       ),
                     ),
                   ),
@@ -377,6 +438,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     child: Row(
                       children: [
                         Expanded(child: _buildTabButton('Biografi Penenun', 0)),
+                        const SizedBox(width: 8),
                         Expanded(child: _buildTabButton('Benang Membumi', 1)),
                       ],
                     ),
@@ -387,7 +449,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   if (_selectedTabIndex == 0)
                     _buildBiografiPenenunContent()
                   else
-                    const SizedBox(), // Placeholder for Benang Membumi
+                    _buildBenangMembumiContent(),
                 ],
               ),
             ),
@@ -588,6 +650,122 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         ),
         const SizedBox(height: 80), // extra padding for scrolling
       ],
+    );
+  }
+
+  Widget _buildBenangMembumiContent() {
+    return Column(
+      children: [
+        _buildBenangMembumiItem(
+          icon: Icons.color_lens_outlined,
+          title: 'Arti Warna',
+          subtitle: 'Merah',
+          onTap: () => context.push('/benang-membumi'),
+        ),
+        const SizedBox(height: 16),
+        _buildBenangMembumiItem(
+          icon: Icons.grid_on_outlined,
+          title: 'Arti Pola',
+          subtitle: 'Horizontal',
+          onTap: () => context.push('/benang-membumi'),
+        ),
+        const SizedBox(height: 16),
+        _buildBenangMembumiItem(
+          icon: Icons.touch_app_outlined,
+          title: 'Penggunaan',
+          subtitle: 'Saran Penggunaan',
+          onTap: () => context.push('/benang-membumi'),
+        ),
+        const SizedBox(height: 80),
+      ],
+    );
+  }
+
+  Widget _buildBenangMembumiItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: const BoxDecoration(
+              color: Color(0xFF31476C),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF5E5E5E),
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF54B7C2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Lihat Detail',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.arrow_forward,
+                    color: Colors.white,
+                    size: 12,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

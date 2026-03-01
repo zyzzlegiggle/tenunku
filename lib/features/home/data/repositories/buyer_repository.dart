@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/profile_model.dart';
 import '../models/product_model.dart';
@@ -222,27 +223,71 @@ class BuyerRepository {
   }
 
   /// Create a new order (for "Beli Langsung" direct purchase)
-  Future<void> createOrder({
+  Future<String> createOrder({
     required String buyerId,
     required String sellerId,
     required String productId,
     required int quantity,
     required double totalPrice,
   }) async {
-    await _supabase.from('orders').insert({
-      'buyer_id': buyerId,
-      'seller_id': sellerId,
-      'product_id': productId,
-      'quantity': quantity,
-      'total_price': totalPrice,
-      'status': 'pending',
-    });
+    final data = await _supabase
+        .from('orders')
+        .insert({
+          'buyer_id': buyerId,
+          'seller_id': sellerId,
+          'product_id': productId,
+          'quantity': quantity,
+          'total_price': totalPrice,
+          'status': 'pending',
+        })
+        .select('id')
+        .single();
 
     // Increment sold count
     await _supabase.rpc(
       'increment_sold_count',
       params: {'p_product_id': productId, 'p_quantity': quantity},
     );
+
+    return data['id'] as String;
+  }
+
+  /// Upload payment proof to storage
+  Future<String?> uploadPaymentProof(
+    String orderId,
+    List<int> bytes,
+    String extension,
+  ) async {
+    try {
+      final fileName = 'proof_$orderId.${extension.replaceAll('.', '')}';
+      final path = 'payment_proofs/$fileName';
+
+      await _supabase.storage
+          .from('receipts')
+          .uploadBinary(
+            path,
+            Uint8List.fromList(bytes),
+            fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+          );
+
+      return _supabase.storage.from('receipts').getPublicUrl(path);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Update order status and proof URL
+  Future<void> updateOrderStatusWithProof(
+    String orderId,
+    String proofUrl,
+  ) async {
+    await _supabase
+        .from('orders')
+        .update({
+          'status': 'pending', // Still pending but now with proof
+          'payment_proof_url': proofUrl,
+        })
+        .eq('id', orderId);
   }
 
   // ==================== CART METHODS ====================
