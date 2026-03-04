@@ -65,9 +65,11 @@ class _PolaDetailPageState extends State<PolaDetailPage> {
   Widget build(BuildContext context) {
     final name = widget.polaData['name'] ?? 'Pola';
     final displayTitle = widget.polaData['displayTitle'] ?? 'Pola $name';
-    final imagePath = widget.polaData['image'] ?? '';
+    final imagePath =
+        widget.polaData['image'] ?? widget.polaData['image_url'] ?? '';
     final description =
-        widget.polaData['description'] ??
+        (widget.polaData['meaning'] as String?) ??
+        (widget.polaData['description'] as String?) ??
         'Pola ini merupakan salah satu motif tenun khas yang memiliki makna mendalam dalam budaya masyarakat.';
 
     final isPoleng = name == 'Poleng';

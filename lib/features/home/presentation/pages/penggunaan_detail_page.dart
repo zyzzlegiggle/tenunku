@@ -12,8 +12,13 @@ class PenggunaanDetailPage extends StatelessWidget {
     final name = usageData['name'] as String? ?? 'Penggunaan';
     final displayTitle = usageData['displayTitle'] as String? ?? name;
     final imagePath =
-        usageData['image'] as String? ?? 'assets/benangmembumi/suatsongket.png';
-    final description = usageData['description'] as String? ?? '';
+        usageData['image'] as String? ??
+        usageData['icon_url'] as String? ??
+        'assets/benangmembumi/suatsongket.png';
+    final description =
+        (usageData['meaning'] as String?) ??
+        (usageData['description'] as String?) ??
+        '';
 
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;

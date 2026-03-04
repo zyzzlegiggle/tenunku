@@ -370,55 +370,63 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Variants Section (Mockup sizes and variants)
+                  // Variants Section (Dynamic sizes and variants)
                   Row(
                     children: [
                       Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 0,
-                            vertical: 8,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Ukuran',
-                                style: GoogleFonts.poppins(
-                                  color: const Color(0xFF727272),
-                                  fontSize: 14,
+                        child: GestureDetector(
+                          onTap: _showAddToCartModal,
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 0,
+                              vertical: 8,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Ukuran',
+                                  style: GoogleFonts.poppins(
+                                    color: const Color(0xFF727272),
+                                    fontSize: 14,
+                                  ),
                                 ),
-                              ),
-                              const Icon(
-                                Icons.keyboard_arrow_down,
-                                color: Color(0xFF727272),
-                              ),
-                            ],
+                                const Icon(
+                                  Icons.keyboard_arrow_down,
+                                  color: Color(0xFF727272),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 32),
                       Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 0,
-                            vertical: 8,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Varian',
-                                style: GoogleFonts.poppins(
-                                  color: const Color(0xFF727272),
-                                  fontSize: 14,
+                        child: GestureDetector(
+                          onTap: _showAddToCartModal,
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 0,
+                              vertical: 8,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Varian',
+                                  style: GoogleFonts.poppins(
+                                    color: const Color(0xFF727272),
+                                    fontSize: 14,
+                                  ),
                                 ),
-                              ),
-                              const Icon(
-                                Icons.keyboard_arrow_down,
-                                color: Color(0xFF727272),
-                              ),
-                            ],
+                                const Icon(
+                                  Icons.keyboard_arrow_down,
+                                  color: Color(0xFF727272),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -657,32 +665,78 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     return Column(
       children: [
         _buildBenangMembumiItem(
-          icon: Icons.color_lens_outlined,
           title: 'Arti Warna',
-          subtitle: 'Merah',
-          onTap: () => context.push('/benang-membumi'),
+          subtitle: widget.product.benangColor?.name ?? '-',
+          color: widget.product.benangColor?.hexCode != null
+              ? _parseColor(widget.product.benangColor!.hexCode!)
+              : null,
+          icon: widget.product.benangColor?.hexCode == null
+              ? Icons.color_lens_outlined
+              : null,
+          onTap: () {
+            if (widget.product.benangColor != null) {
+              context.push(
+                '/benang-membumi/warna',
+                extra: widget.product.benangColor!.toJson(),
+              );
+            } else {
+              context.push('/benang-membumi');
+            }
+          },
         ),
         const SizedBox(height: 16),
         _buildBenangMembumiItem(
-          icon: Icons.grid_on_outlined,
           title: 'Arti Pola',
-          subtitle: 'Horizontal',
-          onTap: () => context.push('/benang-membumi'),
+          subtitle: widget.product.benangPattern?.name ?? '-',
+          imageUrl: widget.product.benangPattern?.imageUrl,
+          icon: widget.product.benangPattern?.imageUrl == null
+              ? Icons.grid_on_outlined
+              : null,
+          onTap: () {
+            if (widget.product.benangPattern != null) {
+              context.push(
+                '/benang-membumi/pola',
+                extra: widget.product.benangPattern!.toJson(),
+              );
+            } else {
+              context.push('/benang-membumi');
+            }
+          },
         ),
         const SizedBox(height: 16),
         _buildBenangMembumiItem(
-          icon: Icons.touch_app_outlined,
           title: 'Penggunaan',
-          subtitle: 'Saran Penggunaan',
-          onTap: () => context.push('/benang-membumi'),
+          subtitle: widget.product.benangUsage?.name ?? 'Saran Penggunaan',
+          assetPath: 'assets/penggunaan.png',
+          onTap: () {
+            if (widget.product.benangUsage != null) {
+              context.push(
+                '/benang-membumi/penggunaan',
+                extra: widget.product.benangUsage!.toJson(),
+              );
+            } else {
+              context.push('/benang-membumi');
+            }
+          },
         ),
         const SizedBox(height: 80),
       ],
     );
   }
 
+  Color _parseColor(String hex) {
+    hex = hex.replaceAll('#', '');
+    if (hex.length == 6) {
+      hex = 'FF$hex';
+    }
+    return Color(int.parse(hex, radix: 16));
+  }
+
   Widget _buildBenangMembumiItem({
-    required IconData icon,
+    IconData? icon,
+    Color? color,
+    String? imageUrl,
+    String? assetPath,
     required String title,
     required String subtitle,
     required VoidCallback onTap,
@@ -705,11 +759,26 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           Container(
             width: 48,
             height: 48,
-            decoration: const BoxDecoration(
-              color: Color(0xFF31476C),
-              shape: BoxShape.circle,
+            decoration: BoxDecoration(
+              color: assetPath != null
+                  ? Colors.transparent
+                  : (color ?? const Color(0xFF31476C)),
+              shape: assetPath != null ? BoxShape.rectangle : BoxShape.circle,
+              image: imageUrl != null
+                  ? DecorationImage(
+                      image: NetworkImage(imageUrl),
+                      fit: BoxFit.cover,
+                    )
+                  : assetPath != null
+                  ? DecorationImage(
+                      image: AssetImage(assetPath),
+                      fit: BoxFit.contain,
+                    )
+                  : null,
             ),
-            child: Icon(icon, color: Colors.white, size: 24),
+            child: (imageUrl == null && assetPath == null && icon != null)
+                ? Icon(icon, color: Colors.white, size: 24)
+                : null,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -783,7 +852,19 @@ class _CartModal extends StatefulWidget {
 class _CartModalState extends State<_CartModal> {
   final BuyerRepository _buyerRepository = BuyerRepository();
   int _quantity = 1;
-  String? _selectedVariant = 'Garis';
+  String? _selectedVariant;
+  String? _selectedSize;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.product.variants.isNotEmpty) {
+      _selectedVariant = widget.product.variants.first;
+    }
+    if (widget.product.sizes.isNotEmpty) {
+      _selectedSize = widget.product.sizes.first;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -841,6 +922,28 @@ class _CartModalState extends State<_CartModal> {
           const Divider(color: Color(0xFFE9E9E9)),
           const SizedBox(height: 16),
           Text(
+            'Ukuran',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: const Color(0xFF757575),
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (widget.product.sizes.isEmpty)
+            Text(
+              'Tidak ada pilihan ukuran',
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+            )
+          else
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: widget.product.sizes
+                  .map((size) => _buildSelectionButton(size, isSize: true))
+                  .toList(),
+            ),
+          const SizedBox(height: 16),
+          Text(
             'Varian',
             style: GoogleFonts.poppins(
               fontSize: 14,
@@ -848,13 +951,21 @@ class _CartModalState extends State<_CartModal> {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildVariantButton('Garis'),
-              const SizedBox(width: 12),
-              _buildVariantButton('Pola'),
-            ],
-          ),
+          if (widget.product.variants.isEmpty)
+            Text(
+              'Tidak ada pilihan varian',
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+            )
+          else
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: widget.product.variants
+                  .map(
+                    (variant) => _buildSelectionButton(variant, isSize: false),
+                  )
+                  .toList(),
+            ),
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -947,6 +1058,8 @@ class _CartModalState extends State<_CartModal> {
                     productName: widget.product.name,
                     productImageUrl: widget.product.imageUrl,
                     productPrice: widget.product.price,
+                    selectedSize: _selectedSize,
+                    selectedVariant: _selectedVariant,
                   );
                   Navigator.pop(context);
                   context.push('/buyer/payment', extra: [cartItem]);
@@ -957,6 +1070,8 @@ class _CartModalState extends State<_CartModal> {
                     productId: widget.product.id,
                     sellerId: widget.product.sellerId,
                     quantity: _quantity,
+                    selectedSize: _selectedSize,
+                    selectedVariant: _selectedVariant,
                   );
                   if (mounted) {
                     Navigator.pop(context);
@@ -987,35 +1102,45 @@ class _CartModalState extends State<_CartModal> {
     );
   }
 
-  Widget _buildVariantButton(String title) {
-    bool isActive = _selectedVariant == title;
+  Widget _buildSelectionButton(String title, {required bool isSize}) {
+    bool isActive = isSize ? _selectedSize == title : _selectedVariant == title;
     return GestureDetector(
-      onTap: () => setState(() => _selectedVariant = title),
+      onTap: () => setState(() {
+        if (isSize) {
+          _selectedSize = title;
+        } else {
+          _selectedVariant = title;
+        }
+      }),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isActive ? const Color(0xFFF5793B) : const Color(0xFFF0F0F0),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: Image.network(
-                widget.product.imageUrl ?? '',
-                width: 24,
-                height: 24,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    Container(width: 24, height: 24, color: Colors.grey),
+            if (!isSize) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Image.network(
+                  widget.product.imageUrl ?? '',
+                  width: 24,
+                  height: 24,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) =>
+                      Container(width: 24, height: 24, color: Colors.grey),
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
+              const SizedBox(width: 8),
+            ],
             Text(
               title,
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 color: isActive ? Colors.white : const Color(0xFF757575),
+                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ],

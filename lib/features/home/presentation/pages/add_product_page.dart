@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
@@ -45,6 +46,8 @@ class _AddProductPageState extends State<AddProductPage> {
   String? _selectedColorId;
   String? _selectedUsageId;
   String _selectedCategory = 'Kain';
+  final List<String> _selectedSizes = [];
+  final List<String> _selectedVariants = [];
 
   bool _isSaving = false;
   int _activeTabIndex = 0;
@@ -67,6 +70,8 @@ class _AddProductPageState extends State<AddProductPage> {
       } else if (widget.product!.imageUrl != null) {
         _uploadedImageUrls.add(widget.product!.imageUrl!);
       }
+      _selectedSizes.addAll(widget.product!.sizes);
+      _selectedVariants.addAll(widget.product!.variants);
       _fetchReviews();
     } else {
       _isLoadingReviews = false;
@@ -170,16 +175,42 @@ class _AddProductPageState extends State<AddProductPage> {
   }
 
   Future<void> _saveProductWithUpload() async {
-    if (_nameController.text.isEmpty || _priceController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nama dan Harga produk wajib diisi')),
-      );
-      return;
+    final name = _nameController.text.trim();
+    final priceStr = _priceController.text.trim();
+    final stockStr = _stockController.text.trim();
+    final description = _descriptionController.text.trim();
+
+    String? error;
+    if (name.isEmpty) {
+      error = 'Nama produk wajib diisi';
+    } else if (priceStr.isEmpty) {
+      error = 'Harga produk wajib diisi';
+    } else if (double.tryParse(priceStr) == null) {
+      error = 'Harga produk harus berupa angka';
+    } else if (stockStr.isEmpty) {
+      error = 'Stok produk wajib diisi';
+    } else if (int.tryParse(stockStr) == null) {
+      error = 'Stok produk harus berupa angka';
+    } else if (description.isEmpty) {
+      error = 'Deskripsi produk wajib diisi';
+    } else if (_selectedImages.isEmpty && _uploadedImageUrls.isEmpty) {
+      error = 'Minimal satu gambar produk wajib diisi';
+    } else if (_selectedPatternId == null) {
+      error = 'Pola (Benang Membumi) wajib dipilih';
+    } else if (_selectedColorId == null) {
+      error = 'Warna (Benang Membumi) wajib dipilih';
+    } else if (_selectedSizes.isEmpty) {
+      error = 'Minimal pilih satu ukuran';
+    } else if (_selectedVariants.isEmpty) {
+      error = 'Minimal pilih satu varian';
     }
 
-    if (_selectedImages.isEmpty && _uploadedImageUrls.isEmpty) {
+    if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Minimal satu gambar produk wajib diisi')),
+        SnackBar(
+          content: Text(error),
+          backgroundColor: const Color(0xFFF5793B),
+        ),
       );
       return;
     }
@@ -231,6 +262,8 @@ class _AddProductPageState extends State<AddProductPage> {
         patternId: _selectedPatternId,
         colorId: _selectedColorId,
         usageId: _selectedUsageId,
+        sizes: _selectedSizes,
+        variants: _selectedVariants,
         createdAt: createdTime,
       );
 
@@ -448,6 +481,12 @@ class _AddProductPageState extends State<AddProductPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Image List
+                      _buildLabel(
+                        'Upload Gambar Produk',
+                        fontSize: 16,
+                        isRequired: true,
+                      ),
+                      const SizedBox(height: 12),
                       SizedBox(
                         height: 120,
                         child: ListView.separated(
@@ -606,10 +645,14 @@ class _AddProductPageState extends State<AddProductPage> {
                       ],
                       const SizedBox(height: 24),
 
-                      _buildLabel('Nama Produk', fontSize: 16),
+                      _buildLabel(
+                        'Nama Produk',
+                        fontSize: 16,
+                        isRequired: true,
+                      ),
                       _buildTextField(
                         _nameController,
-                        hint: 'Lorem ipsum dolor sit amet',
+                        hint: 'Contoh: Kain Tenun Ikat Sikka',
                       ),
                       const SizedBox(height: 16),
 
@@ -619,7 +662,11 @@ class _AddProductPageState extends State<AddProductPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _buildLabel('Harga', fontSize: 16),
+                                _buildLabel(
+                                  'Harga',
+                                  fontSize: 16,
+                                  isRequired: true,
+                                ),
                                 _buildTextField(
                                   _priceController,
                                   isNumber: true,
@@ -633,7 +680,11 @@ class _AddProductPageState extends State<AddProductPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _buildLabel('Stok', fontSize: 16),
+                                _buildLabel(
+                                  'Stok',
+                                  fontSize: 16,
+                                  isRequired: true,
+                                ),
                                 _buildTextField(
                                   _stockController,
                                   isNumber: true,
@@ -646,16 +697,67 @@ class _AddProductPageState extends State<AddProductPage> {
                       ),
                       const SizedBox(height: 16),
 
-                      _buildLabel('Kategori', fontSize: 16),
+                      _buildLabel('Kategori', fontSize: 16, isRequired: true),
                       _buildCategoryDropdown(),
                       const SizedBox(height: 16),
 
-                      _buildLabel('Deskripsi', fontSize: 16),
+                      _buildLabel('Deskripsi', fontSize: 16, isRequired: true),
                       _buildTextField(
                         _descriptionController,
                         maxLines: 4,
                         hint: 'Ceritakan tentang produk Anda...',
                       ),
+                      const SizedBox(height: 24),
+
+                      _buildLabel(
+                        'Pilihan Ukuran',
+                        fontSize: 16,
+                        isRequired: true,
+                      ),
+                      _buildMultiSelectOptions(
+                        options: ['S', 'M', 'L', 'XL'],
+                        selectedList: _selectedSizes,
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildLabel(
+                        'Pilihan Varian',
+                        fontSize: 16,
+                        isRequired: true,
+                      ),
+                      _buildMultiSelectOptions(
+                        options: ['Garis', 'Pola'],
+                        selectedList: _selectedVariants,
+                        hasImage: true,
+                        mainImageUrl: _uploadedImageUrls.isNotEmpty
+                            ? _uploadedImageUrls.first
+                            : (_selectedImages.isNotEmpty ? null : null),
+                      ),
+                      const SizedBox(height: 24),
+
+                      const Divider(height: 32),
+                      Text(
+                        'Informasi Benang Membumi',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF54B7C2),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildLabel(
+                        'Pola (Benang Membumi)',
+                        fontSize: 16,
+                        isRequired: true,
+                      ),
+                      _buildPolaDropdown(),
+                      const SizedBox(height: 16),
+                      _buildLabel(
+                        'Warna (Benang Membumi)',
+                        fontSize: 16,
+                        isRequired: true,
+                      ),
+                      _buildColorDropdown(),
                       const SizedBox(height: 24),
 
                       const SizedBox(height: 32),
@@ -759,16 +861,33 @@ class _AddProductPageState extends State<AddProductPage> {
     );
   }
 
-  Widget _buildLabel(String text, {double fontSize = 14}) {
+  Widget _buildLabel(
+    String text, {
+    double fontSize = 14,
+    bool isRequired = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0, left: 4.0),
-      child: Text(
-        text,
-        style: GoogleFonts.poppins(
-          fontSize: fontSize,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-        ),
+      child: Row(
+        children: [
+          Text(
+            text,
+            style: GoogleFonts.poppins(
+              fontSize: fontSize,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          if (isRequired)
+            Text(
+              ' *',
+              style: GoogleFonts.poppins(
+                fontSize: fontSize,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFF5793B),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -784,13 +903,32 @@ class _AddProductPageState extends State<AddProductPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE0E0E0), width: 0.5),
       ),
       child: TextField(
         controller: controller,
-        keyboardType: isNumber ? TextInputType.number : TextInputType.multiline,
+        keyboardType: isNumber
+            ? const TextInputType.numberWithOptions(decimal: true)
+            : TextInputType.multiline,
+        inputFormatters: isNumber
+            ? [
+                if (controller == _stockController)
+                  FilteringTextInputFormatter.digitsOnly
+                else
+                  FilteringTextInputFormatter.allow(
+                    RegExp(r'[1-9][0-9]*\.?[0-9]*'),
+                  ),
+              ]
+            : null,
         maxLines: maxLines,
         style: GoogleFonts.poppins(fontSize: 14, color: Colors.black),
         decoration: InputDecoration(
+          prefixText: isNumber && controller == _priceController ? 'Rp ' : null,
+          prefixStyle: GoogleFonts.poppins(
+            fontSize: 14,
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
           border: InputBorder.none,
           focusedBorder: InputBorder.none,
           enabledBorder: InputBorder.none,
@@ -880,6 +1018,232 @@ class _AddProductPageState extends State<AddProductPage> {
                 Text(
                   _selectedCategory,
                   style: GoogleFonts.poppins(fontSize: 14, color: Colors.black),
+                ),
+                const Icon(Icons.keyboard_arrow_down, color: Color(0xFF54B7C2)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPolaDropdown() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return PopupMenuButton<String>(
+          position: PopupMenuPosition.under,
+          color: const Color(0xFFFFE14F),
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          constraints: BoxConstraints(
+            minWidth: constraints.maxWidth,
+            maxWidth: constraints.maxWidth,
+          ),
+          onSelected: (val) {
+            setState(() {
+              _selectedPatternId = val;
+              // Link Usage to Pola
+              final selectedPola = _patterns.firstWhere((p) => p.id == val);
+              final matchingUsage = _usages
+                  .where((u) => u.name == selectedPola.name)
+                  .firstOrNull;
+              if (matchingUsage != null) {
+                _selectedUsageId = matchingUsage.id;
+              }
+            });
+          },
+          itemBuilder: (context) {
+            return _patterns.map((item) {
+              final isSelected = item.id == _selectedPatternId;
+              return PopupMenuItem<String>(
+                value: item.id,
+                padding: EdgeInsets.zero,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected ? Colors.white : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        item.name,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: const Color(0xFF727272),
+                        ),
+                      ),
+                      if (isSelected)
+                        const Icon(
+                          Icons.check,
+                          color: Color(0xFF54B7C2),
+                          size: 18,
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList();
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _patterns
+                          .where((p) => p.id == _selectedPatternId)
+                          .firstOrNull
+                          ?.name ??
+                      'Pilih Pola',
+                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.black),
+                ),
+                const Icon(Icons.keyboard_arrow_down, color: Color(0xFF54B7C2)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildColorDropdown() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return PopupMenuButton<String>(
+          position: PopupMenuPosition.under,
+          color: const Color(0xFFFFB74D), // Different color for distinction
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          constraints: BoxConstraints(
+            minWidth: constraints.maxWidth,
+            maxWidth: constraints.maxWidth,
+          ),
+          onSelected: (val) {
+            setState(() {
+              _selectedColorId = val;
+            });
+          },
+          itemBuilder: (context) {
+            return _colors.map((item) {
+              final isSelected = item.id == _selectedColorId;
+              return PopupMenuItem<String>(
+                value: item.id,
+                padding: EdgeInsets.zero,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected ? Colors.white : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 16,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              color: item.hexCode != null
+                                  ? Color(
+                                      int.parse(
+                                        item.hexCode!.replaceFirst('#', '0xFF'),
+                                      ),
+                                    )
+                                  : Colors.grey,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            item.name,
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: const Color(0xFF727272),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (isSelected)
+                        const Icon(
+                          Icons.check,
+                          color: Color(0xFF54B7C2),
+                          size: 18,
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList();
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    if (_selectedColorId != null) ...[
+                      Container(
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: Color(
+                            int.parse(
+                              _colors
+                                  .firstWhere((c) => c.id == _selectedColorId)
+                                  .hexCode!
+                                  .replaceFirst('#', '0xFF'),
+                            ),
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Text(
+                      _colors
+                              .where((c) => c.id == _selectedColorId)
+                              .firstOrNull
+                              ?.name ??
+                          'Pilih Warna',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
                 ),
                 const Icon(Icons.keyboard_arrow_down, color: Color(0xFF54B7C2)),
               ],
@@ -1073,6 +1437,87 @@ class _AddProductPageState extends State<AddProductPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMultiSelectOptions({
+    required List<String> options,
+    required List<String> selectedList,
+    bool hasImage = false,
+    String? mainImageUrl,
+  }) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: options.map((option) {
+        final isSelected = selectedList.contains(option);
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              if (isSelected) {
+                selectedList.remove(option);
+              } else {
+                selectedList.add(option);
+              }
+            });
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xFF54B7C2) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected ? const Color(0xFF54B7C2) : Colors.white,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF54B7C2).withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (hasImage) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: mainImageUrl != null
+                        ? Image.network(
+                            mainImageUrl,
+                            width: 20,
+                            height: 20,
+                            fit: BoxFit.cover,
+                          )
+                        : Container(
+                            width: 20,
+                            height: 20,
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.image, size: 12),
+                          ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  option,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: isSelected ? Colors.white : const Color(0xFF727272),
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  ),
+                ),
+                if (isSelected) ...[
+                  const SizedBox(width: 8),
+                  const Icon(Icons.check, color: Colors.white, size: 16),
+                ],
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

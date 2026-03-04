@@ -12,6 +12,8 @@ class CartItem {
   final String? productImageUrl;
   final double? productPrice;
   final String? sellerName;
+  final String? selectedSize;
+  final String? selectedVariant;
 
   CartItem({
     required this.id,
@@ -25,6 +27,8 @@ class CartItem {
     this.productImageUrl,
     this.productPrice,
     this.sellerName,
+    this.selectedSize,
+    this.selectedVariant,
   });
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
@@ -48,6 +52,8 @@ class CartItem {
       sellerName: json['profiles'] != null
           ? (json['profiles']['shop_name'] ?? json['profiles']['full_name'])
           : null,
+      selectedSize: json['selected_size'],
+      selectedVariant: json['selected_variant'],
     );
   }
 
@@ -58,6 +64,8 @@ class CartItem {
       'product_id': productId,
       'seller_id': sellerId,
       'quantity': quantity,
+      'selected_size': selectedSize,
+      'selected_variant': selectedVariant,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
       // joined fields not usually serialized back for inserts

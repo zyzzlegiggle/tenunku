@@ -24,6 +24,8 @@ class Product {
   final BenangPattern? benangPattern;
   final BenangColor? benangColor;
   final BenangUsage? benangUsage;
+  final List<String> sizes;
+  final List<String> variants;
   final DateTime createdAt;
   final String status; // 'aktif', 'disembunyikan'
 
@@ -50,6 +52,8 @@ class Product {
     this.benangPattern,
     this.benangColor,
     this.benangUsage,
+    this.sizes = const [],
+    this.variants = const [],
     required this.createdAt,
     this.status = 'aktif',
   });
@@ -86,6 +90,10 @@ class Product {
       benangUsage: json['benang_usages'] != null
           ? BenangUsage.fromJson(json['benang_usages'])
           : null,
+      sizes: json['sizes'] != null ? List<String>.from(json['sizes']) : [],
+      variants: json['variants'] != null
+          ? List<String>.from(json['variants'])
+          : [],
       createdAt: DateTime.parse(json['created_at']),
       status: json['status'] ?? 'aktif',
     );
@@ -112,6 +120,8 @@ class Product {
       'pattern_id': patternId,
       'color_id': colorId,
       'usage_id': usageId,
+      'sizes': sizes,
+      'variants': variants,
       'created_at': createdAt.toIso8601String(),
       'status': status,
     };

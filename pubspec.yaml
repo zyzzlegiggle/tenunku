@@ -69,6 +69,7 @@ flutter:
   assets:
     - assets/logo.png
     - assets/smallstar.png
+    - assets/penggunaan.png
     - assets/onboardDialog/
     - assets/homepage/
     - assets/benangmembumi/

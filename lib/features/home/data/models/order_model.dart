@@ -10,6 +10,8 @@ class OrderModel {
   final String? trackingNumber;
   final String? shippingEvidenceUrl;
   final String? paymentProofUrl;
+  final String? selectedSize;
+  final String? selectedVariant;
   final DateTime createdAt;
 
   // Joins (optional, might need to be fetched separately or via Supabase join)
@@ -30,6 +32,8 @@ class OrderModel {
     this.trackingNumber,
     this.shippingEvidenceUrl,
     this.paymentProofUrl,
+    this.selectedSize,
+    this.selectedVariant,
     required this.createdAt,
     this.buyerName,
     this.productName,
@@ -50,6 +54,8 @@ class OrderModel {
       trackingNumber: json['tracking_number'],
       shippingEvidenceUrl: json['shipping_evidence_url'],
       paymentProofUrl: json['payment_proof_url'],
+      selectedSize: json['selected_size'],
+      selectedVariant: json['selected_variant'],
       createdAt: DateTime.parse(json['created_at']),
       buyerName: json['profiles'] != null
           ? json['profiles']['full_name']
@@ -77,6 +83,8 @@ class OrderModel {
       'tracking_number': trackingNumber,
       'shipping_evidence_url': shippingEvidenceUrl,
       'payment_proof_url': paymentProofUrl,
+      'selected_size': selectedSize,
+      'selected_variant': selectedVariant,
       'created_at': createdAt.toIso8601String(),
     };
   }

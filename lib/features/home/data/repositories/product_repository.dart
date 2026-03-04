@@ -9,6 +9,7 @@ class ProductRepository {
     final data = await _supabase
         .from('products')
         .select('*, benang_patterns(*), benang_colors(*), benang_usages(*)')
+        .eq('status', 'aktif')
         .limit(6)
         .order('created_at', ascending: false); // For now just latest
 
@@ -20,6 +21,7 @@ class ProductRepository {
     final data = await _supabase
         .from('products')
         .select('*, benang_patterns(*), benang_colors(*), benang_usages(*)')
+        .eq('status', 'aktif')
         .order('sold_count', ascending: false)
         .limit(10);
 
@@ -37,7 +39,8 @@ class ProductRepository {
   }) async {
     dynamic dbQuery = _supabase
         .from('products')
-        .select('*, benang_patterns(*), benang_colors(*), benang_usages(*)');
+        .select('*, benang_patterns(*), benang_colors(*), benang_usages(*)')
+        .eq('status', 'aktif');
 
     if (query != null && query.isNotEmpty) {
       dbQuery = dbQuery.ilike('name', '%$query%');
@@ -90,6 +93,7 @@ class ProductRepository {
         .from('products')
         .select('*, benang_patterns(*), benang_colors(*), benang_usages(*)')
         .eq('seller_id', sellerId)
+        .eq('status', 'aktif')
         .order('created_at', ascending: false);
 
     return (data as List).map((e) => Product.fromJson(e)).toList();

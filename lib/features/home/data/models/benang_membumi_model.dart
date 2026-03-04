@@ -22,6 +22,16 @@ class BenangPattern {
       createdAt: DateTime.parse(json['created_at']),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'meaning': meaning,
+      'image_url': imageUrl,
+      'created_at': createdAt.toIso8601String(),
+    };
+  }
 }
 
 class BenangColor {
@@ -48,6 +58,16 @@ class BenangColor {
       createdAt: DateTime.parse(json['created_at']),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'meaning': meaning,
+      'hex_code': hexCode,
+      'created_at': createdAt.toIso8601String(),
+    };
+  }
 }
 
 class BenangUsage {
@@ -73,5 +93,15 @@ class BenangUsage {
       iconUrl: json['icon_url'],
       createdAt: DateTime.parse(json['created_at']),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'meaning': meaning,
+      'icon_url': iconUrl,
+      'created_at': createdAt.toIso8601String(),
+    };
   }
 }

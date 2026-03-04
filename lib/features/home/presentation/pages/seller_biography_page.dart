@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/profile_model.dart';
 import '../../data/models/product_model.dart';
 import '../../data/repositories/product_repository.dart';
@@ -53,19 +54,49 @@ class _SellerBiographyPageState extends State<SellerBiographyPage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Header: Back icon
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: EdgeInsets.only(top: topPadding + 20, left: 16),
-                child: GestureDetector(
-                  onTap: () => context.pop(),
-                  child: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.grey,
-                    size: 28,
+            // Header: Back icon and potentially Edit icon
+            Padding(
+              padding: EdgeInsets.only(
+                top: topPadding + 20,
+                left: 16,
+                right: 16,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => context.pop(),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: Colors.grey,
+                      size: 28,
+                    ),
                   ),
-                ),
+                  if (Supabase.instance.client.auth.currentUser?.id ==
+                      seller.id)
+                    GestureDetector(
+                      onTap: () => context.push('/seller/edit-profile'),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5793B),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.edit,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 20),

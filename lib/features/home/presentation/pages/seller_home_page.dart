@@ -215,7 +215,9 @@ class _SellerHomePageState extends State<SellerHomePage> {
               shape: const CircleBorder(),
               child: Icon(
                 _isSelectionMode ? Icons.edit : Icons.add,
-                color: Colors.white,
+                color: _isSelectionMode
+                    ? const Color(0xFF31476C)
+                    : Colors.white,
               ),
             )
           : null,
@@ -963,100 +965,110 @@ class _SellerHomePageState extends State<SellerHomePage> {
   }
 
   void _showActionDialog() {
-    String localStatus = _selectedFilter == 'Disembunyikan'
-        ? 'aktif'
-        : 'disembunyikan';
+    // If we're in 'Aktif' or 'Ulasan Terbanyak', suggest hiding.
+    // Otherwise (Disembunyikan), suggest showing.
+    String localStatus = (_selectedFilter == 'Aktif')
+        ? 'disembunyikan'
+        : 'aktif';
 
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.5),
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return Container(
-              padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
-                color: Color(0xFF31476C),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF54B7C2),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      'Pilih Tindakan',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF31476C),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF54B7C2),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  _buildActionOption(
-                    'Tetap Sembunyikan Produk',
-                    'disembunyikan',
-                    localStatus,
-                    (val) => setModalState(() => localStatus = val!),
-                  ),
-                  _buildActionOption(
-                    'Tampilkan Produk Secara Publik',
-                    'aktif',
-                    localStatus,
-                    (val) => setModalState(() => localStatus = val!),
-                  ),
-                  const SizedBox(height: 32),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.white),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            'Kembali',
-                            style: GoogleFonts.poppins(color: Colors.white),
-                          ),
+                      child: Text(
+                        'Pilih Tindakan',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _updateProductsStatus(localStatus);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF54B7C2),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildActionOption(
+                      _selectedFilter == 'Aktif'
+                          ? 'Sembunyikan Produk'
+                          : 'Tetap Sembunyikan Produk',
+                      'disembunyikan',
+                      localStatus,
+                      (val) => setModalState(() => localStatus = val!),
+                    ),
+                    _buildActionOption(
+                      _selectedFilter == 'Disembunyikan'
+                          ? 'Tampilkan Produk'
+                          : 'Tampilkan Produk Secara Publik',
+                      'aktif',
+                      localStatus,
+                      (val) => setModalState(() => localStatus = val!),
+                    ),
+                    const SizedBox(height: 32),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.white),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
-                          ),
-                          child: Text(
-                            'Lanjutkan',
-                            style: GoogleFonts.poppins(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
+                            child: Text(
+                              'Kembali',
+                              style: GoogleFonts.poppins(color: Colors.white),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _updateProductsStatus(localStatus);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF54B7C2),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              'Lanjutkan',
+                              style: GoogleFonts.poppins(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -1092,9 +1104,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
 
     return GestureDetector(
       onLongPress: () {
-        if (_selectedFilter == 'Disembunyikan') {
-          _toggleProductSelection(product.id);
-        }
+        _toggleProductSelection(product.id);
       },
       onTap: () async {
         if (_isSelectionMode) {
@@ -1189,16 +1199,16 @@ class _SellerHomePageState extends State<SellerHomePage> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFFF5793B)
-                              : Colors.white24,
+                          color: isSelected ? Colors.white : Colors.white24,
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(color: Colors.white, width: 2),
                         ),
                         child: Icon(
                           Icons.check,
                           size: 16,
-                          color: isSelected ? Colors.white : Colors.transparent,
+                          color: isSelected
+                              ? const Color(0xFFF5793B)
+                              : Colors.transparent,
                         ),
                       ),
                     ),

@@ -58,6 +58,7 @@ class BuyerRepository {
         .from('favorites')
         .select('*, products(*)')
         .eq('user_id', userId)
+        .eq('products.status', 'aktif')
         .order('created_at', ascending: false);
 
     return (data as List).map((e) => Product.fromJson(e['products'])).toList();
@@ -99,6 +100,7 @@ class BuyerRepository {
         .from('recently_viewed')
         .select('*, products(*)')
         .eq('user_id', userId)
+        .eq('products.status', 'aktif')
         .order('viewed_at', ascending: false)
         .limit(limit);
 
@@ -130,6 +132,7 @@ class BuyerRepository {
         .select('*, products(*)')
         .eq('buyer_id', userId)
         .eq('status', 'completed')
+        .eq('products.status', 'aktif')
         .order('created_at', ascending: false);
 
     // Extract unique products
@@ -229,6 +232,8 @@ class BuyerRepository {
     required String productId,
     required int quantity,
     required double totalPrice,
+    String? selectedSize,
+    String? selectedVariant,
   }) async {
     final data = await _supabase
         .from('orders')
@@ -239,6 +244,8 @@ class BuyerRepository {
           'quantity': quantity,
           'total_price': totalPrice,
           'status': 'pending',
+          'selected_size': selectedSize,
+          'selected_variant': selectedVariant,
         })
         .select('id')
         .single();
@@ -309,12 +316,16 @@ class BuyerRepository {
     required String productId,
     required String sellerId,
     required int quantity,
+    String? selectedSize,
+    String? selectedVariant,
   }) async {
     await _supabase.from('cart_items').upsert({
       'buyer_id': buyerId,
       'product_id': productId,
       'seller_id': sellerId,
       'quantity': quantity,
+      'selected_size': selectedSize,
+      'selected_variant': selectedVariant,
       'updated_at': DateTime.now().toUtc().toIso8601String(),
     }, onConflict: 'buyer_id,product_id');
   }

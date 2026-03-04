@@ -305,6 +305,17 @@ class _CartPageState extends State<CartPage> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
+              if (item.selectedSize != null || item.selectedVariant != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Text(
+                    '${item.selectedSize ?? ''}${item.selectedSize != null && item.selectedVariant != null ? ', ' : ''}${item.selectedVariant ?? ''}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ),
               const SizedBox(height: 4),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

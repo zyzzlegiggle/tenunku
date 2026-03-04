@@ -47,6 +47,14 @@ class _SellerProductDetailPageState extends State<SellerProductDetailPage> {
     context.go('/seller-home', extra: index);
   }
 
+  void _showOptionsModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _ProductOptionsModal(product: widget.product),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final name = widget.product.name;
@@ -253,44 +261,52 @@ class _SellerProductDetailPageState extends State<SellerProductDetailPage> {
                     Row(
                       children: [
                         Expanded(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Ukuran',
-                                style: GoogleFonts.poppins(
-                                  color: const Color(0xFF727272),
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
+                          child: GestureDetector(
+                            onTap: _showOptionsModal,
+                            behavior: HitTestBehavior.opaque,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Ukuran',
+                                  style: GoogleFonts.poppins(
+                                    color: const Color(0xFF727272),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const Icon(
-                                Icons.keyboard_arrow_down,
-                                color: Color(0xFF727272),
-                                size: 20,
-                              ),
-                            ],
+                                const Icon(
+                                  Icons.keyboard_arrow_down,
+                                  color: Color(0xFF727272),
+                                  size: 20,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(width: 48),
                         Expanded(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Varian',
-                                style: GoogleFonts.poppins(
-                                  color: const Color(0xFF727272),
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
+                          child: GestureDetector(
+                            onTap: _showOptionsModal,
+                            behavior: HitTestBehavior.opaque,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Varian',
+                                  style: GoogleFonts.poppins(
+                                    color: const Color(0xFF727272),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const Icon(
-                                Icons.keyboard_arrow_down,
-                                color: Color(0xFF727272),
-                                size: 20,
-                              ),
-                            ],
+                                const Icon(
+                                  Icons.keyboard_arrow_down,
+                                  color: Color(0xFF727272),
+                                  size: 20,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -542,6 +558,152 @@ class _SellerProductDetailPageState extends State<SellerProductDetailPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ProductOptionsModal extends StatelessWidget {
+  final Product product;
+
+  const _ProductOptionsModal({required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Informasi Pilihan Produk',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF31476C),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Ukuran Tersedia',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF757575),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (product.sizes.isEmpty)
+            Text(
+              'Tidak ada pilihan ukuran',
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+            )
+          else
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: product.sizes
+                  .map((size) => _buildOptionChip(size))
+                  .toList(),
+            ),
+          const SizedBox(height: 24),
+          Text(
+            'Varian Tersedia',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF757575),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (product.variants.isEmpty)
+            Text(
+              'Tidak ada pilihan varian',
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+            )
+          else
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: product.variants
+                  .map((variant) => _buildOptionChip(variant, hasImage: true))
+                  .toList(),
+            ),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF54B7C2),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'Tutup',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOptionChip(String title, {bool hasImage = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F0F0),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (hasImage) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: product.imageUrls.isNotEmpty
+                  ? Image.network(
+                      product.imageUrls.first,
+                      width: 20,
+                      height: 20,
+                      fit: BoxFit.cover,
+                    )
+                  : product.imageUrl != null
+                  ? Image.network(
+                      product.imageUrl!,
+                      width: 20,
+                      height: 20,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      width: 20,
+                      height: 20,
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.image, size: 12),
+                    ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: const Color(0xFF31476C),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }

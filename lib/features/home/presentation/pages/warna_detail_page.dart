@@ -36,9 +36,17 @@ class WarnaDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = colorData['color'] as Color? ?? const Color(0xFFE0E0E0);
+    final hexCode = colorData['hex_code'] as String?;
+    final color =
+        colorData['color'] as Color? ??
+        (hexCode != null
+            ? Color(int.parse(hexCode.replaceFirst('#', '0xFF')))
+            : const Color(0xFFE0E0E0));
     final name = colorData['name'] as String? ?? 'Warna';
-    final subtitle = colorData['subtitle'] as String? ?? '';
+    final subtitle =
+        (colorData['meaning'] as String?) ??
+        (colorData['subtitle'] as String?) ??
+        '';
     final imagePath = colorData['image'] as String? ?? '';
     final screenHeight = MediaQuery.of(context).size.height;
     final topHeight = screenHeight / 3;

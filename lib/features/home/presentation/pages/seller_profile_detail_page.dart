@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/profile_model.dart';
 
 class SellerProfileDetailPage extends StatefulWidget {
@@ -34,14 +35,19 @@ class _SellerProfileDetailPageState extends State<SellerProfileDetailPage> {
   String _getTabDescription(int index) {
     switch (index) {
       case 0:
-        return widget.seller.bio ??
-            'Saya telah menenun selama lebih dari 20 tahun, warisan dari nenek saya. Setiap motif memiliki cerita tersendiri yang mencerminkan kearifan lokal desa kami.';
+        return (widget.seller.description != null &&
+                widget.seller.description!.isNotEmpty)
+            ? widget.seller.description!
+            : 'Saya telah menenun selama lebih dari 20 tahun, warisan dari nenek saya. Setiap motif memiliki cerita tersendiri yang mencerminkan kearifan lokal desa kami.';
       case 1:
-        return widget.seller.hope ??
-            'Saya berharap generasi muda tetap mau belajar menenun agar tradisi ini tidak punah dimakan waktu.';
+        return (widget.seller.hope != null && widget.seller.hope!.isNotEmpty)
+            ? widget.seller.hope!
+            : 'Saya berharap generasi muda tetap mau belajar menenun agar tradisi ini tidak punah dimakan waktu.';
       case 2:
-        return widget.seller.dailyActivity ??
-            'Pagi hari saya menyiapkan benang alam, siang hari menenun di teras rumah sambil bercengkerama dengan tetangga.';
+        return (widget.seller.dailyActivity != null &&
+                widget.seller.dailyActivity!.isNotEmpty)
+            ? widget.seller.dailyActivity!
+            : 'Pagi hari saya menyiapkan benang alam, siang hari menenun di teras rumah sambil bercengkerama dengan tetangga.';
       default:
         return '';
     }
@@ -66,14 +72,43 @@ class _SellerProfileDetailPageState extends State<SellerProfileDetailPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Back Button
-                  GestureDetector(
-                    onTap: () => context.pop(),
-                    child: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.grey,
-                      size: 28,
-                    ),
+                  // Back Button & Potentially Edit Button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () => context.pop(),
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.grey,
+                          size: 28,
+                        ),
+                      ),
+                      if (Supabase.instance.client.auth.currentUser?.id ==
+                          widget.seller.id)
+                        GestureDetector(
+                          onTap: () => context.push('/seller/edit-profile'),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF5793B),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 24),
 
