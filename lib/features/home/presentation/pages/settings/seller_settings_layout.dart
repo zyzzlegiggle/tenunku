@@ -16,9 +16,7 @@ class SellerSettingsLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      backgroundColor: const Color(
-        0xFFE0E0E0,
-      ), // Grey background for the main body
+      backgroundColor: Colors.white, // White background to match buyer settings
       appBar: AppBar(
         backgroundColor: const Color(0xFF54B7C2), // Cyan header
         elevation: 0,
