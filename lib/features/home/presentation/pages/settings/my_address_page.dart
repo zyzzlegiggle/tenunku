@@ -39,6 +39,70 @@ class _MyAddressPageState extends State<MyAddressPage> {
     }
   }
 
+  Future<void> _updateAddress(String value) async {
+    if (_profile == null) return;
+    try {
+      setState(() => _isLoading = true);
+      final json = _profile!.toJson();
+      json['shop_address'] = value;
+      final updated = Profile.fromJson(json);
+      await _sellerRepo.updateProfile(updated);
+      await _fetchProfile();
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Alamat berhasil diperbarui')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal memperbarui: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showEditDialog({
+    required String title,
+    String? currentValue,
+    required Function(String) onSave,
+  }) {
+    final controller = TextEditingController(text: currentValue);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit $title', style: GoogleFonts.poppins()),
+        content: TextField(
+          controller: controller,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: 'Masukkan $title',
+            focusedBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFF54B7C2)),
+            ),
+          ),
+          style: GoogleFonts.poppins(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Batal', style: GoogleFonts.poppins(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              onSave(controller.text.trim());
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF54B7C2)),
+            child: Text('Simpan', style: GoogleFonts.poppins(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SellerSettingsLayout(
@@ -50,9 +114,11 @@ class _MyAddressPageState extends State<MyAddressPage> {
                 children: [
                   const SizedBox(height: 16),
                   InkWell(
-                    onTap: () {
-                      // TODO: Handle address edit
-                    },
+                    onTap: () => _showEditDialog(
+                      title: 'Alamat Toko',
+                      currentValue: _profile?.shopAddress,
+                      onSave: (val) => _updateAddress(val),
+                    ),
                     child: Container(
                       width: double.infinity,
                       color: Colors.white,

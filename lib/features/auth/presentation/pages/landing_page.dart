@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});
@@ -14,27 +13,18 @@ class LandingPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 20),
-              Text(
-                'Daftar',
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  color: Colors.grey[700],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const Spacer(),
+              const Spacer(flex: 2),
               // Logo Placeholder
-              Center(child: Image.asset('logo.png', width: 150, height: 150)),
-              const Spacer(),
+              Center(child: Image.asset('assets/logo.png', width: 150, height: 150)),
+              const SizedBox(height: 40),
               // Masuk Button
               ElevatedButton(
                 onPressed: () => context.push('/login'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF54B7C2).withOpacity(0.15),
-                  foregroundColor: const Color(0xFF54B7C2),
-                  elevation: 5,
-                  shadowColor: Colors.black26,
+                  backgroundColor: const Color(0xFF54B7C2).withOpacity(0.1),
+                  foregroundColor: Colors.black.withOpacity(0.5),
+                  elevation: 0,
+                  shadowColor: Colors.transparent,
                 ),
                 child: const Text('Masuk'),
               ),
@@ -44,13 +34,13 @@ class LandingPage extends StatelessWidget {
                 onPressed: () => context.push('/register'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF54B7C2),
-                  foregroundColor: Colors.white,
+                  foregroundColor: Colors.black,
                   elevation: 5,
                   shadowColor: Colors.black45,
                 ),
                 child: const Text('Daftar'),
               ),
-              const Spacer(),
+              const Spacer(flex: 3),
             ],
           ),
         ),

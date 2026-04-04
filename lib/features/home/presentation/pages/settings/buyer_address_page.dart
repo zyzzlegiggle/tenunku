@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../data/repositories/buyer_repository.dart';
+import '../../../data/models/address_model.dart';
 
 class BuyerAddressPage extends StatefulWidget {
   const BuyerAddressPage({super.key});
@@ -84,14 +85,15 @@ class _BuyerAddressPageState extends State<BuyerAddressPage> {
                             color: Color(0xFFF5793B), // orange divider
                           ),
                           itemBuilder: (context, index) {
-                            final address = _addresses[index];
+                            final addressMap = _addresses[index];
+                            final address = AddressModel.fromJson(addressMap);
                             return _buildAddressCard(
                               context,
-                              label: address['label'] as String? ?? 'Alamat',
-                              name: address['recipient_name'] as String? ?? '',
-                              address: address['full_address'] as String? ?? '',
-                              isPrimary:
-                                  address['is_primary'] as bool? ?? false,
+                              label: address.label,
+                              name: address.recipientName,
+                              address: address.fullAddress,
+                              isPrimary: address.isPrimary,
+                              onTap: () => _showAddressDialog(address: address),
                             );
                           },
                         ),
@@ -105,10 +107,7 @@ class _BuyerAddressPageState extends State<BuyerAddressPage> {
                     vertical: 20,
                   ),
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      // Tambah Alamat Baru logic
-                      // Navigator.push or context.push to add new address
-                    },
+                    onPressed: () => _showAddressDialog(),
                     icon: const Icon(Icons.add, size: 20),
                     label: Text(
                       'Tambah Alamat Baru',
@@ -146,12 +145,105 @@ class _BuyerAddressPageState extends State<BuyerAddressPage> {
     );
   }
 
+  void _showAddressDialog({AddressModel? address}) {
+    final labelController = TextEditingController(text: address?.label);
+    final nameController = TextEditingController(text: address?.recipientName);
+    final phoneController = TextEditingController(text: address?.phone);
+    final addressController = TextEditingController(text: address?.fullAddress);
+    bool isPrimary = address?.isPrimary ?? false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(address == null ? 'Tambah Alamat' : 'Edit Alamat', style: GoogleFonts.poppins()),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildDialogField('Label (Rumah, Kantor, dll)', labelController),
+                _buildDialogField('Nama Penerima', nameController),
+                _buildDialogField('No. Handphone', phoneController, isPhone: true),
+                _buildDialogField('Alamat Lengkap', addressController, maxLines: 3),
+                CheckboxListTile(
+                  title: Text('Alamat Utama', style: GoogleFonts.poppins(fontSize: 14)),
+                  value: isPrimary,
+                  onChanged: (val) => setDialogState(() => isPrimary = val ?? false),
+                  contentPadding: EdgeInsets.zero,
+                  activeColor: const Color(0xFF54B7C2),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Batal', style: GoogleFonts.poppins(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final userId = Supabase.instance.client.auth.currentUser?.id;
+                if (userId == null) return;
+
+                final newAddress = AddressModel(
+                  id: address?.id ?? '',
+                  userId: userId,
+                  label: labelController.text,
+                  recipientName: nameController.text,
+                  phone: phoneController.text,
+                  fullAddress: addressController.text,
+                  isPrimary: isPrimary,
+                );
+
+                try {
+                  if (address == null) {
+                    await _buyerRepo.addAddress(newAddress);
+                  } else {
+                    await _buyerRepo.updateAddress(newAddress);
+                  }
+                  if (isPrimary) {
+                    await _buyerRepo.setPrimaryAddress(userId, address?.id ?? '');
+                  }
+                  _loadAddresses();
+                  if (mounted) Navigator.pop(context);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF54B7C2)),
+              child: Text('Simpan', style: GoogleFonts.poppins(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDialogField(String label, TextEditingController controller, {bool isPhone = false, int maxLines = 1}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: TextField(
+        controller: controller,
+        keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: GoogleFonts.poppins(fontSize: 12),
+          border: const OutlineInputBorder(),
+          focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF54B7C2))),
+        ),
+        style: GoogleFonts.poppins(fontSize: 14),
+      ),
+    );
+  }
+
   Widget _buildAddressCard(
     BuildContext context, {
     required String label,
     required String name,
     required String address,
     required bool isPrimary,
+    required VoidCallback onTap,
   }) {
     return Container(
       width: double.infinity,
@@ -159,9 +251,7 @@ class _BuyerAddressPageState extends State<BuyerAddressPage> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            // Select address logic
-          },
+          onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: Row(

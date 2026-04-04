@@ -61,3 +61,34 @@ create policy "Banner images are viewable by everyone"
 create policy "Users can upload their own banner"
   on storage.objects for insert
   with check ( bucket_id = 'banners' and auth.uid() = (storage.foldername(name))[1]::uuid );
+
+-- Create QRIS bucket
+insert into storage.buckets (id, name, public)
+values ('qris', 'qris', true)
+on conflict (id) do nothing;
+
+-- Policy: QRIS images are viewable by everyone
+create policy "QRIS images are viewable by everyone"
+  on storage.objects for select
+  using ( bucket_id = 'qris' );
+
+-- Policy: Users can upload their own qris
+create policy "Users can upload their own qris"
+  on storage.objects for insert
+  with check ( bucket_id = 'qris' and auth.uid() = (storage.foldername(name))[1]::uuid );
+
+-- Create receipts bucket (payment proofs)
+insert into storage.buckets (id, name, public)
+values ('receipts', 'receipts', true)
+on conflict (id) do nothing;
+
+-- Policy: Receipts are viewable by authenticated users (or seller/buyer specifically)
+-- For simplicity and consistency with existing code, making it viewable by everyone
+create policy "Receipts are viewable by everyone"
+  on storage.objects for select
+  using ( bucket_id = 'receipts' );
+
+-- Policy: Authenticated users can upload receipts
+create policy "Authenticated users can upload receipts"
+  on storage.objects for insert
+  with check ( bucket_id = 'receipts' and auth.role() = 'authenticated' );

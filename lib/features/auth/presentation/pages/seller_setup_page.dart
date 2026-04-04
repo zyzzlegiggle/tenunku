@@ -86,7 +86,7 @@ class _SellerSetupPageState extends State<SellerSetupPage> {
                 ),
               ),
               const SizedBox(height: 30),
-              Center(child: Image.asset('logo.png', width: 120, height: 120)),
+              Center(child: Image.asset('assets/logo.png', width: 120, height: 120)),
               const SizedBox(height: 30),
 
               // Pembeli / Penjual Tab (Penjual selected, non-interactive)

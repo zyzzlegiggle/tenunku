@@ -90,7 +90,7 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          'Bahasa / Language',
+          'Bahasa',
           style: GoogleFonts.poppins(
             color: Colors.white,
             fontWeight: FontWeight.w600,
@@ -128,19 +128,6 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
                           id: 'id',
                           title: 'Bahasa Indonesia',
                           isSelected: _selectedLanguage == 'id',
-                          orange: orange,
-                        ),
-                        const Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: Colors
-                              .white, // Separator if needed, although mostly relies on bg
-                        ),
-                        _buildLanguageOption(
-                          context,
-                          id: 'en',
-                          title: 'English',
-                          isSelected: _selectedLanguage == 'en',
                           orange: orange,
                         ),
                       ],

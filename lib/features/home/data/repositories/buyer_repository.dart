@@ -5,6 +5,7 @@ import '../models/product_model.dart';
 import '../models/order_model.dart';
 import '../models/cart_item_model.dart';
 
+import '../models/address_model.dart';
 import '../models/conversation_model.dart';
 import '../models/message_model.dart';
 
@@ -47,8 +48,39 @@ class BuyerRepository {
     return List<Map<String, dynamic>>.from(data);
   }
 
-  Future<void> addAddress(Map<String, dynamic> address) async {
-    await _supabase.from('addresses').insert(address);
+  Future<void> addAddress(AddressModel address) async {
+    final data = address.toJson();
+    data.remove('id');
+    data.remove('created_at');
+    data.remove('updated_at');
+    await _supabase.from('addresses').insert(data);
+  }
+
+  Future<void> updateAddress(AddressModel address) async {
+    final data = address.toJson();
+    data.remove('id');
+    data.remove('user_id');
+    data.remove('created_at');
+    data.remove('updated_at');
+    await _supabase.from('addresses').update(data).eq('id', address.id);
+  }
+
+  Future<void> deleteAddress(String addressId) async {
+    await _supabase.from('addresses').delete().eq('id', addressId);
+  }
+
+  Future<void> setPrimaryAddress(String userId, String addressId) async {
+    // Unset current primary
+    await _supabase
+        .from('addresses')
+        .update({'is_primary': false})
+        .eq('user_id', userId);
+
+    // Set new primary
+    await _supabase
+        .from('addresses')
+        .update({'is_primary': true})
+        .eq('id', addressId);
   }
 
   // ==================== FAVORITES METHODS ====================

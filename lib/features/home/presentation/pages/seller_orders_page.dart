@@ -448,14 +448,39 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Buyer Name
-          Text(
-            order.buyerName ?? 'Nama Pembeli',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+          // Buyer Name & Payment Status
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                order.buyerName ?? 'Nama Pembeli',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              if (order.paymentProofUrl != null &&
+                  order.paymentProofUrl!.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2E7D32), // Green
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Sudah Bayar',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 4),
 
@@ -480,27 +505,43 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
             child: _selectedStatus == 'pending'
                 ? Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: [
+                  children: [
+                    if (order.paymentProofUrl != null &&
+                        order.paymentProofUrl!.isNotEmpty) ...[
                       _buildActionButton(
-                        'Tolak',
+                        'Lihat Bukti',
                         onTap: () {
-                          _showRejectionDialog(order);
+                          _showPaymentProofDialog(order);
                         },
                         isPrimary: false,
-                        customBorderColor: const Color(0xFFB3B3B3),
-                        customTextColor: const Color(0xFFB3B3B3),
+                        customBorderColor: const Color(0xFF54B7C2),
+                        customTextColor: const Color(0xFF54B7C2),
                       ),
                       const SizedBox(width: 8),
-                      _buildActionButton(
-                        'Terima',
-                        onTap: () {
-                          _updateStatus(order.id, 'shipping');
-                        },
-                        isPrimary: true,
-                        customBgColor: const Color(0xFF54B7C2),
-                        customTextColor: Colors.white,
-                      ),
                     ],
+                    _buildActionButton(
+                      'Tolak',
+                      onTap: () {
+                        _showRejectionDialog(order);
+                      },
+                      isPrimary: false,
+                      customBorderColor: const Color(0xFFB3B3B3),
+                      customTextColor: const Color(0xFFB3B3B3),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      order.paymentProofUrl != null &&
+                              order.paymentProofUrl!.isNotEmpty
+                          ? 'Konfirmasi'
+                          : 'Terima',
+                      onTap: () {
+                        _updateStatus(order.id, 'shipping');
+                      },
+                      isPrimary: true,
+                      customBgColor: const Color(0xFF54B7C2),
+                      customTextColor: Colors.white,
+                    ),
+                  ],
                   )
                 : const SizedBox(),
           ),
@@ -761,6 +802,58 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> {
         onSaved: (trackingNumber, evidenceUrl) {
           _submitTrackingNumber(order.id, trackingNumber, evidenceUrl);
         },
+      ),
+    );
+  }
+
+  void _showPaymentProofDialog(OrderModel order) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Bukti Pembayaran',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            if (order.paymentProofUrl != null)
+              Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.6,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    order.paymentProofUrl!,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Center(
+                      child: Text('Gagal memuat gambar'),
+                    ),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }

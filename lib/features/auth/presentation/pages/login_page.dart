@@ -38,214 +38,211 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 20),
-              Text(
-                'Login ${_selectedRoleIndex == 0 ? 'Pembeli' : 'Penjual'}',
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  color: Colors.grey[700],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 30),
-              // Logo Placeholder
-              Center(
-                child: Image.asset('assets/logo.png', width: 120, height: 120),
-              ),
-              const SizedBox(height: 30),
-              // Role Toggle
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0E0E0),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _selectedRoleIndex = 0),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: _selectedRoleIndex == 0
-                                ? _kBluePrimary
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Pembeli',
-                            style: GoogleFonts.poppins(
-                              color: _selectedRoleIndex == 0
-                                  ? Colors.white
-                                  : Colors.grey[700],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _selectedRoleIndex = 1),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: _selectedRoleIndex == 1
-                                ? _kBluePrimary
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Penjual',
-                            style: GoogleFonts.poppins(
-                              color: _selectedRoleIndex == 1
-                                  ? Colors.white
-                                  : Colors.grey[700],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30),
-              // Fields based on role
-              if (_selectedRoleIndex == 0) ...[
-                // Pembeli: Username & Password
-                _buildLabel('Username'),
-                const SizedBox(height: 8),
-                _buildTextField('Masukkan Username', _usernameController),
-                const SizedBox(height: 20),
-              ] else ...[
-                // Penjual: Nama Lengkap & Nama Toko
-                _buildLabel('Nama Lengkap'),
-                const SizedBox(height: 8),
-                _buildTextField('Masukkan Nama Lengkap', _fullNameController),
-                const SizedBox(height: 20),
-
-                _buildLabel('Nama Toko'),
-                const SizedBox(height: 8),
-                _buildTextField('Masukkan Nama Toko', _shopNameController),
-                const SizedBox(height: 20),
-              ],
-
-              // Password Field (Common)
-              _buildLabel('Kata Sandi'),
-              const SizedBox(height: 8),
-              _buildTextField(
-                'Masukkan Kata Sandi',
-                _passwordController,
-                isObscure: true,
-              ),
-              const SizedBox(height: 10),
-
-              // Forgot Password
-              Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  'Lupa Kata Sandi?',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: Colors.grey[500],
-                    decoration: TextDecoration.underline,
+              Row(
+                children: [
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => context.pop(),
                   ),
-                ),
+                ],
               ),
-              const SizedBox(height: 40),
-              // Login Button
-              ElevatedButton(
-                onPressed: () async {
-                  try {
-                    final authRepo = AuthRepository();
-                    if (_selectedRoleIndex == 0) {
-                      // Login Pembeli
-                      if (_usernameController.text.isEmpty ||
-                          _passwordController.text.isEmpty) {
-                        throw 'Harap isi username dan kata sandi';
-                      }
-
-                      await authRepo.signInWithUsername(
-                        username: _usernameController.text,
-                        password: _passwordController.text,
-                      );
-                    } else {
-                      // Login Penjual
-                      if (_fullNameController.text.isEmpty ||
-                          _shopNameController.text.isEmpty ||
-                          _passwordController.text.isEmpty) {
-                        throw 'Harap isi semua kolom';
-                      }
-
-                      await authRepo.signInSeller(
-                        fullName: _fullNameController.text,
-                        shopName: _shopNameController.text,
-                        password: _passwordController.text,
-                      );
-                    }
-
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Login Berhasil')),
-                      );
-                      if (_selectedRoleIndex == 1) {
-                        context.go('/seller-home');
-                      } else {
-                        context.go('/home');
-                      }
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      final message = e is AuthException
-                          ? e.message
-                          : e.toString();
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(message)));
-                    }
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _kBluePrimary,
-                  elevation: 5,
-                  shadowColor: Colors.black45,
-                ),
-                child: const Text('Masuk'),
-              ),
-              const SizedBox(height: 30),
-              // Register Link
-              Center(
-                child: GestureDetector(
-                  onTap: () => context.push('/register'),
-                  child: RichText(
-                    text: TextSpan(
-                      text: 'Belum punya akun? ',
-                      style: GoogleFonts.poppins(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                      ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 10),
+                    // Logo Placeholder
+                    Center(
+                      child: Image.asset('assets/logo.png', width: 120, height: 120),
+                    ),
+                    const SizedBox(height: 30),
+                    // Role Selector
+                    Row(
                       children: [
-                        TextSpan(
-                          text: 'Daftar disini',
-                          style: GoogleFonts.poppins(
-                            color: Colors.grey[800],
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => setState(() => _selectedRoleIndex = 0),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _selectedRoleIndex == 0
+                                  ? _kBluePrimary
+                                  : _kBluePrimary.withOpacity(0.1),
+                              foregroundColor: _selectedRoleIndex == 0
+                                  ? Colors.black
+                                  : Colors.black.withOpacity(0.5),
+                              elevation: _selectedRoleIndex == 0 ? 5 : 0,
+                              shadowColor: _selectedRoleIndex == 0
+                                  ? Colors.black26
+                                  : Colors.transparent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: const Text('Pembeli'),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => setState(() => _selectedRoleIndex = 1),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _selectedRoleIndex == 1
+                                  ? _kBluePrimary
+                                  : _kBluePrimary.withOpacity(0.1),
+                              foregroundColor: _selectedRoleIndex == 1
+                                  ? Colors.black
+                                  : Colors.black.withOpacity(0.5),
+                              elevation: _selectedRoleIndex == 1 ? 5 : 0,
+                              shadowColor: _selectedRoleIndex == 1
+                                  ? Colors.black26
+                                  : Colors.transparent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: const Text('Penjual'),
                           ),
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 30),
+                    // Fields based on role
+                    if (_selectedRoleIndex == 0) ...[
+                      // Pembeli: Username & Password
+                      _buildLabel('Username'),
+                      const SizedBox(height: 8),
+                      _buildTextField('Masukkan Username', _usernameController),
+                      const SizedBox(height: 20),
+                    ] else ...[
+                      // Penjual: Nama Lengkap & Nama Toko
+                      _buildLabel('Nama Lengkap'),
+                      const SizedBox(height: 8),
+                      _buildTextField('Masukkan Nama Lengkap', _fullNameController),
+                      const SizedBox(height: 20),
+
+                      _buildLabel('Nama Toko'),
+                      const SizedBox(height: 8),
+                      _buildTextField('Masukkan Nama Toko', _shopNameController),
+                      const SizedBox(height: 20),
+                    ],
+
+                    // Password Field (Common)
+                    _buildLabel('Kata Sandi'),
+                    const SizedBox(height: 8),
+                    _buildTextField(
+                      'Masukkan Kata Sandi',
+                      _passwordController,
+                      isObscure: true,
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Forgot Password
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'Lupa Kata Sandi?',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    // Login Button
+                    ElevatedButton(
+                      onPressed: () async {
+                        try {
+                          final authRepo = AuthRepository();
+                          if (_selectedRoleIndex == 0) {
+                            // Login Pembeli
+                            if (_usernameController.text.isEmpty ||
+                                _passwordController.text.isEmpty) {
+                              throw 'Harap isi username dan kata sandi';
+                            }
+
+                            await authRepo.signInWithUsername(
+                              username: _usernameController.text,
+                              password: _passwordController.text,
+                            );
+                          } else {
+                            // Login Penjual
+                            if (_fullNameController.text.isEmpty ||
+                                _shopNameController.text.isEmpty ||
+                                _passwordController.text.isEmpty) {
+                              throw 'Harap isi semua kolom';
+                            }
+
+                            await authRepo.signInSeller(
+                              fullName: _fullNameController.text,
+                              shopName: _shopNameController.text,
+                              password: _passwordController.text,
+                            );
+                          }
+
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Login Berhasil')),
+                            );
+                            if (_selectedRoleIndex == 1) {
+                              context.go('/seller-home');
+                            } else {
+                              context.go('/home');
+                            }
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            final message = e is AuthException
+                                ? e.message
+                                : e.toString();
+                            ScaffoldMessenger.of(
+                              context,
+                            ).showSnackBar(SnackBar(content: Text(message)));
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _kBluePrimary,
+                        elevation: 5,
+                        shadowColor: Colors.black45,
+                      ),
+                      child: const Text('Masuk'),
+                    ),
+                    const SizedBox(height: 60),
+                    // Register Link
+                    Center(
+                      child: GestureDetector(
+                        onTap: () => context.push('/register'),
+                        child: RichText(
+                          text: TextSpan(
+                            text: 'Belum punya akun? ',
+                            style: GoogleFonts.poppins(
+                              color: Colors.grey[400],
+                              fontSize: 12,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: 'Daftar disini',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.grey[400],
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
             ],
           ),
         ),

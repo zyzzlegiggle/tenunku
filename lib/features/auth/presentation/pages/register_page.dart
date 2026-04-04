@@ -128,7 +128,7 @@ class _RegisterPageState extends State<RegisterPage> {
       }
 
       final authRepo = AuthRepository();
-      await authRepo.signUp(
+      final response = await authRepo.signUp(
         email: _emailController.text,
         password: _passwordController.text,
         fullName: _nameController.text,
@@ -139,25 +139,20 @@ class _RegisterPageState extends State<RegisterPage> {
         nik: _selectedRoleIndex == 1 ? _nikController.text : null,
       );
 
-      // Auto-login to establish session
-      await authRepo.signInWithPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
-
-      // OTP temporarily deactivated
-      // await authRepo.signInWithOtp(phone: _phoneController.text);
-
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registrasi Berhasil. Selamat Datang!')),
-        );
-
-        // Direct routing based on role
-        if (_selectedRoleIndex == 1) {
-          context.go('/seller-setup');
+        if (response.session != null) {
+          // If auto-confirm is enabled in Supabase, we get a session immediately
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Registrasi Berhasil. Selamat Datang!')),
+          );
+          if (_selectedRoleIndex == 1) {
+            context.go('/seller-setup');
+          } else {
+            context.go('/home');
+          }
         } else {
-          context.go('/home');
+          // If email verification is enabled, session will be null
+          _showEmailConfirmationDialog(_emailController.text);
         }
       }
     } catch (e) {
@@ -170,6 +165,60 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
+  void _showEmailConfirmationDialog(String email) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Verifikasi Email'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.email_outlined, size: 60, color: _kBluePrimary),
+            const SizedBox(height: 16),
+            Text(
+              'Tautan verifikasi telah dikirim ke:',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(fontSize: 14),
+            ),
+            Text(
+              email,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Silakan periksa kotak masuk atau spam email Anda untuk mengaktifkan akun.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+        actions: [
+          Center(
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                context.go('/login'); // Redirect to login
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _kBluePrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text('Ke Halaman Masuk'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isPembeli = _selectedRoleIndex == 0;
@@ -177,226 +226,219 @@ class _RegisterPageState extends State<RegisterPage> {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 20),
-              // Header with Back Button logic if on Step 2
+              const SizedBox(height: 10),
+              // Header with Back Button logic
               Row(
                 children: [
-                  if (_currentStep == 2)
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () => setState(() => _currentStep = 1),
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () {
+                      if (_currentStep == 2) {
+                        setState(() => _currentStep = 1);
+                      } else {
+                        context.pop();
+                      }
+                    },
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 10),
+                    // Logo Placeholder
+                    Center(
+                      child: Image.asset('assets/logo.png', width: 120, height: 120),
                     ),
-                ],
-              ),
-              Text(
-                'Daftar ${_selectedRoleIndex == 0 ? 'Pembeli' : 'Penjual'}',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  color: Colors.grey[700],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 30),
-              // Logo Placeholder
-              Center(
-                child: Image.asset('assets/logo.png', width: 120, height: 120),
-              ),
-              const SizedBox(height: 30),
+                    const SizedBox(height: 20),
 
-              // Step 1: Role Toggle
-              if (_currentStep == 1) ...[
-                Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE0E0E0),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _selectedRoleIndex = 0),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              color: _selectedRoleIndex == 0
-                                  ? _kBluePrimary
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              'Pembeli',
-                              style: GoogleFonts.poppins(
-                                color: _selectedRoleIndex == 0
-                                    ? Colors.white
-                                    : Colors.grey[700],
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _selectedRoleIndex = 1),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              color: _selectedRoleIndex == 1
-                                  ? _kBluePrimary
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              'Penjual',
-                              style: GoogleFonts.poppins(
-                                color: _selectedRoleIndex == 1
-                                    ? Colors.white
-                                    : Colors.grey[700],
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Fields
-                _buildLabel('Nama Lengkap'),
-                const SizedBox(height: 8),
-                _buildTextField('Masukkan Nama Lengkap', _nameController),
-                const SizedBox(height: 20),
-
-                if (isPembeli) ...[
-                  _buildLabel('Nomor Telepon'),
-                  const SizedBox(height: 8),
-                  _buildTextField('Masukkan Nomor Telepon', _phoneController),
-                  const SizedBox(height: 20),
-
-                  _buildLabel('E-mail'),
-                  const SizedBox(height: 8),
-                  _buildTextField('Masukkan E-mail', _emailController),
-                  const SizedBox(height: 20),
-                ] else ...[
-                  // Penjual Step 1: Tanggal Lahir, NIK
-                  _buildLabel('Tanggal Lahir'),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () => _selectDate(context),
-                    child: IgnorePointer(
-                      child: _buildTextField(
-                        'YYYY-MM-DD',
-                        _birthDateController,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  _buildLabel('NIK'),
-                  const SizedBox(height: 8),
-                  _buildTextField('Masukkan NIK', _nikController),
-                  const SizedBox(height: 20),
-                ],
-              ] else ...[
-                // Step 2 Fields
-                if (isPembeli) ...[
-                  _buildLabel('Username'),
-                  const SizedBox(height: 8),
-                  _buildTextField('Masukkan Username', _usernameController),
-                  const SizedBox(height: 20),
-                ] else ...[
-                  // Penjual Step 2: Phone, Email, Password
-                  _buildLabel('Nomor Telepon'),
-                  const SizedBox(height: 8),
-                  _buildTextField('Masukkan Nomor Telepon', _phoneController),
-                  const SizedBox(height: 20),
-
-                  _buildLabel('E-mail'),
-                  const SizedBox(height: 8),
-                  _buildTextField('Masukkan E-mail', _emailController),
-                  const SizedBox(height: 20),
-                ],
-
-                _buildLabel('Kata Sandi'),
-                const SizedBox(height: 8),
-                _buildTextField(
-                  'Masukkan Kata Sandi',
-                  _passwordController,
-                  isObscure: true,
-                ),
-                const SizedBox(height: 20),
-              ],
-
-              // Step Indicator
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildStepCircle(1, _currentStep >= 1),
-                  _buildStepLine(),
-                  _buildStepCircle(2, _currentStep >= 2),
-                  if (_selectedRoleIndex == 1) ...[
-                    _buildStepLine(),
-                    _buildStepCircle(3, false),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 30),
-
-              // Button
-              ElevatedButton(
-                onPressed: _nextStep,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _kBluePrimary,
-                  elevation: 5,
-                  shadowColor: Colors.black45,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: Text(
-                  _currentStep == 1 ? 'Selanjutnya' : 'Daftar',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Login Link
-              if (_currentStep == 1)
-                Center(
-                  child: GestureDetector(
-                    onTap: () => context.push('/login'),
-                    child: RichText(
-                      text: TextSpan(
-                        text: 'Sudah punya akun? ',
-                        style: GoogleFonts.poppins(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
+                    // Step 1: Role Toggle
+                    if (_currentStep == 1) ...[
+                      // Role Selector
+                      Row(
                         children: [
-                          TextSpan(
-                            text: 'Masuk disini',
-                            style: GoogleFonts.poppins(
-                              color: Colors.grey[800],
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () => setState(() => _selectedRoleIndex = 0),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _selectedRoleIndex == 0
+                                    ? _kBluePrimary
+                                    : _kBluePrimary.withOpacity(0.1),
+                                foregroundColor: _selectedRoleIndex == 0
+                                    ? Colors.black
+                                    : Colors.black.withOpacity(0.5),
+                                elevation: _selectedRoleIndex == 0 ? 5 : 0,
+                                shadowColor: _selectedRoleIndex == 0
+                                    ? Colors.black26
+                                    : Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: const Text('Pembeli'),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () => setState(() => _selectedRoleIndex = 1),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _selectedRoleIndex == 1
+                                    ? _kBluePrimary
+                                    : _kBluePrimary.withOpacity(0.1),
+                                foregroundColor: _selectedRoleIndex == 1
+                                    ? Colors.black
+                                    : Colors.black.withOpacity(0.5),
+                                elevation: _selectedRoleIndex == 1 ? 5 : 0,
+                                shadowColor: _selectedRoleIndex == 1
+                                    ? Colors.black26
+                                    : Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: const Text('Penjual'),
                             ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 20),
+
+                      // Fields
+                      _buildLabel('Nama Lengkap'),
+                      const SizedBox(height: 8),
+                      _buildTextField('Masukkan Nama Lengkap', _nameController),
+                      const SizedBox(height: 20),
+
+                      if (isPembeli) ...[
+                        _buildLabel('Nomor Telepon'),
+                        const SizedBox(height: 8),
+                        _buildTextField('Masukkan Nomor Telepon', _phoneController),
+                        const SizedBox(height: 20),
+
+                        _buildLabel('E-mail'),
+                        const SizedBox(height: 8),
+                        _buildTextField('Masukkan E-mail', _emailController),
+                        const SizedBox(height: 20),
+                      ] else ...[
+                        // Penjual Step 1: Tanggal Lahir, NIK
+                        _buildLabel('Tanggal Lahir'),
+                        const SizedBox(height: 8),
+                        InkWell(
+                          onTap: () => _selectDate(context),
+                          child: IgnorePointer(
+                            child: _buildTextField(
+                              'YYYY-MM-DD',
+                              _birthDateController,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        _buildLabel('NIK'),
+                        const SizedBox(height: 8),
+                        _buildTextField('Masukkan NIK', _nikController),
+                        const SizedBox(height: 20),
+                      ],
+                    ] else ...[
+                      // Step 2 Fields
+                      if (isPembeli) ...[
+                        _buildLabel('Username'),
+                        const SizedBox(height: 8),
+                        _buildTextField('Masukkan Username', _usernameController),
+                        const SizedBox(height: 20),
+                      ] else ...[
+                        // Penjual Step 2: Phone, Email, Password
+                        _buildLabel('Nomor Telepon'),
+                        const SizedBox(height: 8),
+                        _buildTextField('Masukkan Nomor Telepon', _phoneController),
+                        const SizedBox(height: 20),
+
+                        _buildLabel('E-mail'),
+                        const SizedBox(height: 8),
+                        _buildTextField('Masukkan E-mail', _emailController),
+                        const SizedBox(height: 20),
+                      ],
+
+                      _buildLabel('Kata Sandi'),
+                      const SizedBox(height: 8),
+                      _buildTextField(
+                        'Masukkan Kata Sandi',
+                        _passwordController,
+                        isObscure: true,
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+
+                    // Step Indicator
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildStepCircle(1, _currentStep >= 1),
+                        _buildStepLine(),
+                        _buildStepCircle(2, _currentStep >= 2),
+                        if (_selectedRoleIndex == 1) ...[
+                          _buildStepLine(),
+                          _buildStepCircle(3, false),
+                        ],
+                      ],
                     ),
-                  ),
+                    const SizedBox(height: 30),
+                    // Button
+                    ElevatedButton(
+                      onPressed: _nextStep,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _kBluePrimary,
+                        elevation: 5,
+                        shadowColor: Colors.black45,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: Text(
+                        _currentStep == 1 ? 'Selanjutnya' : 'Daftar',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 60),
+                    // Login Link
+                    if (_currentStep == 1)
+                      Center(
+                        child: GestureDetector(
+                          onTap: () => context.push('/login'),
+                          child: RichText(
+                            text: TextSpan(
+                              text: 'Sudah punya akun? ',
+                              style: GoogleFonts.poppins(
+                                color: Colors.grey[400],
+                                fontSize: 12,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: 'Masuk disini',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.grey[400],
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 20),
+                  ],
                 ),
-              const SizedBox(height: 20),
+              ),
             ],
           ),
         ),

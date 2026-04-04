@@ -2,6 +2,7 @@ class Profile {
   final String id;
   final String? fullName;
   final String? shopName;
+  final String? username;
   final String? phone;
   final String? role;
   final String? avatarUrl;
@@ -18,6 +19,7 @@ class Profile {
     required this.id,
     this.fullName,
     this.shopName,
+    this.username,
     this.phone,
     this.role,
     this.avatarUrl,
@@ -36,6 +38,7 @@ class Profile {
       id: json['id'],
       fullName: json['full_name'],
       shopName: json['shop_name'],
+      username: json['username'],
       phone: json['phone'],
       role: json['role'],
       avatarUrl: json['avatar_url'],
@@ -55,6 +58,7 @@ class Profile {
       'id': id,
       'full_name': fullName,
       'shop_name': shopName,
+      'username': username,
       'phone': phone,
       'role': role,
       'avatar_url': avatarUrl,
